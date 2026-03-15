@@ -1,0 +1,11 @@
+.confetti-particle {
+  position: absolute;
+  top: -20px;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  0%   { top: -20px; transform: rotate(0deg) translateX(0); opacity: 1; }
+  60%  { opacity: 1; }
+  100% { top: 110vh; transform: rotate(720deg) translateX(var(--drift, 40px)); opacity: 0; }
+}

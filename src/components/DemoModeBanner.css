@@ -1,0 +1,35 @@
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(124,58,237,0.12);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 10px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.demo-tag {
+  background: #7c3aed;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+}
+.demo-text { color: #a78bfa; flex: 1; }
+.demo-connect {
+  background: rgba(124,58,237,0.2);
+  border: 1px solid rgba(124,58,237,0.4);
+  border-radius: 7px;
+  color: #c4b5fd;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.demo-connect:hover { background: rgba(124,58,237,0.35); }

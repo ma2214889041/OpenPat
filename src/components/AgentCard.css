@@ -1,0 +1,118 @@
+.agent-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-top: 3px solid var(--status-color, #475569);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.3s, transform 0.15s;
+  min-width: 180px;
+}
+.agent-card:hover { transform: translateY(-2px); }
+
+.ac-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ac-name-row { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.ac-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #f1f5f9;
+  outline: none;
+  cursor: text;
+  border-radius: 4px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+.ac-name:focus { background: rgba(255,255,255,0.06); }
+.ac-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--status-color, #475569);
+  box-shadow: 0 0 6px var(--status-color, #475569);
+  flex-shrink: 0;
+  animation: acPulse 2s infinite;
+}
+@keyframes acPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.ac-remove {
+  background: none; border: none;
+  color: #334155; cursor: pointer;
+  font-size: 12px; padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+.ac-remove:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+/* Mini lobster animations */
+.mini-lobster { display: flex; align-items: center; justify-content: center; }
+.mini-lobster--idle .ml-ant-l { transform-origin: 42px 29px; animation: mlSwayL 3s ease-in-out infinite; }
+.mini-lobster--idle .ml-ant-r { transform-origin: 58px 29px; animation: mlSwayR 3s ease-in-out infinite; }
+.mini-lobster--idle .ml-body  { animation: mlBreathe 4s ease-in-out infinite; }
+.mini-lobster--thinking .ml-body { animation: mlScratch 0.5s ease-in-out infinite alternate; }
+.mini-lobster--thinking .ml-pupil-l,
+.mini-lobster--thinking .ml-pupil-r { animation: mlRoll 1.2s linear infinite; }
+.mini-lobster--tool_call .ml-claw-l { transform-origin: 32px 55px; animation: mlClawUp 0.6s ease-in-out infinite alternate; }
+.mini-lobster--tool_call .ml-claw-r { transform-origin: 68px 55px; animation: mlClawUp2 0.6s ease-in-out infinite alternate; }
+.mini-lobster--done svg { animation: mlBounce 0.5s ease-in-out 3; }
+.mini-lobster--error svg { animation: mlSlump 0.5s ease-in-out forwards; }
+.mini-lobster--offline svg { filter: saturate(0.2) brightness(0.7); }
+.mini-lobster--offline .ml-zzz { animation: mlZ 2s ease-out infinite; }
+
+@keyframes mlSwayL  { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-12deg)} }
+@keyframes mlSwayR  { 0%,100%{transform:rotate(0)} 50%{transform:rotate(12deg)} }
+@keyframes mlBreathe { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(1.04)} }
+@keyframes mlScratch { 0%{transform:translateX(0)} 100%{transform:translateX(3px) rotate(2deg)} }
+@keyframes mlRoll    { 0%{transform:translate(0,0)} 50%{transform:translate(0,-2px)} 100%{transform:translate(0,0)} }
+@keyframes mlClawUp  { 0%{transform:rotate(0)} 100%{transform:rotate(-30deg) translateY(-8px)} }
+@keyframes mlClawUp2 { 0%{transform:rotate(0)} 100%{transform:rotate(30deg) translateY(-8px)} }
+@keyframes mlBounce  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes mlSlump   { 100%{transform:rotate(-12deg) translateY(6px)} }
+@keyframes mlZ       { 0%{opacity:0;transform:translate(0,0)} 50%{opacity:1} 100%{opacity:0;transform:translate(6px,-12px)} }
+
+.ac-status-badge { font-size: 13px; font-weight: 700; }
+.ac-tool { background: rgba(59,130,246,0.1); border-radius: 6px; padding: 4px 8px; }
+.ac-tool code { font-size: 11px; color: #60a5fa; }
+
+.ac-stats {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+.ac-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex: 1;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  padding: 6px 4px;
+}
+.ac-stat span { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+.ac-stat small { font-size: 10px; color: #475569; }
+
+.ac-url {
+  width: 100%;
+  overflow: hidden;
+}
+.ac-url code {
+  font-size: 10px;
+  color: #334155;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

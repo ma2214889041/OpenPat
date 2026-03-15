@@ -1,0 +1,43 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          VITE_STRIPE_CYBER_PRICE: ${{ secrets.VITE_STRIPE_CYBER_PRICE }}
+          VITE_STRIPE_PIXEL_PRICE: ${{ secrets.VITE_STRIPE_PIXEL_PRICE }}
+          VITE_STRIPE_GOLDEN_PRICE: ${{ secrets.VITE_STRIPE_GOLDEN_PRICE }}
+          VITE_STRIPE_SPACE_PRICE: ${{ secrets.VITE_STRIPE_SPACE_PRICE }}
+          VITE_STRIPE_GUOCHAO_PRICE: ${{ secrets.VITE_STRIPE_GUOCHAO_PRICE }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: lobster-pet
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /u/
+Sitemap: https://lobster.pet/sitemap.xml

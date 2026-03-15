@@ -1,0 +1,58 @@
+.skin-selector {
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skin-selector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.skin-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.skin-shop-link {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.skin-shop-link:hover { text-decoration: underline; }
+
+.skin-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.skin-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  min-width: 60px;
+}
+.skin-item:hover:not(.locked) { background: rgba(255,255,255,0.07); border-color: rgba(232,64,28,0.3); }
+.skin-item.active { border-color: #e8401c; background: rgba(232,64,28,0.1); }
+.skin-item.locked { opacity: 0.45; cursor: pointer; }
+.skin-item.locked:hover { opacity: 0.6; }
+.skin-emoji { font-size: 22px; }
+.skin-name  { font-size: 10px; color: #64748b; white-space: nowrap; }
+.skin-item.active .skin-name { color: #f87171; }

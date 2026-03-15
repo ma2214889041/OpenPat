@@ -1,0 +1,65 @@
+.leaderboard-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.lb-header h1 { font-size: 28px; margin-bottom: 6px; }
+.lb-header p  { color: #64748b; margin: 0; }
+.lb-demo-hint {
+  margin-top: 10px;
+  padding: 8px 14px;
+  background: rgba(251,146,60,0.08);
+  border: 1px solid rgba(251,146,60,0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #fb923c;
+  display: inline-block;
+}
+
+.lb-tabs {
+  display: flex;
+  gap: 8px;
+}
+.lb-tab {
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.lb-tab:hover { color: #94a3b8; }
+.lb-tab.active { background: rgba(232,64,28,0.12); border-color: rgba(232,64,28,0.3); color: #f87171; }
+
+.lb-table { display: flex; flex-direction: column; gap: 8px; }
+.lb-loading { text-align: center; color: #475569; padding: 40px; }
+
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  transition: background 0.1s;
+}
+.lb-row:hover { background: rgba(255,255,255,0.04); }
+.lb-row.top { border-color: rgba(232,64,28,0.2); background: rgba(232,64,28,0.04); }
+
+.lb-rank { font-size: 20px; width: 36px; text-align: center; flex-shrink: 0; }
+.lb-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg,#e8401c,#fb923c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.lb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.lb-user { flex: 1; min-width: 0; }
+.lb-username { font-weight: 700; color: #f1f5f9; font-size: 14px; }
+.lb-level    { font-size: 11px; color: #64748b; }
+.lb-achievements { display: flex; gap: 4px; }
+.lb-ach { font-size: 16px; }
+.lb-value { font-size: 20px; font-weight: 800; color: #fb923c; font-variant-numeric: tabular-nums; min-width: 60px; text-align: right; }

@@ -1,0 +1,65 @@
+.badge-panel {
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.badge-panel--locked {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+  font-size: 13px;
+}
+.badge-panel--locked span { font-size: 20px; }
+.badge-panel--locked p { margin: 0; }
+
+.badge-header { }
+.badge-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.badge-preview {
+  padding: 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+.badge-img { height: 20px; }
+
+.badge-actions { display: flex; gap: 8px; }
+.badge-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.badge-btn:hover { background: rgba(255,255,255,0.08); color: #f1f5f9; }
+.badge-btn.copy.copied { color: #22c55e; }
+
+.badge-code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #475569;
+  background: rgba(0,0,0,0.2);
+  padding: 8px;
+  border-radius: 6px;
+  word-break: break-all;
+  overflow: hidden;
+}

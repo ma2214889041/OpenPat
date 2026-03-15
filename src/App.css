@@ -1,0 +1,19 @@
+.app {
+  min-height: 100vh;
+  position: relative;
+}
+
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* All pages sit above bg-grid */
+.app > *:not(.bg-grid) {
+  position: relative;
+  z-index: 1;
+}

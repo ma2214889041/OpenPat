@@ -1,0 +1,91 @@
+.cost-estimator {
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ce-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ce-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.ce-model-select {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 11px;
+  padding: 3px 6px;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ce-cost {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.ce-amount {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fb923c;
+  font-variant-numeric: tabular-nums;
+}
+.ce-usd {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.ce-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+.ce-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  font-family: 'SF Mono', monospace;
+}
+
+.ce-compare {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  padding: 6px 10px;
+  background: rgba(251,146,60,0.06);
+  border-radius: 8px;
+}
+
+.ce-fat-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ce-fat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
