@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase, hasSupabase } from '../utils/supabase';
-import { LEVELS, getLevel, ACHIEVEMENTS } from '../utils/storage';
+import { LEVELS, getLevel, ACHIEVEMENTS, RARITY_COLORS } from '../utils/storage';
 import LobsterSVG from '../components/LobsterSVG';
 import { STATES } from '../hooks/useGateway';
 import './PublicProfile.css';
@@ -19,7 +19,7 @@ const MOCK_PROFILE = {
   total_tool_calls: 4321,
   total_tokens_input: 9800000,
   total_tokens_output: 3200000,
-  achievements: ['perfect_task', 'night_owl'],
+  achievements: ['perfect_task', 'night_owl', 'first_connect', 'tasks_10'],
   level: 2,
 };
 
@@ -30,12 +30,49 @@ const MOCK_STATUS = {
   session_tool_calls: 12,
 };
 
+const TITLES = [
+  { minTasks: 200000, title: '龙虾神' },
+  { minTasks: 50000,  title: '霸王龙虾座' },
+  { minTasks: 10000,  title: '深夜代码龙虾' },
+  { minTasks: 1000,   title: '勤劳龙虾' },
+  { minTasks: 100,    title: '初出茅庐' },
+  { minTasks: 0,      title: '虾苗新手' },
+];
+
+function getTitle(totalTasks, achievements) {
+  if (achievements.includes('night_owl') && totalTasks >= 1000) return '深夜代码龙虾';
+  if (achievements.includes('no_error_week')) return '零翻车之王';
+  if (achievements.includes('saver')) return 'Token节俭大师';
+  return TITLES.find(t => totalTasks >= t.minTasks)?.title || '虾苗新手';
+}
+
+const STATUS_COLORS = {
+  [STATES.OFFLINE]: '#475569',
+  [STATES.IDLE]: '#22c55e',
+  [STATES.THINKING]: '#f59e0b',
+  [STATES.TOOL_CALL]: '#3b82f6',
+  [STATES.DONE]: '#10b981',
+  [STATES.ERROR]: '#ef4444',
+  [STATES.TOKEN_EXHAUSTED]: '#f97316',
+};
+
+const STATUS_TEXT = {
+  [STATES.OFFLINE]: '龙虾盖着被子睡觉 zzZ',
+  [STATES.IDLE]: '龙虾悠闲待命中',
+  [STATES.THINKING]: '龙虾正在思考...',
+  [STATES.TOOL_CALL]: '龙虾正在调用工具 ⚡',
+  [STATES.DONE]: '龙虾完成任务了！🎉',
+  [STATES.ERROR]: '龙虾翻车了 😵',
+  [STATES.TOKEN_EXHAUSTED]: '龙虾饿晕了 💸',
+};
+
 export default function PublicProfile() {
   const { username } = useParams();
   const [profile, setProfile] = useState(null);
   const [agentStatus, setAgentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load profile + realtime subscription
   useEffect(() => {
     if (!hasSupabase) {
       setProfile({ ...MOCK_PROFILE, username: username || 'demo_user' });
@@ -47,7 +84,6 @@ export default function PublicProfile() {
     let channel;
 
     async function loadAll() {
-      // Load profile first, then use its id for status + realtime
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -67,7 +103,6 @@ export default function PublicProfile() {
 
       setAgentStatus(statusData);
 
-      // Realtime subscription keyed on user_id
       channel = supabase
         .channel(`status:${profileData.id}`)
         .on('postgres_changes', {
@@ -82,9 +117,37 @@ export default function PublicProfile() {
     }
 
     loadAll();
-
     return () => { if (channel) supabase.removeChannel(channel); };
   }, [username]);
+
+  // OG meta tags (must be before early returns — runs when profile loads)
+  useEffect(() => {
+    if (!profile) return;
+    const levelIdx = getLevel(profile.total_tasks);
+    const level = LEVELS[levelIdx];
+    const achCount = (profile.achievements || []).length;
+    const title = `@${profile.username} 的龙虾 — OpenPat`;
+    const desc = `${level.name} · ${fmt(profile.total_tasks)} 任务完成 · ${achCount} 个成就`;
+    document.title = title;
+    const setMeta = (name, content, prop = false) => {
+      const sel = prop ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+      let el = document.querySelector(sel);
+      if (!el) {
+        el = document.createElement('meta');
+        prop ? el.setAttribute('property', name) : el.setAttribute('name', name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    setMeta('description', desc);
+    setMeta('og:title', title, true);
+    setMeta('og:description', desc, true);
+    setMeta('og:url', `https://openpat.dev/u/${profile.username}`, true);
+    setMeta('twitter:card', 'summary');
+    setMeta('twitter:title', title);
+    setMeta('twitter:description', desc);
+    return () => { document.title = 'OpenPat 🦞'; };
+  }, [profile]);
 
   if (loading) {
     return <div className="profile-loading"><span>🦞</span><p>加载中...</p></div>;
@@ -104,6 +167,9 @@ export default function PublicProfile() {
   const levelIdx = getLevel(profile.total_tasks);
   const level = LEVELS[levelIdx];
   const status = agentStatus?.status || STATES.OFFLINE;
+  const statusColor = STATUS_COLORS[status] || '#94a3b8';
+  const statusText = STATUS_TEXT[status] || '';
+  const title = getTitle(profile.total_tasks, profile.achievements || []);
   const foundAch = ACHIEVEMENTS.filter(a => (profile.achievements || []).includes(a.id));
 
   return (
@@ -112,62 +178,68 @@ export default function PublicProfile() {
         <div className="profile-demo-hint">🎭 演示数据 — 配置 Supabase 后显示真实状态</div>
       )}
 
-      <div className="profile-card">
-        {/* Header */}
-        <div className="profile-header">
+      <div className="profile-hero">
+        {/* Name + title */}
+        <div className="profile-identity">
           <div className="profile-avatar">
             {profile.avatar_url
               ? <img src={profile.avatar_url} alt="" />
               : <span>{profile.username[0].toUpperCase()}</span>
             }
           </div>
-          <div className="profile-meta">
+          <div>
             <h1 className="profile-name">@{profile.username}</h1>
-            <div className="profile-level">{level.name} · {fmt(profile.total_tasks)} tasks</div>
+            <div className="profile-title">{title}</div>
           </div>
         </div>
 
-        {/* Lobster + live status */}
-        <div className="profile-lobster-section">
+        {/* Big lobster */}
+        <div className="profile-lobster-big" style={{ '--glow': statusColor }}>
           <LobsterSVG status={status} fatness={1} onClick={() => {}} />
           <div className="profile-live">
-            <span className={`live-dot live-dot--${status}`} />
-            <span className="live-label">实时状态</span>
+            <span className="live-dot" style={{ background: statusColor }} />
+            <span className="live-text">{statusText}</span>
           </div>
         </div>
 
-        {/* Stats */}
+        {/* 3 core stats */}
         <div className="profile-stats">
-          {[
-            ['🔢', fmt(profile.total_tokens_input + profile.total_tokens_output), 'Tokens'],
-            ['🛠', fmt(profile.total_tool_calls), '工具调用'],
-            ['✅', fmt(profile.total_tasks), '任务完成'],
-          ].map(([emoji, val, label]) => (
-            <div key={label} className="profile-stat">
-              <span className="ps-emoji">{emoji}</span>
-              <span className="ps-value">{val}</span>
-              <span className="ps-label">{label}</span>
-            </div>
-          ))}
+          <div className="profile-stat">
+            <span className="ps-value">{fmt(profile.total_tasks)}</span>
+            <span className="ps-label">任务完成</span>
+          </div>
+          <div className="profile-stat highlight">
+            <span className="ps-value">{level.name}</span>
+            <span className="ps-label">当前等级</span>
+          </div>
+          <div className="profile-stat">
+            <span className="ps-value">{foundAch.length}</span>
+            <span className="ps-label">成就解锁</span>
+          </div>
         </div>
 
-        {/* Achievements */}
+        {/* Achievement badges */}
         {foundAch.length > 0 && (
-          <div className="profile-achievements">
-            <h3>成就</h3>
-            <div className="profile-ach-grid">
-              {foundAch.map(a => (
-                <div key={a.id} className="profile-ach" title={a.desc}>
-                  <span>{a.emoji}</span>
-                  <span>{a.name}</span>
-                </div>
-              ))}
-            </div>
+          <div className="profile-ach-row">
+            {foundAch.map(a => {
+              const colors = RARITY_COLORS[a.rarity] || RARITY_COLORS.common;
+              return (
+                <span
+                  key={a.id}
+                  className="profile-ach-badge"
+                  title={`${a.name} — ${a.desc}`}
+                  style={{ background: colors.bg, borderColor: colors.border, color: colors.text }}
+                >
+                  {a.emoji} {a.name}
+                </span>
+              );
+            })}
           </div>
         )}
 
         <div className="profile-footer">
-          <code>npx lobster-pet</code> · lobster.pet
+          <code>npx openpat</code>
+          <span className="profile-watermark">openpat.dev</span>
         </div>
       </div>
     </div>

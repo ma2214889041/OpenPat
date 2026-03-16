@@ -50,9 +50,30 @@
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 14px;
   transition: background 0.1s;
+  text-decoration: none;
+  color: inherit;
 }
 .lb-row:hover { background: rgba(255,255,255,0.04); }
 .lb-row.top { border-color: rgba(232,64,28,0.2); background: rgba(232,64,28,0.04); }
+
+.lb-lobster-thumb {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  --lp: #e8401c;
+  --ls: #c83010;
+  --lobster-shadow: rgba(232,64,28,0.3);
+}
+.lb-row.top .lb-lobster-thumb {
+  --lp: #f59e0b;
+  --ls: #d97706;
+  --lobster-shadow: rgba(245,158,11,0.4);
+}
+.lb-lobster-thumb .lobster { transform: scale(0.22); transform-origin: top center; }
 
 .lb-rank { font-size: 20px; width: 36px; text-align: center; flex-shrink: 0; }
 .lb-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg,#e8401c,#fb923c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; }

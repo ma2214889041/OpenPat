@@ -23,7 +23,7 @@ export default function GifButton({ stats, skinColors }) {
   const download = () => {
     const a = document.createElement('a');
     a.href = gifUrl;
-    a.download = `lobster-pet-${Date.now()}.gif`;
+    a.download = `openpat-${Date.now()}.gif`;
     a.click();
   };
 

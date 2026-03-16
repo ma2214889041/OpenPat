@@ -16,7 +16,7 @@ export default function ConnectModal({ onConnect }) {
       <div className="modal">
         <div className="modal-header">
           <span className="modal-logo">🦞</span>
-          <h1>Lobster Pet</h1>
+          <h1>OpenPat</h1>
           <p>连接你的 OpenClaw Agent，让它变成一只会动的虚拟龙虾</p>
         </div>
 
@@ -55,7 +55,7 @@ export default function ConnectModal({ onConnect }) {
         </form>
 
         <div className="modal-footer">
-          <p>或者用 <code>npx lobster-pet</code> 自动检测 Token</p>
+          <p>或者用 <code>npx openpat</code> 自动检测 Token</p>
         </div>
       </div>
     </div>

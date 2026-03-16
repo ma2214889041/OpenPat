@@ -99,7 +99,7 @@ function buildFrameSVG(stats, skinColors, t) {
     <text x="160" y="358" font-family="sans-serif" font-size="20" font-weight="bold" fill="#f1f5f9">${stats.toolCalls}</text>
     <text x="280" y="338" font-family="sans-serif" font-size="13" fill="#64748b">成功率</text>
     <text x="280" y="358" font-family="sans-serif" font-size="20" font-weight="bold" fill="#22c55e">${stats.toolCalls > 0 ? ((stats.toolCallsSuccess / stats.toolCalls) * 100).toFixed(0) + '%' : '—'}</text>
-    <text x="200" y="392" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#334155">🦞 lobster.pet · npx lobster-pet</text>
+    <text x="200" y="392" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#334155">🦞 openpat.dev · npx openpat</text>
   </svg>`;
 }
 

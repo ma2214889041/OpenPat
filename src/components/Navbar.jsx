@@ -3,10 +3,8 @@ import AuthButton from './AuthButton';
 import './Navbar.css';
 
 const LINKS = [
-  { to: '/', label: '🦞 龙虾' },
-  { to: '/team', label: '👥 团队' },
-  { to: '/shop', label: '🛒 商店' },
-  { to: '/leaderboard', label: '🏆 排行榜' },
+  { to: '/', label: '🦞 我的龙虾' },
+  { to: '/leaderboard', label: '🌐 龙虾广场' },
 ];
 
 export default function Navbar({ onSettings }) {
@@ -15,7 +13,7 @@ export default function Navbar({ onSettings }) {
     <nav className="navbar">
       <div className="navbar-brand">
         <span className="navbar-logo">🦞</span>
-        <span className="navbar-title">Lobster Pet</span>
+        <span className="navbar-title">OpenPat</span>
       </div>
       <div className="navbar-links">
         {LINKS.map(l => (
@@ -29,7 +27,7 @@ export default function Navbar({ onSettings }) {
         ))}
       </div>
       <div className="navbar-auth">
-        <button className="nav-settings-btn" onClick={onSettings} title="设置 (,)">⚙️</button>
+        <button className="nav-settings-btn" onClick={onSettings} title="设置">⚙️</button>
         <AuthButton />
       </div>
     </nav>

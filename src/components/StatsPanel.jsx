@@ -1,5 +1,5 @@
+import { useState } from 'react';
 import './StatsPanel.css';
-import { LEVELS, getLevel } from '../utils/storage';
 import { STATES } from '../hooks/useGateway';
 
 function fmt(n) {
@@ -21,10 +21,10 @@ const STATUS_LABELS = {
   [STATES.OFFLINE]: '离线',
   [STATES.IDLE]: '空闲',
   [STATES.THINKING]: '思考中',
-  [STATES.TOOL_CALL]: '工具调用中',
-  [STATES.DONE]: '任务完成',
-  [STATES.ERROR]: '报错了',
-  [STATES.TOKEN_EXHAUSTED]: 'Token 耗尽',
+  [STATES.TOOL_CALL]: '调用中',
+  [STATES.DONE]: '完成',
+  [STATES.ERROR]: '报错',
+  [STATES.TOKEN_EXHAUSTED]: 'Token耗尽',
 };
 
 const STATUS_COLORS = {
@@ -37,66 +37,48 @@ const STATUS_COLORS = {
   [STATES.TOKEN_EXHAUSTED]: '#f97316',
 };
 
-export default function StatsPanel({ status, stats, currentTool, totalTasks, showModel, onToggleModel }) {
-  const levelIdx = getLevel(totalTasks);
-  const level = LEVELS[levelIdx];
+export default function StatsPanel({ status, stats, totalTasks }) {
+  const [expanded, setExpanded] = useState(false);
+  const totalTokens = stats.tokensInput + stats.tokensOutput;
   const successRate = stats.toolCalls > 0
-    ? ((stats.toolCallsSuccess / stats.toolCalls) * 100).toFixed(1)
+    ? ((stats.toolCallsSuccess / stats.toolCalls) * 100).toFixed(1) + '%'
     : '—';
 
   return (
-    <div className="stats-panel">
-      {/* Status badge */}
-      <div className="status-badge" style={{ '--color': STATUS_COLORS[status] }}>
-        <span className="status-dot" />
-        <span className="status-label">{STATUS_LABELS[status]}</span>
-      </div>
+    <div className="stats-bar-wrapper">
+      <button className="stats-bar" onClick={() => setExpanded(v => !v)}>
+        <span className="stat-badge" style={{ '--color': STATUS_COLORS[status] }}>
+          <span className="stat-dot" />
+          {STATUS_LABELS[status]}
+        </span>
+        <span className="stat-chip">🔢 {fmt(totalTokens)}</span>
+        <span className="stat-chip">🛠 {stats.toolCalls}</span>
+        <span className="stat-chip">⏱ {stats.sessionStart ? fmtTime(stats.uptime) : '—'}</span>
+        <span className="stat-expand">{expanded ? '▲' : '▼'}</span>
+      </button>
 
-      {/* Level */}
-      <div className="level-row">
-        <span className="level-emoji">🦞</span>
-        <span className="level-name">{level.name}</span>
-        <span className="level-tasks">{fmt(totalTasks)} tasks</span>
-      </div>
-
-      {/* Current tool */}
-      {currentTool && (
-        <div className="current-tool">
-          <span className="tool-label">调用中：</span>
-          <code className="tool-name">{currentTool.name}</code>
-          <span className="tool-time">{fmtTime(Math.floor((Date.now() - currentTool.start) / 1000))}</span>
+      {expanded && (
+        <div className="stats-detail">
+          <div className="sd-row">
+            <span className="sd-label">Input tokens</span>
+            <span className="sd-val">{fmt(stats.tokensInput)}</span>
+          </div>
+          <div className="sd-row">
+            <span className="sd-label">Output tokens</span>
+            <span className="sd-val">{fmt(stats.tokensOutput)}</span>
+          </div>
+          <div className="sd-row">
+            <span className="sd-label">成功率</span>
+            <span className="sd-val">{successRate}</span>
+          </div>
+          {stats.modelName && (
+            <div className="sd-row">
+              <span className="sd-label">模型</span>
+              <span className="sd-val">{stats.modelName}</span>
+            </div>
+          )}
         </div>
       )}
-
-      {/* Stats grid */}
-      <div className="stats-grid">
-        <div className="stat">
-          <div className="stat-value">{fmt(stats.tokensInput)}</div>
-          <div className="stat-label">input tokens</div>
-        </div>
-        <div className="stat">
-          <div className="stat-value">{fmt(stats.tokensOutput)}</div>
-          <div className="stat-label">output tokens</div>
-        </div>
-        <div className="stat">
-          <div className="stat-value">{stats.toolCalls}</div>
-          <div className="stat-label">工具调用</div>
-        </div>
-        <div className="stat">
-          <div className="stat-value">{successRate}{stats.toolCalls > 0 ? '%' : ''}</div>
-          <div className="stat-label">成功率</div>
-        </div>
-        <div className="stat">
-          <div className="stat-value">{stats.sessionStart ? fmtTime(stats.uptime) : '—'}</div>
-          <div className="stat-label">运行时长</div>
-        </div>
-        <div className="stat clickable" onClick={onToggleModel}>
-          <div className="stat-value model-val">
-            {showModel ? (stats.modelName || '—') : '● ● ●'}
-          </div>
-          <div className="stat-label">模型 {showModel ? '🙈' : '👁'}</div>
-        </div>
-      </div>
     </div>
   );
 }

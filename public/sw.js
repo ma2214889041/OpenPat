@@ -1,5 +1,5 @@
-// Lobster Pet Service Worker
-const CACHE = 'lobster-pet-v1';
+// OpenPat Service Worker
+const CACHE = 'openpat-v1';
 const PRECACHE = ['/', '/index.html'];
 
 self.addEventListener('install', e => {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * npx lobster-pet
- * Starts a local HTTP server serving the Lobster Pet UI,
+ * npx openpat
+ * Starts a local HTTP server serving the OpenPat UI,
  * auto-detects OpenClaw config, and opens the browser.
  */
 import { createServer } from 'http';
@@ -89,7 +89,7 @@ function serve() {
   server.listen(PORT, () => {
     const url = `http://localhost:${PORT}`;
     console.log('');
-    console.log('  🦞  Lobster Pet');
+    console.log('  🦞  OpenPat');
     console.log('');
     if (cfg) {
       console.log(`  ✅  Auto-detected OpenClaw config: ${cfg.path}`);

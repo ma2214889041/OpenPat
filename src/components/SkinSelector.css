@@ -19,16 +19,11 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-.skin-shop-link {
-  background: none;
-  border: none;
-  color: #f87171;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
+.skin-free-hint {
+  font-size: 11px;
+  color: #22c55e;
+  font-weight: 600;
 }
-.skin-shop-link:hover { text-decoration: underline; }
 
 .skin-list {
   display: flex;

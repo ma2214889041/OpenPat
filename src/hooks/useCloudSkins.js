@@ -18,7 +18,7 @@ export function useCloudSkins(user, setOwnedIds) {
       .then(({ data }) => {
         if (data?.owned_skins?.length) {
           setOwnedIds(data.owned_skins);
-          localStorage.setItem('lobster-pet-skins', JSON.stringify(data.owned_skins));
+          localStorage.setItem('openpat-skins', JSON.stringify(data.owned_skins));
         }
       });
   }, [user]); // eslint-disable-line

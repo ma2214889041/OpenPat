@@ -1,17 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import LobsterSVG from '../components/LobsterSVG';
 import StatsPanel from '../components/StatsPanel';
+import LobsterReport from '../components/LobsterReport';
 import ConnectModal from '../components/ConnectModal';
-import ErrorLog from '../components/ErrorLog';
 import ShareButton from '../components/ShareButton';
 import GifButton from '../components/GifButton';
 import LevelProgress from '../components/LevelProgress';
 import SkinSelector from '../components/SkinSelector';
-import BadgePanel from '../components/BadgePanel';
-import CostEstimator from '../components/CostEstimator';
-import SessionHistory from '../components/SessionHistory';
-import KeyboardHints from '../components/KeyboardHints';
 import AchievementToast, { useAchievementToast } from '../components/AchievementToast';
 import DemoModeBanner from '../components/DemoModeBanner';
 import { triggerConfetti } from '../components/Confetti';
@@ -19,17 +14,19 @@ import { useGateway, STATES } from '../hooks/useGateway';
 import { useAuth } from '../hooks/useAuth';
 import { useSkins } from '../hooks/useSkins';
 import { useNotifications } from '../hooks/useNotifications';
-import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useDynamicFavicon } from '../hooks/useDynamicFavicon';
 import { useDemoMode } from '../hooks/useDemoMode';
 import { useCloudSkins } from '../hooks/useCloudSkins';
-import { loadData, saveData, ACHIEVEMENTS, onGatewayConnect, tickUptimeCheck, recordError, checkNoErrorWeek } from '../utils/storage';
-import { estimateCost, costToFatness } from '../utils/cost';
+import {
+  loadData, saveData, ACHIEVEMENTS, RARITY_COLORS,
+  onGatewayConnect, tickUptimeCheck, recordError, checkNoErrorWeek,
+  checkAchievements,
+} from '../utils/storage';
 import { saveSession } from '../utils/sessionHistory';
 import { supabase, hasSupabase } from '../utils/supabase';
 import './Home.css';
 
-const CONN_KEY = 'lobster-pet-connection';
+const CONN_KEY = 'openpat-connection';
 
 function loadConn() {
   try { return JSON.parse(localStorage.getItem(CONN_KEY) || 'null'); }
@@ -37,34 +34,26 @@ function loadConn() {
 }
 
 export default function Home() {
-  const navigate = useNavigate();
   const saved = loadConn();
   const [wsUrl, setWsUrl] = useState(saved?.url || '');
   const [token, setToken] = useState(saved?.token || '');
   const [showModal, setShowModal] = useState(!saved);
-  const [showError, setShowError] = useState(false);
-  const [showModel, setShowModel] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [showKbHints, setShowKbHints] = useState(false);
   const [localData, setLocalData] = useState(loadData);
   const sessionStartRef = useRef(null);
   const prevConnected = useRef(false);
   const prevStatus = useRef(null);
 
   const { user, username } = useAuth();
-  const { activeSkin, activeSkinId, ownedIds, selectSkin, unlockSkin, skinStyle, setOwnedIds } = useSkins();
-  const { notify, requestPermission } = useNotifications();
+  const { activeSkin, activeSkinId, selectSkin, skinStyle, setOwnedIds } = useSkins();
+  const { notify } = useNotifications();
   const { status, connected, currentTool, errorLog, stats } = useGateway(wsUrl, token);
 
-  // Demo mode when not connected
   const { demoStatus, demoTool, demoStats } = useDemoMode(!connected);
   const displayStatus = connected ? status : demoStatus;
   const displayTool = connected ? currentTool : demoTool;
+  const displayStats = connected ? stats : demoStats;
 
-  // Dynamic favicon
   useDynamicFavicon(displayStatus);
-
-  // Sync cloud-owned skins when logged in
   useCloudSkins(user, setOwnedIds);
 
   const { toast, dismiss } = useAchievementToast(localData.achievements);
@@ -92,19 +81,18 @@ export default function Home() {
     setShowModal(false);
   }, []);
 
-  // Track session start/end for history + marathon tracking
+  // Track session start/end
   useEffect(() => {
     if (connected && !prevConnected.current) {
       sessionStartRef.current = Date.now();
-      // Marathon: record connect time
       setLocalData(prev => {
         const updated = onGatewayConnect(prev);
-        saveData(updated);
-        return updated;
+        const withAch = checkAchievements(updated, { activeSkinId });
+        saveData(withAch);
+        return withAch;
       });
     }
     if (!connected && prevConnected.current && sessionStartRef.current) {
-      // Save session when disconnected
       saveSession({
         startTime: sessionStartRef.current,
         tokensInput: stats.tokensInput,
@@ -115,7 +103,6 @@ export default function Home() {
         modelName: stats.modelName,
         status: 'disconnected',
       });
-      // 把本次 session 的 token 累加到今日计数，保证重连后 fatness 计算延续
       setLocalData(prev => {
         const today = new Date().toDateString();
         const base = prev.todayDate === today ? prev : { ...prev, todayTokensInput: 0, todayTokensOutput: 0, todayDate: today };
@@ -127,15 +114,16 @@ export default function Home() {
           totalTokensInput:  base.totalTokensInput  + stats.tokensInput,
           totalTokensOutput: base.totalTokensOutput + stats.tokensOutput,
         };
-        saveData(updated);
-        return updated;
+        const withAch = checkAchievements(updated, { activeSkinId });
+        saveData(withAch);
+        return withAch;
       });
       sessionStartRef.current = null;
     }
     prevConnected.current = connected;
   }, [connected]); // eslint-disable-line
 
-  // Uptime tick (60s) — marathon achievement check
+  // Uptime tick
   useEffect(() => {
     if (!connected) return;
     const id = setInterval(() => {
@@ -148,7 +136,7 @@ export default function Home() {
     return () => clearInterval(id);
   }, [connected]);
 
-  // Count completed tasks + check achievements
+  // Count completed tasks + achievements
   useEffect(() => {
     if (status === prevStatus.current) return;
     const prev_ = prevStatus.current;
@@ -162,7 +150,6 @@ export default function Home() {
         if (!prev.achievements.includes('perfect_task') && sessionErrors === 0) {
           newAch.push('perfect_task');
         }
-        // Check no_error_week on each DONE (may cross week boundary)
         const withWeekCheck = checkNoErrorWeek(prev);
         const updated = {
           ...withWeekCheck,
@@ -170,8 +157,9 @@ export default function Home() {
           _sessionErrors: 0,
           achievements: [...withWeekCheck.achievements, ...newAch.filter(id => !withWeekCheck.achievements.includes(id))],
         };
-        saveData(updated);
-        return updated;
+        const withAch = checkAchievements(updated, { activeSkinId });
+        saveData(withAch);
+        return withAch;
       });
       notify('🦞 任务完成！', '龙虾完成了一个任务 ✔');
     }
@@ -180,7 +168,7 @@ export default function Home() {
         const updated = recordError({ ...prev, _sessionErrors: (prev._sessionErrors || 0) + 1 });
         return updated;
       });
-      notify('🦞 龙虾翻车了', '点击查看错误日志');
+      notify('🦞 龙虾翻车了', '不用担心，龙虾还在战斗');
     }
   }, [status]); // eslint-disable-line
 
@@ -213,6 +201,18 @@ export default function Home() {
     }
   }, [connected]);
 
+  // Track active skin for achievements
+  useEffect(() => {
+    setLocalData(prev => {
+      const withAch = checkAchievements(prev, { activeSkinId });
+      if (withAch.achievements.length !== prev.achievements.length || withAch.usedSkinIds?.length !== prev.usedSkinIds?.length) {
+        saveData(withAch);
+        return withAch;
+      }
+      return prev;
+    });
+  }, [activeSkinId]);
+
   // Sync status to Supabase
   useEffect(() => {
     if (!hasSupabase || !user || !connected) return;
@@ -226,174 +226,101 @@ export default function Home() {
     });
   }, [status, user, connected, currentTool, stats]);
 
-  // 终身累计花费决定胖瘦（$0→瘦 0.6，$50→圆滚滚 1.5）
-  const totalUsd = estimateCost(
-    localData.totalTokensInput + stats.tokensInput,
-    localData.totalTokensOutput + stats.tokensOutput,
-    stats.modelName
-  );
-  const fatness = costToFatness(totalUsd);
-
-  // Interactions
-  const handleLobsterClick = useCallback(() => {
-    if (status === STATES.ERROR) setShowError(v => !v);
-  }, [status]);
-
-  const handleLobsterDblClick = useCallback(() => {
-    const summary = [
-      '🦞 Lobster Pet 状态摘要',
-      `状态: ${status}`,
-      `Tokens: ${stats.tokensInput + stats.tokensOutput}`,
-      `工具调用: ${stats.toolCalls} (成功: ${stats.toolCallsSuccess})`,
-      `运行时长: ${stats.uptime}s`,
-    ].join('\n');
-    navigator.clipboard?.writeText(summary);
-  }, [status, stats]);
-
-  // Keyboard shortcuts
-  useKeyboardShortcuts({
-    's': () => document.querySelector('.share-btn')?.click(),
-    'h': () => setShowHistory(v => !v),
-    'c': handleLobsterDblClick,
-    'm': () => setShowModel(v => !v),
-    'n': () => requestPermission(),
-    '?': () => setShowKbHints(v => !v),
-  });
-
   // Dynamic title
   useEffect(() => {
     const titles = {
-      [STATES.ERROR]: '[Error] Lobster is crying... 🦞',
-      [STATES.TOOL_CALL]: '[Working] Lobster is busy 🦞⚡',
-      [STATES.DONE]: '[Done] Lobster crushed it! 🦞✔',
+      [STATES.ERROR]: '[Error] 龙虾翻车了 🦞',
+      [STATES.TOOL_CALL]: '[Working] 龙虾正在忙 🦞⚡',
+      [STATES.DONE]: '[Done] 龙虾搞定了！🦞✔',
     };
-    document.title = titles[displayStatus] || 'Lobster Pet 🦞';
+    document.title = titles[displayStatus] || 'OpenPat 🦞';
   }, [displayStatus]);
+
+  const handleShareGenerated = useCallback(() => {
+    setLocalData(prev => {
+      const withAch = checkAchievements(prev, { didShare: true });
+      saveData(withAch);
+      return withAch;
+    });
+  }, []);
 
   return (
     <div className="home">
       {showModal && <ConnectModal onConnect={handleConnect} />}
       <AchievementToast toast={toast} onDismiss={dismiss} />
-      <KeyboardHints visible={showKbHints} onClose={() => setShowKbHints(false)} />
       {!connected && !showModal && (
         <DemoModeBanner onConnect={() => setShowModal(true)} />
       )}
 
-      <main className="home-layout">
-        {/* Lobster column */}
-        <section className="home-lobster-col">
-          <div
-            className="home-lobster-wrapper"
-            style={skinStyle}
-            onDoubleClick={handleLobsterDblClick}
-          >
-            <LobsterSVG status={displayStatus} onClick={handleLobsterClick} fatness={fatness} />
-            {showError && (
-              <ErrorLog errors={errorLog} onClose={() => setShowError(false)} />
-            )}
-          </div>
+      <main className="home-main">
+        {/* Big lobster */}
+        <div className="home-lobster-wrap" style={skinStyle}>
+          <LobsterSVG status={displayStatus} fatness={1} onClick={() => {}} />
+        </div>
 
-          <StatusCaption status={displayStatus} currentTool={displayTool} />
+        {/* Narration text */}
+        <LobsterReport status={displayStatus} currentTool={displayTool} />
 
-          {connected && (
-            <div className="home-share-stack">
-              <ShareButton stats={stats} status={status} skinColors={activeSkin.colors} />
-              <GifButton stats={stats} skinColors={activeSkin.colors} />
-            </div>
-          )}
+        {/* Compact stats bar */}
+        <StatsPanel
+          status={displayStatus}
+          stats={displayStats}
+          totalTasks={localData.totalTasks}
+        />
 
-          <div className="home-lobster-footer">
-            <button className="btn-ghost" onClick={() => setShowModal(true)}>
-              {connected ? '🔄 切换连接' : '🔌 连接 Gateway'}
-            </button>
-            <button className="btn-ghost" onClick={() => setShowKbHints(true)} title="键盘快捷键">
-              ⌨️
-            </button>
-          </div>
-        </section>
+        {/* Share buttons */}
+        <div className="home-actions">
+          <ShareButton
+            stats={connected ? stats : demoStats}
+            status={displayStatus}
+            skinColors={activeSkin.colors}
+            onGenerated={handleShareGenerated}
+          />
+          <GifButton stats={connected ? stats : demoStats} skinColors={activeSkin.colors} />
+        </div>
 
-        {/* Stats column */}
-        {connected && (
-          <section className="home-stats-col">
-            <StatsPanel
-              status={status}
-              stats={stats}
-              currentTool={currentTool}
-              totalTasks={localData.totalTasks}
-              showModel={showModel}
-              onToggleModel={() => setShowModel(v => !v)}
-            />
-            <LevelProgress totalTasks={localData.totalTasks} />
-            <CostEstimator
-              tokensInput={stats.tokensInput}
-              tokensOutput={stats.tokensOutput}
-              detectedModel={stats.modelName}
-            />
-            <SkinSelector
-              activeSkinId={activeSkinId}
-              ownedIds={ownedIds}
-              onSelect={selectSkin}
-              onShop={() => navigate('/shop')}
-            />
-            <AchievementsPanel achievements={localData.achievements} />
-            {showHistory
-              ? <SessionHistory onClose={() => setShowHistory(false)} />
-              : <button className="btn-ghost btn-full" onClick={() => setShowHistory(true)}>
-                  📋 查看历史会话
-                </button>
-            }
-            <BadgePanel
-              username={username}
-              status={status}
-              totalTasks={localData.totalTasks}
-            />
-          </section>
-        )}
+        {/* Skin selector */}
+        <SkinSelector
+          activeSkinId={activeSkinId}
+          onSelect={selectSkin}
+        />
 
-        {/* Demo stats column when offline */}
-        {!connected && !showModal && (
-          <section className="home-stats-col">
-            <StatsPanel
-              status={demoStatus}
-              stats={demoStats}
-              currentTool={demoTool}
-              totalTasks={0}
-              showModel={false}
-              onToggleModel={() => {}}
-            />
-          </section>
-        )}
+        {/* Level progress */}
+        <LevelProgress totalTasks={localData.totalTasks} />
+
+        {/* Achievements wall */}
+        <AchievementsWall achievements={localData.achievements} />
+
+        {/* Connect button */}
+        <button className="btn-connect" onClick={() => setShowModal(true)}>
+          {connected ? '🔄 切换连接' : '🔌 连接 Gateway'}
+        </button>
       </main>
     </div>
   );
 }
 
-function StatusCaption({ status, currentTool }) {
-  const captions = {
-    [STATES.OFFLINE]: '龙虾正在休息...',
-    [STATES.IDLE]: '龙虾在悠闲地等待任务',
-    [STATES.THINKING]: '龙虾在认真思考中...',
-    [STATES.TOOL_CALL]: currentTool ? `龙虾正在调用 ${currentTool.name}` : '龙虾正在使用工具',
-    [STATES.DONE]: '龙虾完成任务了！🎉',
-    [STATES.ERROR]: '龙虾翻车了，点击查看错误',
-    [STATES.TOKEN_EXHAUSTED]: 'Token 吃完了，龙虾饿晕了 💸',
-  };
-  return <p className="status-caption">{captions[status]}</p>;
-}
-
-function AchievementsPanel({ achievements }) {
+function AchievementsWall({ achievements }) {
   if (!achievements.length) return null;
   const found = ACHIEVEMENTS.filter(a => achievements.includes(a.id));
   return (
-    <div className="achievements-panel">
-      <h3 className="ach-title">成就</h3>
+    <div className="achievements-wall">
+      <h3 className="ach-title">成就 · {found.length}/{ACHIEVEMENTS.length}</h3>
       <div className="ach-grid">
-        {found.map(a => (
-          <div key={a.id} className="ach-item" title={a.desc}>
-            <span>{a.emoji}</span>
-            <span>{a.name}</span>
-          </div>
-        ))}
+        {found.map(a => {
+          const colors = RARITY_COLORS[a.rarity] || RARITY_COLORS.common;
+          return (
+            <div
+              key={a.id}
+              className="ach-item"
+              title={a.desc}
+              style={{ background: colors.bg, borderColor: colors.border, color: colors.text }}
+            >
+              <span className="ach-emoji">{a.emoji}</span>
+              <span className="ach-name">{a.name}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

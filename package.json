@@ -1,10 +1,10 @@
 {
-  "name": "lobster-pet",
+  "name": "openpat",
   "version": "1.0.0",
   "description": "把你的 OpenClaw AI Agent 变成一只会动的虚拟龙虾 🦞",
   "type": "module",
   "bin": {
-    "lobster-pet": "./cli/index.js"
+    "openpat": "./cli/index.js"
   },
   "scripts": {
     "dev": "vite",

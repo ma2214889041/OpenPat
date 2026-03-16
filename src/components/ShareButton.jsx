@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { generateShareCard } from '../utils/shareCard';
 import './ShareButton.css';
 
-export default function ShareButton({ stats, status, skinColors }) {
+export default function ShareButton({ stats, status, skinColors, onGenerated }) {
   const [loading, setLoading] = useState(false);
-  const [format, setFormat] = useState('1x1');
+  const [format, setFormat] = useState('4x5');
   const [preview, setPreview] = useState(null);
 
   const handleGenerate = async () => {
@@ -12,6 +12,7 @@ export default function ShareButton({ stats, status, skinColors }) {
     try {
       const url = await generateShareCard(stats, status, format, skinColors);
       setPreview(url);
+      onGenerated?.();
     } catch (e) {
       console.error('Card generation failed', e);
     } finally {
@@ -22,7 +23,7 @@ export default function ShareButton({ stats, status, skinColors }) {
   const handleDownload = () => {
     const a = document.createElement('a');
     a.href = preview;
-    a.download = `lobster-pet-${Date.now()}.png`;
+    a.download = `openpat-${Date.now()}.png`;
     a.click();
   };
 
@@ -40,20 +41,20 @@ export default function ShareButton({ stats, status, skinColors }) {
         <div className="share-controls">
           <div className="format-toggle">
             <button
+              className={format === '4x5' ? 'active' : ''}
+              onClick={() => setFormat('4x5')}
+            >4:5</button>
+            <button
               className={format === '1x1' ? 'active' : ''}
               onClick={() => setFormat('1x1')}
             >1:1</button>
-            <button
-              className={format === '9x16' ? 'active' : ''}
-              onClick={() => setFormat('9x16')}
-            >9:16</button>
           </div>
           <button
             className="share-btn"
             onClick={handleGenerate}
             disabled={loading}
           >
-            {loading ? '生成中...' : '🎉 生成分享卡片'}
+            {loading ? '生成中...' : '📸 生成炫耀卡片'}
           </button>
         </div>
       )}

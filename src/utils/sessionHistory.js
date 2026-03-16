@@ -1,4 +1,4 @@
-const HISTORY_KEY = 'lobster-pet-history';
+const HISTORY_KEY = 'openpat-history';
 const MAX_SESSIONS = 20;
 
 export function loadHistory() {
