@@ -12,17 +12,27 @@
   filter: drop-shadow(0 12px 32px var(--lobster-shadow, rgba(232,64,28,0.55)));
 }
 .lobster-svg {
-  width: 200px;
-  height: 220px;
+  width: 240px;
+  height: 260px;
   overflow: visible;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.15));
+}
+
+.lobster-ground-shadow {
+  transform-origin: center;
+  animation: shadowPulse 4s ease-in-out infinite;
+}
+
+@keyframes shadowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.1); opacity: 0.25; }
 }
 
 /* ─── IDLE: gentle antenna sway ─────────────────────────────── */
-.lobster--idle .antenna-left  { transform-origin: 82px 60px; animation: swayLeft 3s ease-in-out infinite; }
-.lobster--idle .antenna-right { transform-origin: 118px 60px; animation: swayRight 3s ease-in-out infinite; }
-.lobster--idle .feeler-left   { transform-origin: 83px 58px; animation: swayLeft 2.5s ease-in-out infinite 0.3s; }
-.lobster--idle .feeler-right  { transform-origin: 117px 58px; animation: swayRight 2.5s ease-in-out infinite 0.3s; }
+.lobster--idle .antenna-left  { transform-origin: 82px 60px; animation: swayLeft 4s ease-in-out infinite; }
+.lobster--idle .antenna-right { transform-origin: 118px 60px; animation: swayRight 4s ease-in-out infinite; }
 .lobster--idle .body          { animation: breathe 4s ease-in-out infinite; }
+.lobster--idle .body-gloss    { animation: breathe 4s ease-in-out infinite; }
 
 @keyframes swayLeft  { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(-12deg)} }
 @keyframes swayRight { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(12deg)} }

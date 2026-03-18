@@ -1,31 +1,98 @@
+/* ══ Design tokens ══ */
+:root {
+  --dk-bg: #0a0a0a;
+  --dk-surface: #111111;
+  --dk-surface-2: #1a1a1a;
+  --dk-border: rgba(255,255,255,0.07);
+  --dk-border-2: rgba(255,255,255,0.12);
+  --dk-text: #ffffff;
+  --dk-text-2: #a1a1aa;
+  --dk-text-3: #52525b;
+  --ac-green:  #83FFC1;
+  --ac-pink:   #FF94DB;
+  --ac-purple: #8B8BFF;
+  --ac-yellow: #FFE780;
+}
+
+/* ── Page shell ── */
 .home {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80px 16px 48px;
+  padding: 80px 16px 80px;
+  background: var(--dk-bg);
   box-sizing: border-box;
+  position: relative;
+}
+
+/* Ambient glow in background */
+.home::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 40%, rgba(139,139,255,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(255,148,219,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 90%, rgba(131,255,193,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .home-main {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
 }
 
-/* Big lobster — the hero */
+/* ── Companion card ── */
+.home-companion-card {
+  width: 100%;
+  background: var(--dk-surface);
+  border: 1px solid var(--dk-border-2);
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 20px 60px rgba(0,0,0,0.4);
+}
+
 .home-lobster-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 220px;
+  padding: 24px 16px 16px;
+  box-sizing: border-box;
   transition: filter 0.5s ease;
-  margin-bottom: 4px;
+  position: relative;
 }
 
-/* Actions row */
+/* Radial glow behind pet */
+.home-lobster-wrap::before {
+  content: '';
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(131,255,193,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.home-companion-footer {
+  padding: 12px 20px 18px;
+  border-top: 1px solid var(--dk-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Actions ── */
 .home-actions {
   display: flex;
   gap: 10px;
@@ -33,55 +100,85 @@
 }
 .home-actions > * { flex: 1; }
 
-/* Connect button */
+/* ── Connect button ── */
 .btn-connect {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  color: #64748b;
+  background: transparent;
+  border: 1px solid var(--dk-border-2);
+  border-radius: 999px;
+  color: var(--dk-text-3);
   padding: 10px 20px;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
-  font-family: inherit;
+  font-family: 'Nunito', system-ui, sans-serif;
   width: 100%;
+  letter-spacing: 0.01em;
 }
-.btn-connect:hover { background: rgba(255,255,255,0.08); color: #94a3b8; }
+.btn-connect:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--dk-text-2);
+  background: rgba(255,255,255,0.03);
+}
 
-/* Achievements wall */
+/* ── Achievements wall ── */
 .achievements-wall {
   width: 100%;
-  padding: 14px 16px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 14px;
+  padding: 16px;
+  background: var(--dk-surface);
+  border: 1px solid var(--dk-border);
+  border-radius: 20px;
 }
 .ach-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--dk-text-3);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 10px;
+  letter-spacing: 0.12em;
+  margin: 0 0 12px;
+  font-family: 'Syne', system-ui, sans-serif;
 }
-.ach-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+.ach-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .ach-item {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
-  border-radius: 14px;
+  border-radius: 20px;
   border: 1px solid transparent;
   font-size: 11px;
   font-weight: 600;
+  font-family: 'Nunito', system-ui, sans-serif;
 }
 .ach-emoji { font-size: 13px; }
 .ach-name { font-size: 11px; }
+.ach-icon-img { width: 16px; height: 16px; object-fit: contain; border-radius: 2px; }
 
-@media (max-width: 480px) {
-  .home-main { max-width: 100%; }
+@media (max-width: 480px) { .home-main { max-width: 100%; } }
+
+/* ── Affinity bar ── */
+.affinity-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
+.affinity-label { font-size: 11px; color: var(--dk-text-3); white-space: nowrap; }
+.affinity-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.affinity-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ac-purple), var(--ac-pink));
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.affinity-fill--happy {
+  background: linear-gradient(90deg, var(--ac-green), var(--ac-yellow));
+  box-shadow: 0 0 8px rgba(131,255,193,0.4);
+}
+.affinity-value { font-size: 11px; color: var(--dk-text-3); width: 24px; text-align: right; }

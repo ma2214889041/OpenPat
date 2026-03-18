@@ -65,3 +65,28 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure handle_new_user();
+
+-- Skin metadata table
+create table if not exists skins (
+  id text primary key,
+  name text not null,
+  description text,
+  price numeric default 0,
+  rarity text default 'common',
+  colors jsonb,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+alter table skins enable row level security;
+
+create policy "Skins are viewable by everyone"
+  on skins for select using (true);
+
+create policy "Admins can manage skins"
+  on skins for all using (
+    exists (
+      select 1 from profiles
+      where profiles.id = auth.uid() and profiles.username = 'admin' -- Basic admin check for MVP
+    )
+  );

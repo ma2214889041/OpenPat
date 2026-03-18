@@ -1,0 +1,61 @@
+.animated-pet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: filter 0.3s ease;
+}
+
+.animated-pet:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.animated-pet-frame {
+  width: 240px;
+  height: 240px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.animated-pet-placeholder {
+  font-size: 80px;
+  opacity: 0.3;
+  line-height: 1;
+}
+
+/* State-specific glow effects */
+.animated-pet--done .animated-pet-frame {
+  filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.5));
+}
+
+.animated-pet--error .animated-pet-frame {
+  filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.4));
+}
+
+.animated-pet--thinking .animated-pet-frame {
+  filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.3));
+}
+
+.animated-pet--tool_call .animated-pet-frame {
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.5));
+}
+
+.animated-pet--happy .animated-pet-frame {
+  filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.4));
+}
+
+/* React / bounce animation */
+@keyframes petBounce {
+  0%   { transform: scale(1) translateY(0); }
+  50%  { transform: scale(1.12) translateY(-8px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+.animated-pet--react .animated-pet-frame {
+  animation: petBounce 0.4s ease-in-out;
+}

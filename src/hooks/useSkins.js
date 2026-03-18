@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase, hasSupabase } from '../utils/supabase';
 
 export const SKINS = [
   {
-    id: 'classic',
+    id: 'default',
     name: '经典红虾',
     description: '最原汁原味的赛博龙虾',
     emoji: '🦞',
+    rarity: 'common',
+    display_type: 'svg',
     colors: {
       primary: '#e8401c',
       secondary: '#c83010',
+      dark: '#b02008',
       shadow: 'rgba(232,64,28,0.35)',
     },
   },
@@ -17,6 +21,8 @@ export const SKINS = [
     name: '赛博龙虾',
     description: '赛博朋克风格，霓虹蓝紫',
     emoji: '🤖',
+    rarity: 'rare',
+    display_type: 'svg',
     colors: {
       primary: '#7c3aed',
       secondary: '#5b21b6',
@@ -28,6 +34,8 @@ export const SKINS = [
     name: '像素龙虾',
     description: '8-bit 复古风格',
     emoji: '👾',
+    rarity: 'uncommon',
+    display_type: 'svg',
     colors: {
       primary: '#f97316',
       secondary: '#ea580c',
@@ -40,6 +48,8 @@ export const SKINS = [
     name: '黄金龙虾',
     description: '稀有金色传说皮肤',
     emoji: '👑',
+    rarity: 'legendary',
+    display_type: 'svg',
     colors: {
       primary: '#f59e0b',
       secondary: '#d97706',
@@ -51,6 +61,8 @@ export const SKINS = [
     name: '太空龙虾',
     description: '星际探索者，深空蓝',
     emoji: '🚀',
+    rarity: 'rare',
+    display_type: 'svg',
     colors: {
       primary: '#0ea5e9',
       secondary: '#0284c7',
@@ -62,6 +74,8 @@ export const SKINS = [
     name: '国潮龙虾',
     description: '中国风，朱砂红+金',
     emoji: '🐉',
+    rarity: 'epic',
+    display_type: 'svg',
     colors: {
       primary: '#dc2626',
       secondary: '#991b1b',
@@ -70,36 +84,67 @@ export const SKINS = [
   },
 ];
 
-// All skins are free — everyone owns all skins
-const ALL_IDS = SKINS.map(s => s.id);
-
 export function useSkins() {
   const [activeSkinId, setActiveSkinId] = useState(() => {
-    return localStorage.getItem('openpat-active-skin') || 'classic';
+    return localStorage.getItem('openpat-active-skin') || 'default';
   });
+  const [allSkins, setAllSkins] = useState(SKINS);
 
-  const activeSkin = SKINS.find(s => s.id === activeSkinId) || SKINS[0];
+  useEffect(() => {
+    if (!hasSupabase) return;
+
+    async function fetchCloudSkins() {
+      const { data, error } = await supabase
+        .from('skins')
+        .select('*')
+        .eq('is_active', true);
+
+      if (!error && data) {
+        // Merge cloud skins with default ones, clouds override defaults if IDs match
+        const merged = [...SKINS];
+        data.forEach(cloudRecord => {
+          const idx = merged.findIndex(s => s.id === cloudRecord.id);
+          const formatted = {
+            ...cloudRecord,
+            emoji: cloudRecord.emoji || '🦞',
+            // Ensure colors exists even for image skins for UI styling
+            colors: cloudRecord.colors || { primary: '#666', secondary: '#444' }
+          };
+          if (idx >= 0) {
+            merged[idx] = formatted;
+          } else {
+            merged.push(formatted);
+          }
+        });
+        setAllSkins(merged);
+      }
+    }
+
+    fetchCloudSkins();
+  }, []);
+
+  const activeSkin = allSkins.find(s => s.id === activeSkinId) || allSkins[0];
 
   const selectSkin = (id) => {
     setActiveSkinId(id);
     localStorage.setItem('openpat-active-skin', id);
   };
 
-  // CSS custom properties to inject on the lobster wrapper
   const skinStyle = {
-    '--lp': activeSkin.colors.primary,
-    '--ls': activeSkin.colors.secondary,
-    '--ls-dark': activeSkin.colors.secondary,
-    '--lobster-shadow': activeSkin.colors.shadow,
+    '--lp': activeSkin?.colors?.primary,
+    '--ls': activeSkin?.colors?.secondary,
+    '--ls-dark': activeSkin?.colors?.dark || activeSkin?.colors?.secondary,
+    '--lobster-shadow': activeSkin?.colors?.shadow,
   };
 
   return {
     activeSkin,
     activeSkinId,
-    ownedIds: ALL_IDS,
-    setOwnedIds: () => {},
+    allSkins,
+    ownedIds: allSkins.map(s => s.id),
+    setOwnedIds: () => { },
     selectSkin,
-    unlockSkin: () => {},
+    unlockSkin: () => { },
     skinStyle,
   };
 }

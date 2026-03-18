@@ -34,11 +34,11 @@ const ACH_EMOJI = {
 };
 
 const TITLES = [
-  { minTasks: 200000, title: '龙虾神' },
-  { minTasks: 50000, title: '霸王龙虾' },
-  { minTasks: 10000, title: '深夜代码龙虾' },
-  { minTasks: 1000, title: '勤劳龙虾' },
-  { minTasks: 0, title: '虾苗新手' },
+  { minTasks: 200000, title: '传奇大师' },
+  { minTasks: 50000, title: '顶尖高手' },
+  { minTasks: 10000, title: '夜间程序员' },
+  { minTasks: 1000, title: '勤奋者' },
+  { minTasks: 0, title: '新手上路' },
 ];
 
 function getTitle(totalTasks) {
@@ -75,8 +75,8 @@ export default function Leaderboard() {
   return (
     <div className="leaderboard-page">
       <div className="lb-header">
-        <h1>🌐 龙虾广场</h1>
-        <p>全球最活跃的赛博龙虾们</p>
+        <h1>排行榜</h1>
+        <p>看看谁在认真工作</p>
         {!hasSupabase && (
           <div className="lb-demo-hint">
             🎭 演示数据 — 配置 Supabase 后显示真实排名
@@ -107,7 +107,7 @@ export default function Leaderboard() {
             : row.total_tool_calls;
           const title = getTitle(row.total_tasks);
           return (
-            <Link key={row.username} to={`/u/${row.username}`} className={`lb-row ${i < 3 ? 'top' : ''}`}>
+            <Link key={row.username} to={`/u/${row.username}`} className={`lb-row ${i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : ''}`}>
               <div className="lb-rank">{rankEmoji(i)}</div>
               <div className="lb-avatar">
                 {row.avatar_url

@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { generateShareCard } from '../utils/shareCard';
+import { useState, useRef } from 'react';
+import { toPng } from 'html-to-image';
+import ShareCard from './ShareCard';
 import './ShareButton.css';
 
-export default function ShareButton({ stats, status, skinColors, onGenerated }) {
+export default function ShareButton({ stats, status, skinId, petFrameUrl, onGenerated }) {
   const [loading, setLoading] = useState(false);
   const [format, setFormat] = useState('4x5');
   const [preview, setPreview] = useState(null);
@@ -10,8 +11,16 @@ export default function ShareButton({ stats, status, skinColors, onGenerated }) 
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const url = await generateShareCard(stats, status, format, skinColors);
-      setPreview(url);
+      const node = document.getElementById('share-card-content');
+      if (!node) throw new Error('Card node not found');
+
+      const dataUrl = await toPng(node, {
+        width: 400,
+        height: 600,
+        pixelRatio: 2,
+      });
+
+      setPreview(dataUrl);
       onGenerated?.();
     } catch (e) {
       console.error('Card generation failed', e);
@@ -58,6 +67,18 @@ export default function ShareButton({ stats, status, skinColors, onGenerated }) 
           </button>
         </div>
       )}
+
+      {/* Hidden high-fidelity card for capture */}
+      <div style={{ position: 'fixed', left: '-9999px', top: '-9999px' }}>
+        <ShareCard
+          stats={stats}
+          status={status}
+          skin={skinId || 'default'}
+          rank={stats.totalTasks >= 50 ? 'gold' : stats.totalTasks >= 10 ? 'cyber' : 'bronze'}
+          username="User"
+          petFrameUrl={petFrameUrl}
+        />
+      </div>
     </div>
   );
 }

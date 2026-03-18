@@ -1,53 +1,179 @@
 .skin-selector {
-  padding: 16px 20px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.skin-selector-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.skin-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.skin-free-hint {
-  font-size: 11px;
-  color: #22c55e;
-  font-weight: 600;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  margin-top: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.skin-list {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.skin-selector-header {
+  margin-bottom: 20px;
 }
+
+.skin-selector-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sparkle {
+  font-size: 1rem;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+
+.skin-subtitle {
+  font-size: 0.85rem;
+  color: #71717a;
+  margin: 4px 0 0;
+}
+
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
 .skin-item {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  color: white;
+}
+
+.skin-item-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skin-emoji {
+  font-size: 1.75rem;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.skin-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 8px 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  min-width: 60px;
+  gap: 2px;
 }
-.skin-item:hover:not(.locked) { background: rgba(255,255,255,0.07); border-color: rgba(232,64,28,0.3); }
-.skin-item.active { border-color: #e8401c; background: rgba(232,64,28,0.1); }
-.skin-item.locked { opacity: 0.45; cursor: pointer; }
-.skin-item.locked:hover { opacity: 0.6; }
-.skin-emoji { font-size: 22px; }
-.skin-name  { font-size: 10px; color: #64748b; white-space: nowrap; }
-.skin-item.active .skin-name { color: #f87171; }
+
+.skin-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.skin-rarity-badge {
+  font-size: 0.7rem;
+  color: #a1a1aa;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.skin-item-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(circle at center, var(--glow-color, rgba(255, 255, 255, 0.1)) 0%, transparent 70%);
+}
+
+.skin-item:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.skin-item:hover .skin-emoji {
+  transform: scale(1.1);
+}
+
+.skin-item:hover .skin-item-glow {
+  opacity: 0.4;
+}
+
+.skin-item.active {
+  border-color: #83FFC1;
+  background: rgba(131, 255, 193, 0.06);
+  box-shadow: 0 0 20px rgba(131, 255, 193, 0.12);
+}
+
+.skin-item.active::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #83FFC1;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  z-index: 3;
+}
+
+/* Rarity Colors */
+.skin-rarity-common {
+  --glow-color: rgba(161, 161, 170, 0.2);
+}
+
+.skin-rarity-uncommon {
+  --glow-color: rgba(34, 197, 94, 0.2);
+}
+
+.skin-rarity-rare {
+  --glow-color: rgba(59, 130, 246, 0.2);
+}
+
+.skin-rarity-epic {
+  --glow-color: rgba(168, 85, 247, 0.2);
+}
+
+.skin-rarity-legendary {
+  --glow-color: rgba(245, 158, 11, 0.2);
+}
+
+@media (max-width: 600px) {
+  .skin-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.skin-empty {
+  padding: 24px;
+  text-align: center;
+  color: #475569;
+  font-size: 0.9rem;
+}
+.skin-empty p { margin: 0 0 8px; }
+.skin-empty-link {
+  color: #60a5fa;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.skin-empty-link:hover { text-decoration: underline; }

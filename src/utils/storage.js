@@ -24,6 +24,8 @@ const defaultData = {
   usedToolNames: [],
   // daily activity
   activeDays: [],
+  // accessory
+  selectedAccessory: 'none',
 };
 
 function isoWeek(date = new Date()) {
@@ -203,6 +205,22 @@ export const ACHIEVEMENTS = [
   { id: 'popular',       emoji: '🌟', name: '万人迷',       desc: '公开状态页被 100 人访问',     rarity: 'legendary' },
   { id: 'skin_collector',emoji: '🎭', name: '全皮肤收集者', desc: '拥有所有皮肤',               rarity: 'legendary' },
 ];
+
+export const ACCESSORIES = [
+  { id: 'none',        emoji: '🚫', name: '素颜',     desc: '不戴任何配饰',             unlock: null,            rarity: 'common'    },
+  { id: 'party_hat',   emoji: '🎉', name: '派对帽',   desc: '第一次连接解锁',           unlock: 'first_connect', rarity: 'common'    },
+  { id: 'sunglasses',  emoji: '😎', name: '墨镜',     desc: '完成第一次工具调用',        unlock: 'first_tool',    rarity: 'common'    },
+  { id: 'graduation',  emoji: '🎓', name: '学士帽',   desc: '完成 10 个任务后解锁',      unlock: 'tasks_10',      rarity: 'rare'      },
+  { id: 'top_hat',     emoji: '🎩', name: '礼帽',     desc: '深夜奋战的荣耀',           unlock: 'night_owl',     rarity: 'rare'      },
+  { id: 'chef_hat',    emoji: '👨‍🍳', name: '厨师帽',  desc: '连续 24 小时不间断',       unlock: 'marathon',      rarity: 'epic'      },
+  { id: 'halo',        emoji: '✨', name: '光环',     desc: '整周零错误的神迹',          unlock: 'no_error_week', rarity: 'epic'      },
+  { id: 'crown',       emoji: '👑', name: '王冠',     desc: '完成 100 个任务的象征',     unlock: 'tasks_100',     rarity: 'legendary' },
+  { id: 'cyber_visor', emoji: '🥽', name: '赛博目镜', desc: '千任务精英专属',            unlock: 'tasks_1000',    rarity: 'legendary' },
+];
+
+export function getUnlockedAccessories(achievements = []) {
+  return ACCESSORIES.filter(a => a.unlock === null || achievements.includes(a.unlock)).map(a => a.id);
+}
 
 export const RARITY_COLORS = {
   common:    { bg: 'rgba(100,116,139,0.15)',  border: 'rgba(100,116,139,0.3)',  text: '#94a3b8' },

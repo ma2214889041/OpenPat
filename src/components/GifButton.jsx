@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { generateGifCard } from '../utils/gifCard';
 import './GifButton.css';
 
-export default function GifButton({ stats, skinColors }) {
+export default function GifButton({ stats, skinColors, petFrameUrls }) {
   const [state, setState] = useState('idle'); // idle | loading | done | error
   const [gifUrl, setGifUrl] = useState(null);
 
   const generate = async () => {
     setState('loading');
     try {
-      const blob = await generateGifCard(stats, skinColors);
+      const blob = await generateGifCard(stats, skinColors, petFrameUrls);
       const url = URL.createObjectURL(blob);
       setGifUrl(url);
       setState('done');

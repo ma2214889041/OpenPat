@@ -104,25 +104,91 @@ function buildFrameSVG(stats, skinColors, t) {
 }
 
 /**
+ * Load an image URL onto an OffscreenCanvas and return pixel data.
+ */
+async function imageUrlToPixels(url, w, h) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  await new Promise((res, rej) => {
+    img.onload = res;
+    img.onerror = rej;
+    img.src = url;
+  });
+  const canvas = new OffscreenCanvas(w, h);
+  const ctx = canvas.getContext('2d');
+  // Dark background
+  ctx.fillStyle = '#080d1a';
+  ctx.fillRect(0, 0, w, h);
+  // Center the pet frame
+  const petSize = Math.round(w * 0.6);
+  const offset = (w - petSize) / 2;
+  ctx.drawImage(img, offset, Math.round(h * 0.05), petSize, petSize);
+  // Stats bar
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, h - 90, w, 90);
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillStyle = '#f1f5f9';
+  const totalTokens = (stats.tokensInput + stats.tokensOutput) || 0;
+  function fmt(n) {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+    return String(n);
+  }
+  ctx.fillText(fmt(totalTokens), 20, h - 55);
+  ctx.fillText(stats.toolCalls, 160, h - 55);
+  ctx.fillStyle = '#22c55e';
+  ctx.fillText(
+    stats.toolCalls > 0 ? ((stats.toolCallsSuccess / stats.toolCalls) * 100).toFixed(0) + '%' : '—',
+    280, h - 55,
+  );
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('Tokens', 20, h - 72);
+  ctx.fillText('工具调用', 160, h - 72);
+  ctx.fillText('成功率', 280, h - 72);
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#334155';
+  ctx.fillText('🦞 openpat.dev', w / 2 - 40, h - 10);
+  return ctx.getImageData(0, 0, w, h).data;
+}
+
+/**
  * Generate an animated GIF share card.
- * @param {object} stats - session stats
- * @param {object} skinColors - { primary, secondary }
- * @param {number} [frames=16] - number of frames
- * @param {number} [delay=80] - ms per frame
+ *
+ * @param {object}   stats         - session stats
+ * @param {object}   skinColors    - { primary, secondary } (SVG fallback)
+ * @param {string[]|null} petFrameUrls - PNG data URLs from animated skin (takes priority)
+ * @param {number}   [delay=120]   - ms per frame
  * @returns {Promise<Blob>} GIF blob
  */
-export async function generateGifCard(stats, skinColors = { primary: '#e8401c', secondary: '#c83010' }, frames = 16, delay = 80) {
+export async function generateGifCard(
+  stats,
+  skinColors = { primary: '#e8401c', secondary: '#c83010' },
+  petFrameUrls = null,
+  delay = 120,
+) {
   const W = 400, H = 400;
   const gif = GIFEncoder();
 
-  for (let i = 0; i < frames; i++) {
-    const t = i / frames;
-    const svgStr = buildFrameSVG(stats, skinColors, t);
-    const pixels = await svgToPixels(svgStr, W, H);
-    // Quantize to 256 colors
-    const palette = quantize(pixels, 256, { format: 'rgb565', oneBitAlpha: false });
-    const index = applyPalette(pixels, palette);
-    gif.writeFrame(index, W, H, { palette, delay });
+  if (petFrameUrls?.length) {
+    // Use AI-generated PNG frames
+    for (const url of petFrameUrls) {
+      const pixels = await imageUrlToPixels(url, W, H);
+      const palette = quantize(pixels, 256, { format: 'rgb565', oneBitAlpha: false });
+      const index = applyPalette(pixels, palette);
+      gif.writeFrame(index, W, H, { palette, delay });
+    }
+  } else {
+    // Fallback: generate SVG animation
+    const frames = 16;
+    for (let i = 0; i < frames; i++) {
+      const t = i / frames;
+      const svgStr = buildFrameSVG(stats, skinColors, t);
+      const pixels = await svgToPixels(svgStr, W, H);
+      const palette = quantize(pixels, 256, { format: 'rgb565', oneBitAlpha: false });
+      const index = applyPalette(pixels, palette);
+      gif.writeFrame(index, W, H, { palette, delay: 80 });
+    }
   }
 
   gif.finish();

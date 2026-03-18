@@ -31,18 +31,18 @@ const MOCK_STATUS = {
 };
 
 const TITLES = [
-  { minTasks: 200000, title: '龙虾神' },
-  { minTasks: 50000,  title: '霸王龙虾座' },
-  { minTasks: 10000,  title: '深夜代码龙虾' },
-  { minTasks: 1000,   title: '勤劳龙虾' },
+  { minTasks: 200000, title: '传奇大师' },
+  { minTasks: 50000,  title: '顶尖高手' },
+  { minTasks: 10000,  title: '夜间程序员' },
+  { minTasks: 1000,   title: '勤奋者' },
   { minTasks: 100,    title: '初出茅庐' },
-  { minTasks: 0,      title: '虾苗新手' },
+  { minTasks: 0,      title: '新手上路' },
 ];
 
 function getTitle(totalTasks, achievements) {
-  if (achievements.includes('night_owl') && totalTasks >= 1000) return '深夜代码龙虾';
+  if (achievements.includes('night_owl') && totalTasks >= 1000) return '夜间程序员';
   if (achievements.includes('no_error_week')) return '零翻车之王';
-  if (achievements.includes('saver')) return 'Token节俭大师';
+  if (achievements.includes('saver')) return 'Token 节省王';
   return TITLES.find(t => totalTasks >= t.minTasks)?.title || '虾苗新手';
 }
 
@@ -57,13 +57,13 @@ const STATUS_COLORS = {
 };
 
 const STATUS_TEXT = {
-  [STATES.OFFLINE]: '龙虾盖着被子睡觉 zzZ',
-  [STATES.IDLE]: '龙虾悠闲待命中',
-  [STATES.THINKING]: '龙虾正在思考...',
-  [STATES.TOOL_CALL]: '龙虾正在调用工具 ⚡',
-  [STATES.DONE]: '龙虾完成任务了！🎉',
-  [STATES.ERROR]: '龙虾翻车了 😵',
-  [STATES.TOKEN_EXHAUSTED]: '龙虾饿晕了 💸',
+  [STATES.OFFLINE]: '离线中',
+  [STATES.IDLE]: '待命中',
+  [STATES.THINKING]: '思考中...',
+  [STATES.TOOL_CALL]: '调用工具中 ⚡',
+  [STATES.DONE]: '任务完成 🎉',
+  [STATES.ERROR]: '发生错误',
+  [STATES.TOKEN_EXHAUSTED]: 'Token 耗尽',
 };
 
 export default function PublicProfile() {
@@ -159,7 +159,7 @@ export default function PublicProfile() {
         <span>🦞</span>
         <h2>找不到这只龙虾</h2>
         <p>@{username} 还没有公开状态页</p>
-        <a href="/">养一只你自己的 →</a>
+        <a href="/">开始你的旅程 →</a>
       </div>
     );
   }

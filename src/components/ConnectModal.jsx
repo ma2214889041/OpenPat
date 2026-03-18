@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './ConnectModal.css';
 
-export default function ConnectModal({ onConnect }) {
+export default function ConnectModal({ onConnect, onSkip }) {
   const [url, setUrl] = useState('ws://localhost:18789');
   const [token, setToken] = useState('');
 
@@ -52,6 +52,12 @@ export default function ConnectModal({ onConnect }) {
           <button type="submit" className="connect-btn">
             🦞 开始养虾
           </button>
+
+          {onSkip && (
+            <button type="button" className="skip-btn" onClick={onSkip}>
+              先看看演示
+            </button>
+          )}
         </form>
 
         <div className="modal-footer">

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import LobsterSVG from '../components/LobsterSVG';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import PetDisplay from '../components/PetDisplay';
 import StatsPanel from '../components/StatsPanel';
 import LobsterReport from '../components/LobsterReport';
 import ConnectModal from '../components/ConnectModal';
@@ -7,12 +7,14 @@ import ShareButton from '../components/ShareButton';
 import GifButton from '../components/GifButton';
 import LevelProgress from '../components/LevelProgress';
 import SkinSelector from '../components/SkinSelector';
-import AchievementToast, { useAchievementToast } from '../components/AchievementToast';
+import AchievementCeremony from '../components/AchievementCeremony';
 import DemoModeBanner from '../components/DemoModeBanner';
 import { triggerConfetti } from '../components/Confetti';
 import { useGateway, STATES } from '../hooks/useGateway';
 import { useAuth } from '../hooks/useAuth';
 import { useSkins } from '../hooks/useSkins';
+import { useAnimatedSkin } from '../hooks/useAnimatedSkin';
+import { useAffinity } from '../hooks/useAffinity';
 import { useNotifications } from '../hooks/useNotifications';
 import { useDynamicFavicon } from '../hooks/useDynamicFavicon';
 import { useDemoMode } from '../hooks/useDemoMode';
@@ -22,6 +24,7 @@ import {
   onGatewayConnect, tickUptimeCheck, recordError, checkNoErrorWeek,
   checkAchievements,
 } from '../utils/storage';
+import { loadAllAchievementDefs } from '../utils/skinStorage';
 import { saveSession } from '../utils/sessionHistory';
 import { supabase, hasSupabase } from '../utils/supabase';
 import './Home.css';
@@ -33,37 +36,97 @@ function loadConn() {
   catch { return null; }
 }
 
+// ─── Achievement ceremony hook ────────────────────────────────────────────────
+// Watches the achievements array for newly unlocked entries.
+// Admin-uploaded achievement defs take priority over built-ins for rich display.
+function useCeremony(achievements, adminDefs) {
+  const [ceremony, setCeremony] = useState(null);
+  const prevRef = useRef(achievements);
+
+  useEffect(() => {
+    const newIds = achievements.filter((id) => !prevRef.current.includes(id));
+    prevRef.current = achievements;
+    if (!newIds.length) return;
+
+    const id = newIds[0];
+    const adminDef = adminDefs.find((d) => d.id === id && d.is_active);
+    const builtin = ACHIEVEMENTS.find((a) => a.id === id);
+    const def = adminDef ?? builtin;
+    if (def) setCeremony(def);
+  }, [achievements, adminDefs]);
+
+  const dismiss = useCallback(() => setCeremony(null), []);
+  return { ceremony, dismiss };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function Home() {
   const saved = loadConn();
-  const [wsUrl, setWsUrl] = useState(saved?.url || '');
-  const [token, setToken] = useState(saved?.token || '');
+  const [wsUrl, setWsUrl] = useState(saved?.url ?? '');
+  const [token, setToken] = useState(saved?.token ?? '');
   const [showModal, setShowModal] = useState(!saved);
   const [localData, setLocalData] = useState(loadData);
+  const [adminAchievementDefs, setAdminAchievementDefs] = useState([]);
+
   const sessionStartRef = useRef(null);
   const prevConnected = useRef(false);
   const prevStatus = useRef(null);
 
+  // ── Hooks ──────────────────────────────────────────────────────────────────
   const { user, username } = useAuth();
-  const { activeSkin, activeSkinId, selectSkin, skinStyle, setOwnedIds } = useSkins();
+  const {
+    activeSkin: svgSkin,
+    activeSkinId: svgSkinId,
+    selectSkin: selectSvgSkin,
+    skinStyle,
+    allSkins: svgSkins,
+    setOwnedIds,
+  } = useSkins();
+
+  const animatedSkin = useAnimatedSkin();
+  const { affinity, addAffinity, isHappy } = useAffinity();
   const { notify } = useNotifications();
   const { status, connected, currentTool, errorLog, stats } = useGateway(wsUrl, token);
-
   const { demoStatus, demoTool, demoStats } = useDemoMode(!connected);
-  const displayStatus = connected ? status : demoStatus;
-  const displayTool = connected ? currentTool : demoTool;
-  const displayStats = connected ? stats : demoStats;
 
-  useDynamicFavicon(displayStatus);
+  useDynamicFavicon(connected ? status : demoStatus);
   useCloudSkins(user, setOwnedIds);
 
-  const { toast, dismiss } = useAchievementToast(localData.achievements);
+  // ── Derived display values ─────────────────────────────────────────────────
+  const displayStatus = connected ? status : demoStatus;
+  const displayTool   = connected ? currentTool : demoTool;
+  const displayStats  = connected ? stats : demoStats;
 
-  // Auto-detect CLI config
+  // ── Skin selector: only admin-managed animated skins ─────────────────────
+  // SVG lobster is a silent fallback only — not a user-selectable option.
+  const allSkins = animatedSkin.allAnimatedSkins;
+  const activeSkinId = animatedSkin.activeId;
+  const handleSelectSkin = useCallback((id) => animatedSkin.select(id), [animatedSkin]);
+
+  // Current pet frame for share card / GIF (first idle frame of active skin)
+  const currentPetFrameUrl = animatedSkin.activeSkin?.frames?.idle?.[0] ?? null;
+  const currentPetFrameUrls = animatedSkin.activeSkin?.frames?.idle ?? null;
+
+  // ── Achievement ceremony ───────────────────────────────────────────────────
+  const { ceremony, dismiss: dismissCeremony } = useCeremony(
+    localData.achievements,
+    adminAchievementDefs,
+  );
+
+  // ── Load admin achievement defs from IndexedDB ────────────────────────────
+  useEffect(() => {
+    loadAllAchievementDefs()
+      .then(setAdminAchievementDefs)
+      .catch((err) => console.error('[Home] failed to load achievement defs:', err));
+  }, []);
+
+  // ── Auto-detect CLI config ─────────────────────────────────────────────────
   useEffect(() => {
     if (saved) return;
     fetch('/lobster-config.json')
-      .then(r => r.json())
-      .then(cfg => {
+      .then((r) => r.json())
+      .then((cfg) => {
         if (cfg.autoDetected && cfg.wsUrl && cfg.token) {
           setWsUrl(cfg.wsUrl);
           setToken(cfg.token);
@@ -71,8 +134,8 @@ export default function Home() {
           setShowModal(false);
         }
       })
-      .catch(() => {});
-  }, []); // eslint-disable-line
+      .catch(() => { });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleConnect = useCallback((url, tok) => {
     setWsUrl(url);
@@ -81,17 +144,19 @@ export default function Home() {
     setShowModal(false);
   }, []);
 
-  // Track session start/end
+  // ── Session start / end ────────────────────────────────────────────────────
   useEffect(() => {
     if (connected && !prevConnected.current) {
       sessionStartRef.current = Date.now();
-      setLocalData(prev => {
+      addAffinity(10); // daily connect bonus
+      setLocalData((prev) => {
         const updated = onGatewayConnect(prev);
-        const withAch = checkAchievements(updated, { activeSkinId });
+        const withAch = checkAchievements(updated, { activeSkinId: svgSkinId });
         saveData(withAch);
         return withAch;
       });
     }
+
     if (!connected && prevConnected.current && sessionStartRef.current) {
       saveSession({
         startTime: sessionStartRef.current,
@@ -103,9 +168,11 @@ export default function Home() {
         modelName: stats.modelName,
         status: 'disconnected',
       });
-      setLocalData(prev => {
+      setLocalData((prev) => {
         const today = new Date().toDateString();
-        const base = prev.todayDate === today ? prev : { ...prev, todayTokensInput: 0, todayTokensOutput: 0, todayDate: today };
+        const base = prev.todayDate === today
+          ? prev
+          : { ...prev, todayTokensInput: 0, todayTokensOutput: 0, todayDate: today };
         const updated = {
           ...base,
           todayTokensInput:  base.todayTokensInput  + stats.tokensInput,
@@ -114,20 +181,21 @@ export default function Home() {
           totalTokensInput:  base.totalTokensInput  + stats.tokensInput,
           totalTokensOutput: base.totalTokensOutput + stats.tokensOutput,
         };
-        const withAch = checkAchievements(updated, { activeSkinId });
+        const withAch = checkAchievements(updated, { activeSkinId: svgSkinId });
         saveData(withAch);
         return withAch;
       });
       sessionStartRef.current = null;
     }
-    prevConnected.current = connected;
-  }, [connected]); // eslint-disable-line
 
-  // Uptime tick
+    prevConnected.current = connected;
+  }, [connected]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Uptime tick (marathon achievement) ────────────────────────────────────
   useEffect(() => {
     if (!connected) return;
     const id = setInterval(() => {
-      setLocalData(prev => {
+      setLocalData((prev) => {
         const { data: updated, newAch } = tickUptimeCheck(prev);
         if (newAch) saveData(updated);
         return updated;
@@ -136,49 +204,56 @@ export default function Home() {
     return () => clearInterval(id);
   }, [connected]);
 
-  // Count completed tasks + achievements
+  // ── Task complete / error ──────────────────────────────────────────────────
   useEffect(() => {
     if (status === prevStatus.current) return;
-    const prev_ = prevStatus.current;
+    const prevSt = prevStatus.current;
     prevStatus.current = status;
 
     if (status === STATES.DONE) {
       triggerConfetti();
-      setLocalData(prev => {
-        const sessionErrors = prev._sessionErrors || 0;
-        const newAch = [];
+      addAffinity(5);
+      setLocalData((prev) => {
+        const sessionErrors = prev._sessionErrors ?? 0;
+        const extras = [];
         if (!prev.achievements.includes('perfect_task') && sessionErrors === 0) {
-          newAch.push('perfect_task');
+          extras.push('perfect_task');
         }
-        const withWeekCheck = checkNoErrorWeek(prev);
+        const withWeek = checkNoErrorWeek(prev);
         const updated = {
-          ...withWeekCheck,
-          totalTasks: withWeekCheck.totalTasks + 1,
+          ...withWeek,
+          totalTasks: withWeek.totalTasks + 1,
           _sessionErrors: 0,
-          achievements: [...withWeekCheck.achievements, ...newAch.filter(id => !withWeekCheck.achievements.includes(id))],
+          achievements: [
+            ...withWeek.achievements,
+            ...extras.filter((id) => !withWeek.achievements.includes(id)),
+          ],
         };
-        const withAch = checkAchievements(updated, { activeSkinId });
+        const withAch = checkAchievements(updated, { activeSkinId: svgSkinId });
         saveData(withAch);
         return withAch;
       });
-      notify('🦞 任务完成！', '龙虾完成了一个任务 ✔');
+      notify('任务完成！', '伙伴完成了一个任务 ✔');
     }
-    if (status === STATES.ERROR && prev_ !== STATES.ERROR) {
-      setLocalData(prev => {
-        const updated = recordError({ ...prev, _sessionErrors: (prev._sessionErrors || 0) + 1 });
+
+    if (status === STATES.ERROR && prevSt !== STATES.ERROR) {
+      setLocalData((prev) => {
+        const updated = recordError({ ...prev, _sessionErrors: (prev._sessionErrors ?? 0) + 1 });
         return updated;
       });
-      notify('🦞 龙虾翻车了', '不用担心，龙虾还在战斗');
+      notify('遇到了问题', '不用担心，伙伴还在努力');
     }
-  }, [status]); // eslint-disable-line
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Tool calls → saver achievement
+  // ── Tool calls → saver achievement ────────────────────────────────────────
   useEffect(() => {
-    setLocalData(prev => {
-      if (!prev.achievements.includes('saver') &&
-          stats.toolCalls >= 50 &&
-          stats.toolCallsSuccess === stats.toolCalls &&
-          stats.tokensInput < 50000) {
+    setLocalData((prev) => {
+      if (
+        !prev.achievements.includes('saver') &&
+        stats.toolCalls >= 50 &&
+        stats.toolCallsSuccess === stats.toolCalls &&
+        stats.tokensInput < 50_000
+      ) {
         const updated = { ...prev, achievements: [...prev.achievements, 'saver'] };
         saveData(updated);
         return updated;
@@ -187,12 +262,12 @@ export default function Home() {
     });
   }, [stats.toolCalls]);
 
-  // Night owl
+  // ── Night owl ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!connected) return;
     const h = new Date().getHours();
     if (h >= 2 && h < 5) {
-      setLocalData(prev => {
+      setLocalData((prev) => {
         if (prev.achievements.includes('night_owl')) return prev;
         const updated = { ...prev, achievements: [...prev.achievements, 'night_owl'] };
         saveData(updated);
@@ -201,122 +276,210 @@ export default function Home() {
     }
   }, [connected]);
 
-  // Track active skin for achievements
+  // ── Track active SVG skin for achievements ─────────────────────────────────
   useEffect(() => {
-    setLocalData(prev => {
-      const withAch = checkAchievements(prev, { activeSkinId });
-      if (withAch.achievements.length !== prev.achievements.length || withAch.usedSkinIds?.length !== prev.usedSkinIds?.length) {
+    setLocalData((prev) => {
+      const withAch = checkAchievements(prev, { activeSkinId: svgSkinId });
+      if (
+        withAch.achievements.length !== prev.achievements.length ||
+        withAch.usedSkinIds?.length !== prev.usedSkinIds?.length
+      ) {
         saveData(withAch);
         return withAch;
       }
       return prev;
     });
-  }, [activeSkinId]);
+  }, [svgSkinId]);
 
-  // Sync status to Supabase
+  // ── Sync to Supabase ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!hasSupabase || !user || !connected) return;
     supabase.from('agent_status').upsert({
       user_id: user.id,
       status,
-      current_tool: currentTool?.name || null,
+      current_tool: currentTool?.name ?? null,
       session_tokens: stats.tokensInput + stats.tokensOutput,
       session_tool_calls: stats.toolCalls,
       updated_at: new Date().toISOString(),
     });
   }, [status, user, connected, currentTool, stats]);
 
-  // Dynamic title
+  // ── Dynamic title ──────────────────────────────────────────────────────────
   useEffect(() => {
     const titles = {
-      [STATES.ERROR]: '[Error] 龙虾翻车了 🦞',
-      [STATES.TOOL_CALL]: '[Working] 龙虾正在忙 🦞⚡',
-      [STATES.DONE]: '[Done] 龙虾搞定了！🦞✔',
+      [STATES.ERROR]:     '[Error] 出错了',
+      [STATES.TOOL_CALL]: '[Working] 正在工作中 ⚡',
+      [STATES.DONE]:      '[Done] 任务完成 ✔',
     };
-    document.title = titles[displayStatus] || 'OpenPat 🦞';
+    document.title = titles[displayStatus] ?? 'OpenPat 🦞';
   }, [displayStatus]);
 
+  // ── Share ──────────────────────────────────────────────────────────────────
   const handleShareGenerated = useCallback(() => {
-    setLocalData(prev => {
+    setLocalData((prev) => {
       const withAch = checkAchievements(prev, { didShare: true });
       saveData(withAch);
       return withAch;
     });
   }, []);
 
+  // ── Pet click → affinity ───────────────────────────────────────────────────
+  const handlePetClick = useCallback(() => {
+    addAffinity(2);
+  }, [addAffinity]);
+
+  // ── Rank (SVG only) ────────────────────────────────────────────────────────
+  const rank = localData.totalTasks >= 50
+    ? 'gold'
+    : localData.totalTasks >= 10
+      ? 'cyber'
+      : 'bronze';
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="home">
-      {showModal && <ConnectModal onConnect={handleConnect} />}
-      <AchievementToast toast={toast} onDismiss={dismiss} />
+      {showModal && (
+        <ConnectModal
+          onConnect={handleConnect}
+          onSkip={() => setShowModal(false)}
+        />
+      )}
+
+      {ceremony && (
+        <AchievementCeremony
+          achievement={ceremony}
+          onClose={dismissCeremony}
+        />
+      )}
+
       {!connected && !showModal && (
         <DemoModeBanner onConnect={() => setShowModal(true)} />
       )}
 
       <main className="home-main">
-        {/* Big lobster */}
-        <div className="home-lobster-wrap" style={skinStyle}>
-          <LobsterSVG status={displayStatus} fatness={1} onClick={() => {}} />
+
+        {/* ── Companion card: pet + report + affinity ── */}
+        <div className="home-companion-card">
+          <div className="home-lobster-wrap" style={skinStyle}>
+            <PetDisplay
+              skin={svgSkin}
+              rank={rank}
+              fatness={1}
+              animatedSkin={animatedSkin.activeSkin}
+              isHappy={isHappy}
+              status={displayStatus}
+              onClick={handlePetClick}
+            />
+          </div>
+          <div className="home-companion-footer">
+            <LobsterReport status={displayStatus} currentTool={displayTool} />
+            {affinity > 0 && (
+              <AffinityBar affinity={affinity} isHappy={isHappy} />
+            )}
+          </div>
         </div>
 
-        {/* Narration text */}
-        <LobsterReport status={displayStatus} currentTool={displayTool} />
-
-        {/* Compact stats bar */}
+        {/* ── Stats ── */}
         <StatsPanel
           status={displayStatus}
           stats={displayStats}
           totalTasks={localData.totalTasks}
         />
 
-        {/* Share buttons */}
+        {/* ── Share actions ── */}
         <div className="home-actions">
           <ShareButton
             stats={connected ? stats : demoStats}
             status={displayStatus}
-            skinColors={activeSkin.colors}
+            skinId={svgSkinId}
+            petFrameUrl={currentPetFrameUrl}
             onGenerated={handleShareGenerated}
           />
-          <GifButton stats={connected ? stats : demoStats} skinColors={activeSkin.colors} />
+          <GifButton
+            stats={connected ? stats : demoStats}
+            skinColors={svgSkin?.colors}
+            petFrameUrls={currentPetFrameUrls}
+          />
         </div>
 
-        {/* Skin selector */}
+        {/* ── Skin selector ── */}
         <SkinSelector
           activeSkinId={activeSkinId}
-          onSelect={selectSkin}
+          skins={allSkins}
+          onSelect={handleSelectSkin}
         />
 
-        {/* Level progress */}
+        {/* ── Level progress ── */}
         <LevelProgress totalTasks={localData.totalTasks} />
 
-        {/* Achievements wall */}
-        <AchievementsWall achievements={localData.achievements} />
+        {/* ── Achievements ── */}
+        <AchievementsWall
+          achievements={localData.achievements}
+          adminDefs={adminAchievementDefs}
+        />
 
-        {/* Connect button */}
+        {/* ── Connect ── */}
         <button className="btn-connect" onClick={() => setShowModal(true)}>
-          {connected ? '🔄 切换连接' : '🔌 连接 Gateway'}
+          {connected ? '切换连接' : '连接 Gateway'}
         </button>
       </main>
     </div>
   );
 }
 
-function AchievementsWall({ achievements }) {
+// ─── Affinity bar ─────────────────────────────────────────────────────────────
+function AffinityBar({ affinity, isHappy }) {
+  return (
+    <div className="affinity-bar-wrap">
+      <span className="affinity-label">
+        {isHappy ? '😊' : '🦞'} 好感度
+      </span>
+      <div className="affinity-track">
+        <div
+          className={`affinity-fill${isHappy ? ' affinity-fill--happy' : ''}`}
+          style={{ width: `${affinity}%` }}
+        />
+      </div>
+      <span className="affinity-value">{affinity}</span>
+    </div>
+  );
+}
+
+// ─── Achievements wall ────────────────────────────────────────────────────────
+// Admin-uploaded defs take priority for icon + name display.
+function AchievementsWall({ achievements, adminDefs }) {
   if (!achievements.length) return null;
-  const found = ACHIEVEMENTS.filter(a => achievements.includes(a.id));
+
+  const unlocked = achievements.map((id) => {
+    const adminDef = adminDefs.find((d) => d.id === id);
+    const builtin  = ACHIEVEMENTS.find((a) => a.id === id);
+    return adminDef ?? builtin;
+  }).filter(Boolean);
+
   return (
     <div className="achievements-wall">
-      <h3 className="ach-title">成就 · {found.length}/{ACHIEVEMENTS.length}</h3>
+      <h3 className="ach-title">
+        成就 · {unlocked.length}/{ACHIEVEMENTS.length}
+      </h3>
       <div className="ach-grid">
-        {found.map(a => {
-          const colors = RARITY_COLORS[a.rarity] || RARITY_COLORS.common;
+        {unlocked.map((a) => {
+          const colors = RARITY_COLORS[a.rarity] ?? RARITY_COLORS.common;
           return (
             <div
               key={a.id}
               className="ach-item"
               title={a.desc}
-              style={{ background: colors.bg, borderColor: colors.border, color: colors.text }}
+              style={{
+                background: colors.bg,
+                borderColor: colors.border,
+                color: colors.text,
+              }}
             >
-              <span className="ach-emoji">{a.emoji}</span>
+              {a.icon_unlocked ? (
+                <img src={a.icon_unlocked} alt={a.name} className="ach-icon-img" />
+              ) : (
+                <span className="ach-emoji">{a.emoji}</span>
+              )}
               <span className="ach-name">{a.name}</span>
             </div>
           );

@@ -68,7 +68,7 @@ export default function SettingsPanel({ onClose }) {
 
         <div className="sp-footer">
           <span>OpenPat v1.0.0</span>
-          <a href="https://github.com/openpat/openpat" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          <a href="https://github.com/ma2214889041/OpenPat" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
         </div>
       </div>
     </div>

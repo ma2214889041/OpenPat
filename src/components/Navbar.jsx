@@ -3,8 +3,7 @@ import AuthButton from './AuthButton';
 import './Navbar.css';
 
 const LINKS = [
-  { to: '/', label: '🦞 我的龙虾' },
-  { to: '/leaderboard', label: '🌐 龙虾广场' },
+  { to: '/', label: '主页' },
 ];
 
 export default function Navbar({ onSettings }) {

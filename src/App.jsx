@@ -1,28 +1,45 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SettingsPanel from './components/SettingsPanel';
+import Landing from './pages/Landing';
 import Home from './pages/Home';
-import Leaderboard from './pages/Leaderboard';
 import PublicProfile from './pages/PublicProfile';
+import AdminSkins from './pages/AdminSkins';
 import './App.css';
 
-export default function App() {
+// Navbar and settings only appear on app routes, not the landing page
+function AppShell({ children }) {
+  const { pathname } = useLocation();
+  const isLanding = pathname === '/';
   const [showSettings, setShowSettings] = useState(false);
 
+  if (isLanding) return children;
+
+  return (
+    <>
+      <div className="bg-grid" />
+      <Navbar onSettings={() => setShowSettings(true)} />
+      {showSettings && (
+        <SettingsPanel onClose={() => setShowSettings(false)} />
+      )}
+      {children}
+    </>
+  );
+}
+
+export default function App() {
   return (
     <BrowserRouter>
       <div className="app">
-        <div className="bg-grid" />
-        <Navbar onSettings={() => setShowSettings(true)} />
-        {showSettings && (
-          <SettingsPanel onClose={() => setShowSettings(false)} />
-        )}
-        <Routes>
-          <Route path="/"            element={<Home />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/u/:username" element={<PublicProfile />} />
-        </Routes>
+        <AppShell>
+          <Routes>
+            <Route path="/"              element={<Landing />} />
+            <Route path="/app"           element={<Home />} />
+            <Route path="/u/:username"   element={<PublicProfile />} />
+            <Route path="/admin"         element={<AdminSkins />} />
+          </Routes>
+        </AppShell>
       </div>
     </BrowserRouter>
   );
