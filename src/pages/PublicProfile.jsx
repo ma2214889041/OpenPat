@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { supabase, hasSupabase } from '../utils/supabase';
 import { LEVELS, getLevel, ACHIEVEMENTS, RARITY_COLORS } from '../utils/storage';
 import LobsterSVG from '../components/LobsterSVG';
+import AnimatedPet from '../components/AnimatedPet';
+import { loadAllSkins, prepareSkinForDisplay } from '../utils/skinStorage';
 import { STATES } from '../hooks/useGateway';
 import './PublicProfile.css';
 
@@ -43,34 +45,114 @@ function getTitle(totalTasks, achievements) {
   if (achievements.includes('night_owl') && totalTasks >= 1000) return '夜间程序员';
   if (achievements.includes('no_error_week')) return '零翻车之王';
   if (achievements.includes('saver')) return 'Token 节省王';
-  return TITLES.find(t => totalTasks >= t.minTasks)?.title || '虾苗新手';
+  return TITLES.find(t => totalTasks >= t.minTasks)?.title ?? '新手上路';
 }
 
 const STATUS_COLORS = {
-  [STATES.OFFLINE]: '#475569',
-  [STATES.IDLE]: '#22c55e',
-  [STATES.THINKING]: '#f59e0b',
-  [STATES.TOOL_CALL]: '#3b82f6',
-  [STATES.DONE]: '#10b981',
-  [STATES.ERROR]: '#ef4444',
+  [STATES.OFFLINE]:         '#aaaaaa',
+  [STATES.IDLE]:            '#22c55e',
+  [STATES.THINKING]:        '#f59e0b',
+  [STATES.TOOL_CALL]:       '#8B8BFF',
+  [STATES.DONE]:            '#83FFC1',
+  [STATES.ERROR]:           '#ef4444',
   [STATES.TOKEN_EXHAUSTED]: '#f97316',
 };
 
 const STATUS_TEXT = {
-  [STATES.OFFLINE]: '离线中',
-  [STATES.IDLE]: '待命中',
-  [STATES.THINKING]: '思考中...',
-  [STATES.TOOL_CALL]: '调用工具中 ⚡',
-  [STATES.DONE]: '任务完成 🎉',
-  [STATES.ERROR]: '发生错误',
+  [STATES.OFFLINE]:         '离线中',
+  [STATES.IDLE]:            '待命中',
+  [STATES.THINKING]:        '思考中...',
+  [STATES.TOOL_CALL]:       '调用工具中 ⚡',
+  [STATES.DONE]:            '任务完成 ✓',
+  [STATES.ERROR]:           '发生错误',
   [STATES.TOKEN_EXHAUSTED]: 'Token 耗尽',
 };
 
+// ── 段子生成器 ───────────────────────────────────────────────────────────────
+function generateDuanzi(profile, agentStatus) {
+  const lines = [];
+  const tasks      = profile.total_tasks || 0;
+  const tokens     = (profile.total_tokens_input || 0) + (profile.total_tokens_output || 0);
+  const toolCalls  = profile.total_tool_calls || 0;
+  const achs       = profile.achievements || [];
+  const status     = agentStatus?.status || STATES.OFFLINE;
+  const sessionTok = agentStatus?.session_tokens || 0;
+
+  // 任务数量行（必有）
+  if (tasks > 10000) {
+    lines.push(`完成了 ${fmt(tasks)} 个任务。AI 这辈子的工作量，被你一个人包揽了。`);
+  } else if (tasks >= 1000) {
+    lines.push(`${fmt(tasks)} 个任务完成，已经超越了 99% 的使用者。剩下那 1% 可能还在写 README。`);
+  } else if (tasks >= 100) {
+    lines.push(`${fmt(tasks)} 个任务，入门了。但传说还早，继续肝。`);
+  } else {
+    lines.push(`才 ${fmt(tasks)} 个任务，正在成为传说的路上 —— 路还很长。`);
+  }
+
+  // 成就 / 消耗行
+  if (achs.includes('night_owl')) {
+    lines.push('凌晨还在肝。妈妈知道吗？');
+  } else if (achs.includes('no_error_week')) {
+    lines.push('一整周零翻车。这已经不是能力问题，是玄学。');
+  } else if (tokens > 5_000_000) {
+    lines.push(`烧掉了 ${fmt(tokens)} 个 Token，按字数算相当于写了 ${Math.round(tokens / 500)} 篇论文，结果啥都没发表。`);
+  } else if (toolCalls > 1000) {
+    lines.push(`工具调用了 ${fmt(toolCalls)} 次，比你今年换过的心情还多。`);
+  } else if (achs.includes('perfect_task')) {
+    lines.push('完美任务达成。AI 此刻应该感谢你没有给它出难题。');
+  }
+
+  // 当前状态行
+  if (status === STATES.THINKING) {
+    lines.push('当前正在思考。请勿打扰，它需要安静。');
+  } else if (status === STATES.TOOL_CALL) {
+    lines.push('正在调用工具。这活儿你不想自己做，它替你扛着。');
+  } else if (status === STATES.IDLE) {
+    lines.push('现在空闲中，像极了等消息却不敢先发的你。');
+  } else if (status === STATES.DONE) {
+    lines.push('刚刚完成了任务，正在得意地抖着。');
+  } else if (status === STATES.ERROR) {
+    lines.push('刚才翻车了。没关系，失败是成功他妈。');
+  } else if (sessionTok > 30000) {
+    lines.push(`这一局就烧了 ${fmt(sessionTok)} Token，希望结果值得。`);
+  }
+
+  return lines.slice(0, 3);
+}
+
+// ── 段子组件 ─────────────────────────────────────────────────────────────────
+function ProfileDuanzi({ lines }) {
+  if (!lines?.length) return null;
+  return (
+    <div className="profile-duanzi">
+      <div className="duanzi-header">AI 说你的故事</div>
+      {lines.map((line, i) => (
+        <div key={i} className="duanzi-line">{line}</div>
+      ))}
+    </div>
+  );
+}
+
+// ── 主组件 ───────────────────────────────────────────────────────────────────
 export default function PublicProfile() {
   const { username } = useParams();
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile]         = useState(null);
   const [agentStatus, setAgentStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]         = useState(true);
+  const [activeSkin, setActiveSkin]   = useState(null);
+
+  // Load first available animated skin from IndexedDB
+  useEffect(() => {
+    loadAllSkins()
+      .then(async (skins) => {
+        const active = skins.filter(s => s.is_active);
+        if (active.length > 0) {
+          const prepared = await prepareSkinForDisplay(active[0]);
+          setActiveSkin(prepared);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Load profile + realtime subscription
   useEffect(() => {
@@ -92,7 +174,6 @@ export default function PublicProfile() {
 
       setProfile(profileData);
       setLoading(false);
-
       if (!profileData) return;
 
       const { data: statusData } = await supabase
@@ -110,9 +191,7 @@ export default function PublicProfile() {
           schema: 'public',
           table: 'agent_status',
           filter: `user_id=eq.${profileData.id}`,
-        }, (payload) => {
-          setAgentStatus(payload.new);
-        })
+        }, (payload) => setAgentStatus(payload.new))
         .subscribe();
     }
 
@@ -120,15 +199,16 @@ export default function PublicProfile() {
     return () => { if (channel) supabase.removeChannel(channel); };
   }, [username]);
 
-  // OG meta tags (must be before early returns — runs when profile loads)
+  // OG meta tags
   useEffect(() => {
     if (!profile) return;
     const levelIdx = getLevel(profile.total_tasks);
-    const level = LEVELS[levelIdx];
+    const level    = LEVELS[levelIdx];
     const achCount = (profile.achievements || []).length;
-    const title = `@${profile.username} 的龙虾 — OpenPat`;
-    const desc = `${level.name} · ${fmt(profile.total_tasks)} 任务完成 · ${achCount} 个成就`;
+    const title    = `@${profile.username} — OpenPat`;
+    const desc     = `${level.name} · ${fmt(profile.total_tasks)} 任务完成 · ${achCount} 个成就`;
     document.title = title;
+
     const setMeta = (name, content, prop = false) => {
       const sel = prop ? `meta[property="${name}"]` : `meta[name="${name}"]`;
       let el = document.querySelector(sel);
@@ -146,40 +226,48 @@ export default function PublicProfile() {
     setMeta('twitter:card', 'summary');
     setMeta('twitter:title', title);
     setMeta('twitter:description', desc);
-    return () => { document.title = 'OpenPat 🦞'; };
+    return () => { document.title = 'OpenPat'; };
   }, [profile]);
 
+  // ── Loading ──
   if (loading) {
-    return <div className="profile-loading"><span>🦞</span><p>加载中...</p></div>;
-  }
-
-  if (!profile) {
     return (
-      <div className="profile-notfound">
-        <span>🦞</span>
-        <h2>找不到这只龙虾</h2>
-        <p>@{username} 还没有公开状态页</p>
-        <a href="/">开始你的旅程 →</a>
+      <div className="profile-loading">
+        <div className="profile-spinner" />
+        <p>加载中...</p>
       </div>
     );
   }
 
-  const levelIdx = getLevel(profile.total_tasks);
-  const level = LEVELS[levelIdx];
-  const status = agentStatus?.status || STATES.OFFLINE;
-  const statusColor = STATUS_COLORS[status] || '#94a3b8';
-  const statusText = STATUS_TEXT[status] || '';
-  const title = getTitle(profile.total_tasks, profile.achievements || []);
-  const foundAch = ACHIEVEMENTS.filter(a => (profile.achievements || []).includes(a.id));
+  // ── Not found ──
+  if (!profile) {
+    return (
+      <div className="profile-notfound">
+        <h2>找不到这个用户</h2>
+        <p>@{username} 还没有公开状态页</p>
+        <Link to="/">开始你的旅程 →</Link>
+      </div>
+    );
+  }
+
+  const levelIdx   = getLevel(profile.total_tasks);
+  const level      = LEVELS[levelIdx];
+  const status     = agentStatus?.status || STATES.OFFLINE;
+  const statusColor = STATUS_COLORS[status] || '#aaa';
+  const statusText  = STATUS_TEXT[status] || '离线中';
+  const title       = getTitle(profile.total_tasks, profile.achievements || []);
+  const foundAch    = ACHIEVEMENTS.filter(a => (profile.achievements || []).includes(a.id));
+  const duanziLines = generateDuanzi(profile, agentStatus);
 
   return (
     <div className="profile-page">
       {!hasSupabase && (
-        <div className="profile-demo-hint">🎭 演示数据 — 配置 Supabase 后显示真实状态</div>
+        <div className="profile-demo-hint">演示数据 — 配置 Supabase 后显示真实状态</div>
       )}
 
-      <div className="profile-hero">
-        {/* Name + title */}
+      <div className="profile-card">
+
+        {/* ── Identity row ── */}
         <div className="profile-identity">
           <div className="profile-avatar">
             {profile.avatar_url
@@ -187,22 +275,31 @@ export default function PublicProfile() {
               : <span>{profile.username[0].toUpperCase()}</span>
             }
           </div>
-          <div>
+          <div className="profile-info">
             <h1 className="profile-name">@{profile.username}</h1>
-            <div className="profile-title">{title}</div>
+            <div className="profile-badge">{title}</div>
           </div>
-        </div>
-
-        {/* Big lobster */}
-        <div className="profile-lobster-big" style={{ '--glow': statusColor }}>
-          <LobsterSVG status={status} fatness={1} onClick={() => {}} />
-          <div className="profile-live">
+          <div className="profile-live-pill">
             <span className="live-dot" style={{ background: statusColor }} />
             <span className="live-text">{statusText}</span>
           </div>
         </div>
 
-        {/* 3 core stats */}
+        {/* ── Pet stage ── */}
+        <div className="profile-pet-stage" style={{ '--glow': statusColor }}>
+          {activeSkin ? (
+            <AnimatedPet
+              skin={activeSkin}
+              status={status}
+              isHappy={false}
+              onClick={() => {}}
+            />
+          ) : (
+            <LobsterSVG status={status} fatness={1} onClick={() => {}} />
+          )}
+        </div>
+
+        {/* ── Stats ── */}
         <div className="profile-stats">
           <div className="profile-stat">
             <span className="ps-value">{fmt(profile.total_tasks)}</span>
@@ -218,11 +315,11 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Achievement badges */}
+        {/* ── Achievements ── */}
         {foundAch.length > 0 && (
           <div className="profile-ach-row">
             {foundAch.map(a => {
-              const colors = RARITY_COLORS[a.rarity] || RARITY_COLORS.common;
+              const colors = RARITY_COLORS[a.rarity] ?? RARITY_COLORS.common;
               return (
                 <span
                   key={a.id}
@@ -237,11 +334,14 @@ export default function PublicProfile() {
           </div>
         )}
 
+        {/* ── Footer ── */}
         <div className="profile-footer">
           <code>npx openpat</code>
           <span className="profile-watermark">openpat.dev</span>
         </div>
       </div>
+
+      <ProfileDuanzi lines={duanziLines} />
     </div>
   );
 }

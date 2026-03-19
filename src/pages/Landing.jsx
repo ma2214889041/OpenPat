@@ -73,16 +73,19 @@ export default function Landing() {
         </div>
 
         <div className="lp-hero-content">
-          <p className="lp-eyebrow">OpenPat · 你的专属陪伴</p>
+          <p className="lp-eyebrow">AI 时代的电子宠物</p>
           <h1 className="lp-hero-h1">
-            陪你工作，<br />
-            <em>见证每一步。</em>
+            你曾希望那只小宠物，<br />
+            <em>能真正懂你。</em>
           </h1>
           <p className="lp-hero-sub">
-            连接 OpenClaw，它会陪在你身边，记录你的每一个时刻。
+            在 AI 时代，这件事或许真的可以了。
+          </p>
+          <p className="lp-hero-sub lp-hero-sub--2">
+            连接你的 OpenClaw，OpenPat 会实时感受它的状态 — 陪你经历每一个当下，见证你们一起走过的每一步。
           </p>
           <div className="lp-hero-actions">
-            <Link to="/app" className="lp-btn lp-btn--primary">立刻开始</Link>
+            <Link to="/app" className="lp-btn lp-btn--primary">唤醒你的伙伴 →</Link>
             <button className="lp-btn lp-btn--ghost" onClick={() => scrollTo('about')}>了解更多 ↓</button>
           </div>
         </div>
@@ -144,11 +147,11 @@ export default function Landing() {
               <span className="lp-nav-logo-name">OpenPat</span>
             </div>
             <p className="lp-about-desc">
-              连接你的 OpenClaw，它会陪在你身边。
-              感受你的状态，记录你的成长，和你一起走过每一个当下。
+              小时候的电子宠物让你想要更多 —— 更多互动，更多陪伴，更多真实的情感连接。
+              在 AI 时代，OpenPat 想把这件事做到。
             </p>
             <Link to="/app" className="lp-btn lp-btn--green">
-              立刻开始 →
+              唤醒你的伙伴 →
             </Link>
           </div>
 
@@ -213,7 +216,7 @@ export default function Landing() {
               一键生成分享卡片，发给朋友，让他们看见你的每一个进步。
             </p>
             <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <Link to="/app" className="lp-btn lp-btn--primary">开始养虾</Link>
+              <Link to="/app" className="lp-btn lp-btn--primary">唤醒你的伙伴 →</Link>
               <Link to="/u/demo" className="lp-btn lp-btn--ghost">查看示例主页 →</Link>
             </div>
           </div>
@@ -342,14 +345,20 @@ export default function Landing() {
 
           <div className="lp-roadmap-card lp-roadmap-card--done">
             <span className="lp-roadmap-tag">已上线</span>
-            <h4 className="lp-roadmap-title">成就 & 皮肤系统</h4>
-            <p className="lp-roadmap-desc">完成里程碑解锁成就，收集限定皮肤，让你的伙伴与众不同。</p>
+            <h4 className="lp-roadmap-title">成就系统</h4>
+            <p className="lp-roadmap-desc">完成里程碑自动解锁成就徽章，记录你们每一个共同经历的时刻。</p>
           </div>
 
           <div className="lp-roadmap-card lp-roadmap-card--done">
             <span className="lp-roadmap-tag">已上线</span>
             <h4 className="lp-roadmap-title">专属公开主页</h4>
             <p className="lp-roadmap-desc">一键生成你的专属主页，把你们的故事分享给朋友。</p>
+          </div>
+
+          <div className="lp-roadmap-card lp-roadmap-card--soon">
+            <span className="lp-roadmap-tag">即将推出</span>
+            <h4 className="lp-roadmap-title">🎨 皮肤 & 形象系统</h4>
+            <p className="lp-roadmap-desc">为你的伙伴选择独特的外形——目前开放管理员上传，更多样式即将开放。</p>
           </div>
 
           <div className="lp-roadmap-card lp-roadmap-card--soon">
