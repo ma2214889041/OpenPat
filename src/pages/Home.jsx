@@ -6,19 +6,16 @@ import ConnectModal from '../components/ConnectModal';
 import ShareButton from '../components/ShareButton';
 import GifButton from '../components/GifButton';
 import LevelProgress from '../components/LevelProgress';
-import SkinSelector from '../components/SkinSelector';
 import AchievementCeremony from '../components/AchievementCeremony';
 import DemoModeBanner from '../components/DemoModeBanner';
 import { triggerConfetti } from '../components/Confetti';
 import { useGateway, STATES } from '../hooks/useGateway';
 import { useAuth } from '../hooks/useAuth';
-import { useSkins } from '../hooks/useSkins';
 import { useAnimatedSkin } from '../hooks/useAnimatedSkin';
 import { useAffinity } from '../hooks/useAffinity';
 import { useNotifications } from '../hooks/useNotifications';
 import { useDynamicFavicon } from '../hooks/useDynamicFavicon';
 import { useDemoMode } from '../hooks/useDemoMode';
-import { useCloudSkins } from '../hooks/useCloudSkins';
 import {
   loadData, saveData, ACHIEVEMENTS, RARITY_COLORS,
   onGatewayConnect, tickUptimeCheck, recordError, checkNoErrorWeek,
@@ -75,15 +72,6 @@ export default function Home() {
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const { user, username } = useAuth();
-  const {
-    activeSkin: svgSkin,
-    activeSkinId: svgSkinId,
-    selectSkin: selectSvgSkin,
-    skinStyle,
-    allSkins: svgSkins,
-    setOwnedIds,
-  } = useSkins();
-
   const animatedSkin = useAnimatedSkin();
   const { affinity, addAffinity, isHappy } = useAffinity();
   const { notify } = useNotifications();
@@ -91,18 +79,13 @@ export default function Home() {
   const { demoStatus, demoTool, demoStats } = useDemoMode(!connected);
 
   useDynamicFavicon(connected ? status : demoStatus);
-  useCloudSkins(user, setOwnedIds);
 
   // ── Derived display values ─────────────────────────────────────────────────
   const displayStatus = connected ? status : demoStatus;
   const displayTool   = connected ? currentTool : demoTool;
   const displayStats  = connected ? stats : demoStats;
 
-  // ── Skin selector: only admin-managed animated skins ─────────────────────
-  // SVG lobster is a silent fallback only — not a user-selectable option.
-  const allSkins = animatedSkin.allAnimatedSkins;
   const activeSkinId = animatedSkin.activeId;
-  const handleSelectSkin = useCallback((id) => animatedSkin.select(id), [animatedSkin]);
 
   // Current pet frame for share card / GIF (first idle frame of active skin)
   const currentPetFrameUrl = animatedSkin.activeSkin?.frames?.idle?.[0] ?? null;
@@ -151,7 +134,7 @@ export default function Home() {
       addAffinity(10); // daily connect bonus
       setLocalData((prev) => {
         const updated = onGatewayConnect(prev);
-        const withAch = checkAchievements(updated, { activeSkinId: svgSkinId });
+        const withAch = checkAchievements(updated, {});
         saveData(withAch);
         return withAch;
       });
@@ -181,7 +164,7 @@ export default function Home() {
           totalTokensInput:  base.totalTokensInput  + stats.tokensInput,
           totalTokensOutput: base.totalTokensOutput + stats.tokensOutput,
         };
-        const withAch = checkAchievements(updated, { activeSkinId: svgSkinId });
+        const withAch = checkAchievements(updated, {});
         saveData(withAch);
         return withAch;
       });
@@ -229,7 +212,7 @@ export default function Home() {
             ...extras.filter((id) => !withWeek.achievements.includes(id)),
           ],
         };
-        const withAch = checkAchievements(updated, { activeSkinId: svgSkinId });
+        const withAch = checkAchievements(updated, {});
         saveData(withAch);
         return withAch;
       });
@@ -276,20 +259,6 @@ export default function Home() {
     }
   }, [connected]);
 
-  // ── Track active SVG skin for achievements ─────────────────────────────────
-  useEffect(() => {
-    setLocalData((prev) => {
-      const withAch = checkAchievements(prev, { activeSkinId: svgSkinId });
-      if (
-        withAch.achievements.length !== prev.achievements.length ||
-        withAch.usedSkinIds?.length !== prev.usedSkinIds?.length
-      ) {
-        saveData(withAch);
-        return withAch;
-      }
-      return prev;
-    });
-  }, [svgSkinId]);
 
   // ── Sync to Supabase ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -328,13 +297,6 @@ export default function Home() {
     addAffinity(2);
   }, [addAffinity]);
 
-  // ── Rank (SVG only) ────────────────────────────────────────────────────────
-  const rank = localData.totalTasks >= 50
-    ? 'gold'
-    : localData.totalTasks >= 10
-      ? 'cyber'
-      : 'bronze';
-
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="home">
@@ -360,11 +322,8 @@ export default function Home() {
 
         {/* ── Companion card: pet + report + affinity ── */}
         <div className="home-companion-card">
-          <div className="home-lobster-wrap" style={skinStyle}>
+          <div className="home-lobster-wrap">
             <PetDisplay
-              skin={svgSkin}
-              rank={rank}
-              fatness={1}
               animatedSkin={animatedSkin.activeSkin}
               isHappy={isHappy}
               status={displayStatus}
@@ -391,23 +350,16 @@ export default function Home() {
           <ShareButton
             stats={connected ? stats : demoStats}
             status={displayStatus}
-            skinId={svgSkinId}
+            skinId={activeSkinId}
             petFrameUrl={currentPetFrameUrl}
             onGenerated={handleShareGenerated}
           />
           <GifButton
             stats={connected ? stats : demoStats}
-            skinColors={svgSkin?.colors}
+            skinColors={null}
             petFrameUrls={currentPetFrameUrls}
           />
         </div>
-
-        {/* ── Skin selector ── */}
-        <SkinSelector
-          activeSkinId={activeSkinId}
-          skins={allSkins}
-          onSelect={handleSelectSkin}
-        />
 
         {/* ── Level progress ── */}
         <LevelProgress totalTasks={localData.totalTasks} />
