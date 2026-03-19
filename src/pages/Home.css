@@ -1,8 +1,8 @@
 /* ══ Design tokens ══ */
 :root {
-  --dk-bg: #0a0a0a;
+  --dk-bg: #080808;
   --dk-surface: #111111;
-  --dk-surface-2: #161616;
+  --dk-surface-2: #171717;
   --dk-border: rgba(255,255,255,0.06);
   --dk-border-2: rgba(255,255,255,0.10);
   --dk-text: #ffffff;
@@ -24,17 +24,18 @@
   background: var(--dk-bg);
   box-sizing: border-box;
   position: relative;
+  overflow-x: hidden;
 }
 
-/* Ambient gradient bg */
+/* Multi-color ambient glow */
 .home::before {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse at 20% 20%, rgba(139,139,255,0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(255,148,219,0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(131,255,193,0.05) 0%, transparent 45%);
+    radial-gradient(ellipse 60% 40% at 15% 20%, rgba(139,139,255,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(255,148,219,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 50% 110%, rgba(131,255,193,0.06) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
@@ -45,46 +46,66 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
 }
 
-/* ── Companion card — pet + report ── */
+/* ══ Companion card ══ */
 .home-companion-card {
   width: 100%;
   background: var(--dk-surface);
-  border: 1px solid var(--dk-border-2);
   border-radius: 28px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+  /* Gradient border via box-shadow + pseudo-element */
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.03),
-    0 24px 64px rgba(0,0,0,0.5);
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 32px 80px rgba(0,0,0,0.6),
+    0 0 120px rgba(139,139,255,0.04);
 }
 
-/* Pet stage */
+/* Gradient top-border shimmer */
+.home-companion-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(139,139,255,0.5) 30%,
+    rgba(255,148,219,0.5) 60%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Pet stage ── */
 .home-lobster-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 260px;
-  padding: 32px 24px 20px;
+  min-height: 280px;
+  padding: 36px 24px 24px;
   box-sizing: border-box;
   position: relative;
 }
 
-/* Color glow behind pet — changes by status via JS inline style */
-.home-lobster-wrap::before {
+/* Radial glow behind pet */
+.home-lobster-wrap::after {
   content: '';
   position: absolute;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(131,255,193,0.08) 0%, transparent 70%);
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle,
+    rgba(131,255,193,0.07) 0%,
+    rgba(139,139,255,0.04) 50%,
+    transparent 70%);
   border-radius: 50%;
   pointer-events: none;
-  transition: background 0.5s;
+  transition: background 0.6s ease;
 }
 
 /* ── Pet placeholder ── */
@@ -94,13 +115,17 @@
   justify-content: center;
   width: 180px;
   height: 180px;
-  border-radius: 24px;
-  border: 2px dashed rgba(255,255,255,0.08);
+  border-radius: 28px;
+  border: 2px dashed rgba(255,255,255,0.07);
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, transform 0.2s;
+  z-index: 1;
 }
 
-.pet-placeholder:hover { border-color: rgba(255,255,255,0.16); }
+.pet-placeholder:hover {
+  border-color: rgba(255,255,255,0.14);
+  transform: scale(1.02);
+}
 
 .pet-placeholder-inner {
   display: flex;
@@ -109,35 +134,36 @@
   gap: 10px;
 }
 
-.pet-placeholder-icon { font-size: 44px; opacity: 0.3; }
+.pet-placeholder-icon { font-size: 48px; opacity: 0.25; }
 
 .pet-placeholder-text {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--dk-text-3);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-/* Companion footer */
+/* ── Companion footer (status + affinity) ── */
 .home-companion-footer {
   padding: 16px 24px 24px;
   border-top: 1px solid var(--dk-border);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: rgba(0,0,0,0.15);
 }
 
-/* ── Status pill inside companion card ── */
+/* Status pill */
 .home-status-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   align-self: flex-start;
-  padding: 6px 14px;
+  padding: 6px 14px 6px 10px;
   border-radius: 9999px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
 }
 
 .home-status-dot {
@@ -147,23 +173,24 @@
   flex-shrink: 0;
 }
 
-.home-status-dot--idle    { background: #83FFC1; box-shadow: 0 0 6px #83FFC1; }
-.home-status-dot--thinking { background: #FFE780; box-shadow: 0 0 6px #FFE780; animation: pulse-dot 1.4s ease-in-out infinite; }
-.home-status-dot--tool_call { background: #8B8BFF; box-shadow: 0 0 6px #8B8BFF; animation: pulse-dot 0.8s ease-in-out infinite; }
-.home-status-dot--done    { background: #83FFC1; box-shadow: 0 0 8px #83FFC1; }
-.home-status-dot--error   { background: #FF94DB; box-shadow: 0 0 6px #FF94DB; }
-.home-status-dot--offline { background: #52525b; }
+.home-status-dot--idle         { background: #83FFC1; box-shadow: 0 0 6px #83FFC180; }
+.home-status-dot--thinking     { background: #FFE780; box-shadow: 0 0 6px #FFE78080; animation: dot-pulse 1.4s ease-in-out infinite; }
+.home-status-dot--tool_call    { background: #8B8BFF; box-shadow: 0 0 8px #8B8BFF99; animation: dot-pulse 0.8s ease-in-out infinite; }
+.home-status-dot--done         { background: #83FFC1; box-shadow: 0 0 10px #83FFC1; }
+.home-status-dot--error        { background: #FF94DB; box-shadow: 0 0 6px #FF94DB80; }
+.home-status-dot--token_exhausted { background: #FFE780; box-shadow: 0 0 6px #FFE78080; }
+.home-status-dot--offline      { background: #3f3f46; }
 
-@keyframes pulse-dot {
+@keyframes dot-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.8); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
 }
 
 .home-status-label {
   font-size: 12px;
   font-weight: 700;
   color: var(--dk-text-2);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
 /* ── Affinity bar ── */
@@ -183,7 +210,7 @@
 .affinity-track {
   flex: 1;
   height: 4px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
   border-radius: 9999px;
   overflow: hidden;
 }
@@ -192,7 +219,7 @@
   height: 100%;
   background: var(--ac-green);
   border-radius: 9999px;
-  transition: width 0.4s ease;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
 }
 
 .affinity-fill--happy {
@@ -203,21 +230,12 @@
   font-size: 11px;
   font-weight: 800;
   color: var(--dk-text-3);
-  min-width: 20px;
+  min-width: 22px;
   text-align: right;
 }
 
-/* ── Stats panel ── */
-.home-stats-wrap {
-  width: 100%;
-  background: var(--dk-surface);
-  border: 1px solid var(--dk-border-2);
-  border-radius: 24px;
-  padding: 20px 24px;
-  box-sizing: border-box;
-}
+/* ══ Stats, actions, level, achievements ══ */
 
-/* ── Actions ── */
 .home-actions {
   display: flex;
   gap: 10px;
@@ -226,19 +244,14 @@
 
 .home-actions > * { flex: 1; }
 
-/* ── Level progress ── */
-.home-level-wrap {
-  width: 100%;
-}
-
-/* ── Achievements wall ── */
 .achievements-wall {
   width: 100%;
-  padding: 20px 24px;
+  padding: 20px 22px;
   background: var(--dk-surface);
   border: 1px solid var(--dk-border-2);
   border-radius: 24px;
   box-sizing: border-box;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
 .ach-title {
@@ -246,22 +259,18 @@
   font-weight: 800;
   color: var(--dk-text-3);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   margin: 0 0 14px;
   font-family: 'Syne', system-ui, sans-serif;
 }
 
-.ach-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+.ach-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .ach-item {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 11px;
+  padding: 5px 12px;
   border-radius: 9999px;
   border: 1px solid transparent;
   font-size: 11px;
@@ -271,13 +280,7 @@
 
 .ach-emoji { font-size: 13px; }
 .ach-name  { white-space: nowrap; }
-
-.ach-icon-img {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-  border-radius: 2px;
-}
+.ach-icon-img { width: 14px; height: 14px; object-fit: contain; border-radius: 2px; }
 
 /* ── Connect button ── */
 .btn-connect {
@@ -285,7 +288,7 @@
   border: 1px solid var(--dk-border-2);
   border-radius: 9999px;
   color: var(--dk-text-3);
-  padding: 11px 24px;
+  padding: 12px 24px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -299,4 +302,31 @@
   border-color: rgba(255,255,255,0.2);
   color: var(--dk-text-2);
   background: rgba(255,255,255,0.03);
+}
+
+/* ── Feedback link ── */
+.btn-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 13px 24px;
+  border-radius: 9999px;
+  border: 1px solid rgba(131,255,193,0.2);
+  background: rgba(131,255,193,0.04);
+  color: var(--ac-green);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Nunito', system-ui, sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: all 0.15s;
+  box-sizing: border-box;
+}
+
+.btn-feedback:hover {
+  border-color: rgba(131,255,193,0.4);
+  background: rgba(131,255,193,0.08);
+  transform: translateY(-1px);
 }

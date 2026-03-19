@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import PetDisplay from '../components/PetDisplay';
 import StatsPanel from '../components/StatsPanel';
 import LobsterReport from '../components/LobsterReport';
@@ -374,6 +375,11 @@ export default function Home() {
         <button className="btn-connect" onClick={() => setShowModal(true)}>
           {connected ? '切换连接' : '连接 Gateway'}
         </button>
+
+        {/* ── Feedback ── */}
+        <Link to="/feedback" className="btn-feedback">
+          💡 建议功能 · 查看路线图
+        </Link>
       </main>
     </div>
   );
