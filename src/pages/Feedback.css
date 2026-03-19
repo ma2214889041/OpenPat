@@ -1,4 +1,4 @@
-/* ══ Feedback / Roadmap 页 — Doodles 白底风格 ══ */
+/* ══ Feedback 页 — Doodles 白底风格 ══ */
 
 .fb-page {
   background: #fff;
@@ -20,7 +20,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #666;
+  color: #888;
   margin-bottom: 16px;
 }
 
@@ -43,232 +43,52 @@
 
 .fb-sub {
   font-size: clamp(16px, 2vw, 20px);
-  line-height: 1.6;
-  color: #444;
+  line-height: 1.7;
+  color: #555;
   font-weight: 500;
-  max-width: 48ch;
-  margin: 0 auto 28px;
+  max-width: 44ch;
+  margin: 0 auto;
 }
 
-.fb-login-hint {
-  display: inline-block;
-  background: #000;
-  color: #fff;
-  border: none;
-  border-radius: 9999px;
-  padding: 12px 28px;
-  font-size: 14px;
-  font-weight: 800;
-  font-family: 'Nunito', system-ui, sans-serif;
-  cursor: pointer;
-  transition: transform 0.15s, filter 0.15s;
-  letter-spacing: 0.01em;
-}
-
-.fb-login-hint:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.15);
-}
-
-/* ── Voting board ── */
-.fb-loading {
-  text-align: center;
-  padding: 80px;
-  color: #999;
-  font-size: 16px;
-}
-
-.fb-board {
-  padding: 80px clamp(20px, 6vw, 100px);
-  display: flex;
-  flex-direction: column;
-  gap: 64px;
-}
-
-.fb-group {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.fb-group-label {
-  display: inline-flex;
-  align-self: flex-start;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 5px 14px;
-  border-radius: 9999px;
-  color: #000;
-}
-
-.fb-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 14px;
-}
-
-/* ── Vote card ── */
-.fb-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  background: #fff;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 20px;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-}
-
-.fb-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.07);
-  border-color: #d1d5db;
-}
-
-.fb-card--voted {
-  border-color: #83FFC1;
-  background: #f0fff8;
-}
-
-.fb-card-emoji {
-  font-size: 32px;
-  flex-shrink: 0;
-  width: 48px;
-  text-align: center;
-}
-
-.fb-card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.fb-card-title {
-  font-family: 'Syne', system-ui, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #000;
-}
-
-.fb-card-desc {
-  font-size: 13px;
-  line-height: 1.5;
-  color: #666;
-  font-weight: 500;
-}
-
-.fb-card-tag {
-  display: inline-flex;
-  align-self: flex-start;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 2px 9px;
-  border-radius: 9999px;
-  margin-top: 4px;
-}
-
-/* ── Vote button ── */
-.fb-vote-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 16px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 14px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
-  font-family: 'Nunito', system-ui, sans-serif;
-}
-
-.fb-vote-btn:hover {
-  border-color: #83FFC1;
-  background: #f0fff8;
-  transform: translateY(-1px);
-}
-
-.fb-vote-btn--active {
-  background: #83FFC1;
-  border-color: #83FFC1;
-}
-
-.fb-vote-btn--active:hover {
-  background: #6fe8ac;
-}
-
-.fb-vote-arrow {
-  font-size: 12px;
-  color: #000;
-  line-height: 1;
-}
-
-.fb-vote-count {
-  font-size: 15px;
-  font-weight: 800;
-  color: #000;
-  line-height: 1;
-}
-
-/* ── Feedback form ── */
+/* ── Form section ── */
 .fb-form-section {
-  padding: 100px clamp(20px, 6vw, 100px);
-  border-top: 1.5px solid #e5e7eb;
-  background: #fafafa;
+  padding: 80px clamp(20px, 6vw, 100px);
 }
 
 .fb-form-inner {
-  max-width: 600px;
+  max-width: 640px;
   margin: 0 auto;
+}
+
+.fb-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.fb-form-h2 {
-  font-family: 'Syne', system-ui, sans-serif;
-  font-size: clamp(32px, 4vw, 48px);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-  margin-bottom: 8px;
-}
-
-.fb-form-h2 em {
-  font-style: normal;
 }
 
 .fb-textarea {
   width: 100%;
-  padding: 18px 20px;
+  padding: 20px 22px;
   border: 1.5px solid #e5e7eb;
-  border-radius: 16px;
-  font-size: 15px;
+  border-radius: 20px;
+  font-size: 16px;
   font-family: 'Nunito', system-ui, sans-serif;
   font-weight: 500;
   color: #000;
   background: #fff;
   resize: vertical;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
   box-sizing: border-box;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .fb-textarea:focus {
   border-color: #8B8BFF;
+  box-shadow: 0 0 0 4px rgba(139,139,255,0.08);
 }
 
-.fb-textarea::placeholder {
-  color: #aaa;
-}
+.fb-textarea::placeholder { color: #bbb; }
 
 .fb-form-actions {
   display: flex;
@@ -280,7 +100,7 @@
 
 .fb-form-hint {
   font-size: 13px;
-  color: #888;
+  color: #999;
   font-weight: 500;
 }
 
@@ -301,8 +121,8 @@
   color: #fff;
   border: none;
   border-radius: 9999px;
-  padding: 13px 28px;
-  font-size: 14px;
+  padding: 13px 32px;
+  font-size: 15px;
   font-weight: 800;
   font-family: 'Nunito', system-ui, sans-serif;
   cursor: pointer;
@@ -316,7 +136,7 @@
 }
 
 .fb-submit:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
@@ -325,18 +145,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 48px;
+  gap: 14px;
+  padding: 56px 40px;
   border: 1.5px solid #83FFC1;
-  border-radius: 20px;
+  border-radius: 24px;
   background: #f0fff8;
   text-align: center;
 }
 
-.fb-thanks-emoji { font-size: 48px; }
+.fb-thanks-emoji { font-size: 56px; }
 
 .fb-thanks p {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #000;
 }
@@ -359,7 +179,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -377,7 +197,6 @@
   color: #fff;
   border: 2px solid #000;
   transition: transform 0.15s, filter 0.15s;
-  cursor: pointer;
 }
 
 .fb-cta-btn:hover {
@@ -392,8 +211,5 @@
 
 .fb-cta-btn--outline:hover {
   background: #f5f5f5;
-}
-
-@media (max-width: 600px) {
-  .fb-cards { grid-template-columns: 1fr; }
+  filter: none;
 }

@@ -378,7 +378,7 @@ export default function Home() {
 
         {/* ── Feedback ── */}
         <Link to="/feedback" className="btn-feedback">
-          💡 建议功能 · 查看路线图
+          💡 给我们反馈
         </Link>
       </main>
     </div>
