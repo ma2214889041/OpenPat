@@ -6,6 +6,7 @@ import Landing from './pages/Landing';
 import Home from './pages/Home';
 import PublicProfile from './pages/PublicProfile';
 import AdminSkins from './pages/AdminSkins';
+import Feedback from './pages/Feedback';
 import './App.css';
 
 // Navbar and settings only appear on app routes, not the landing page
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/app"           element={<Home />} />
             <Route path="/u/:username"   element={<PublicProfile />} />
             <Route path="/admin"         element={<AdminSkins />} />
+            <Route path="/feedback"      element={<Feedback />} />
           </Routes>
         </AppShell>
       </div>

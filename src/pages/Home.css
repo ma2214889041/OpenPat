@@ -2,9 +2,9 @@
 :root {
   --dk-bg: #0a0a0a;
   --dk-surface: #111111;
-  --dk-surface-2: #1a1a1a;
-  --dk-border: rgba(255,255,255,0.07);
-  --dk-border-2: rgba(255,255,255,0.12);
+  --dk-surface-2: #161616;
+  --dk-border: rgba(255,255,255,0.06);
+  --dk-border-2: rgba(255,255,255,0.10);
   --dk-text: #ffffff;
   --dk-text-2: #a1a1aa;
   --dk-text-3: #52525b;
@@ -20,21 +20,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80px 16px 80px;
+  padding: 80px 16px 100px;
   background: var(--dk-bg);
   box-sizing: border-box;
   position: relative;
 }
 
-/* Ambient glow in background */
+/* Ambient gradient bg */
 .home::before {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse at 15% 40%, rgba(139,139,255,0.05) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 20%, rgba(255,148,219,0.05) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 90%, rgba(131,255,193,0.04) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 20%, rgba(139,139,255,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255,148,219,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(131,255,193,0.05) 0%, transparent 45%);
   pointer-events: none;
   z-index: 0;
 }
@@ -45,76 +45,176 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
-  max-width: 440px;
+  max-width: 480px;
 }
 
-/* ── Companion card ── */
+/* ── Companion card — pet + report ── */
 .home-companion-card {
   width: 100%;
   background: var(--dk-surface);
   border: 1px solid var(--dk-border-2);
-  border-radius: 24px;
+  border-radius: 28px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 20px 60px rgba(0,0,0,0.4);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 24px 64px rgba(0,0,0,0.5);
 }
 
+/* Pet stage */
 .home-lobster-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 220px;
-  padding: 24px 16px 16px;
+  min-height: 260px;
+  padding: 32px 24px 20px;
   box-sizing: border-box;
-  transition: filter 0.5s ease;
   position: relative;
 }
 
-/* Radial glow behind pet */
+/* Color glow behind pet — changes by status via JS inline style */
 .home-lobster-wrap::before {
   content: '';
   position: absolute;
-  width: 180px;
-  height: 180px;
-  background: radial-gradient(circle, rgba(131,255,193,0.1) 0%, transparent 70%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(131,255,193,0.08) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
+  transition: background 0.5s;
 }
 
-/* ── Pet placeholder (no skin loaded) ── */
+/* ── Pet placeholder ── */
 .pet-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 160px;
-  height: 160px;
-  border-radius: 20px;
-  border: 2px dashed rgba(255,255,255,0.1);
+  width: 180px;
+  height: 180px;
+  border-radius: 24px;
+  border: 2px dashed rgba(255,255,255,0.08);
   cursor: pointer;
+  transition: border-color 0.2s;
 }
+
+.pet-placeholder:hover { border-color: rgba(255,255,255,0.16); }
+
 .pet-placeholder-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
-.pet-placeholder-icon { font-size: 40px; opacity: 0.4; }
+
+.pet-placeholder-icon { font-size: 44px; opacity: 0.3; }
+
 .pet-placeholder-text {
   font-size: 11px;
   color: var(--dk-text-3);
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
+/* Companion footer */
 .home-companion-footer {
-  padding: 12px 20px 18px;
+  padding: 16px 24px 24px;
   border-top: 1px solid var(--dk-border);
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Status pill inside companion card ── */
+.home-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.home-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.home-status-dot--idle    { background: #83FFC1; box-shadow: 0 0 6px #83FFC1; }
+.home-status-dot--thinking { background: #FFE780; box-shadow: 0 0 6px #FFE780; animation: pulse-dot 1.4s ease-in-out infinite; }
+.home-status-dot--tool_call { background: #8B8BFF; box-shadow: 0 0 6px #8B8BFF; animation: pulse-dot 0.8s ease-in-out infinite; }
+.home-status-dot--done    { background: #83FFC1; box-shadow: 0 0 8px #83FFC1; }
+.home-status-dot--error   { background: #FF94DB; box-shadow: 0 0 6px #FF94DB; }
+.home-status-dot--offline { background: #52525b; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+.home-status-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dk-text-2);
+  letter-spacing: 0.02em;
+}
+
+/* ── Affinity bar ── */
+.affinity-bar-wrap {
+  display: flex;
+  align-items: center;
   gap: 10px;
+}
+
+.affinity-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dk-text-3);
+  white-space: nowrap;
+}
+
+.affinity-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.affinity-fill {
+  height: 100%;
+  background: var(--ac-green);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.affinity-fill--happy {
+  background: linear-gradient(90deg, var(--ac-pink), var(--ac-yellow));
+}
+
+.affinity-value {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--dk-text-3);
+  min-width: 20px;
+  text-align: right;
+}
+
+/* ── Stats panel ── */
+.home-stats-wrap {
+  width: 100%;
+  background: var(--dk-surface);
+  border: 1px solid var(--dk-border-2);
+  border-radius: 24px;
+  padding: 20px 24px;
+  box-sizing: border-box;
 }
 
 /* ── Actions ── */
@@ -123,87 +223,80 @@
   gap: 10px;
   width: 100%;
 }
+
 .home-actions > * { flex: 1; }
 
-/* ── Connect button ── */
-.btn-connect {
-  background: transparent;
-  border: 1px solid var(--dk-border-2);
-  border-radius: 999px;
-  color: var(--dk-text-3);
-  padding: 10px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'Nunito', system-ui, sans-serif;
+/* ── Level progress ── */
+.home-level-wrap {
   width: 100%;
-  letter-spacing: 0.01em;
-}
-.btn-connect:hover {
-  border-color: rgba(255,255,255,0.2);
-  color: var(--dk-text-2);
-  background: rgba(255,255,255,0.03);
 }
 
 /* ── Achievements wall ── */
 .achievements-wall {
   width: 100%;
-  padding: 16px;
+  padding: 20px 24px;
   background: var(--dk-surface);
-  border: 1px solid var(--dk-border);
-  border-radius: 20px;
+  border: 1px solid var(--dk-border-2);
+  border-radius: 24px;
+  box-sizing: border-box;
 }
+
 .ach-title {
   font-size: 10px;
   font-weight: 800;
   color: var(--dk-text-3);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-family: 'Syne', system-ui, sans-serif;
 }
-.ach-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ach-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .ach-item {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 5px 11px;
+  border-radius: 9999px;
   border: 1px solid transparent;
   font-size: 11px;
-  font-weight: 600;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
+
 .ach-emoji { font-size: 13px; }
-.ach-name { font-size: 11px; }
-.ach-icon-img { width: 16px; height: 16px; object-fit: contain; border-radius: 2px; }
+.ach-name  { white-space: nowrap; }
 
-@media (max-width: 480px) { .home-main { max-width: 100%; } }
+.ach-icon-img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  border-radius: 2px;
+}
 
-/* ── Affinity bar ── */
-.affinity-bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* ── Connect button ── */
+.btn-connect {
+  background: transparent;
+  border: 1px solid var(--dk-border-2);
+  border-radius: 9999px;
+  color: var(--dk-text-3);
+  padding: 11px 24px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Nunito', system-ui, sans-serif;
   width: 100%;
+  letter-spacing: 0.01em;
 }
-.affinity-label { font-size: 11px; color: var(--dk-text-3); white-space: nowrap; }
-.affinity-track {
-  flex: 1;
-  height: 3px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 4px;
-  overflow: hidden;
+
+.btn-connect:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--dk-text-2);
+  background: rgba(255,255,255,0.03);
 }
-.affinity-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--ac-purple), var(--ac-pink));
-  border-radius: 4px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.affinity-fill--happy {
-  background: linear-gradient(90deg, var(--ac-green), var(--ac-yellow));
-  box-shadow: 0 0 8px rgba(131,255,193,0.4);
-}
-.affinity-value { font-size: 11px; color: var(--dk-text-3); width: 24px; text-align: right; }

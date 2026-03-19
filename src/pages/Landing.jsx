@@ -56,7 +56,7 @@ export default function Landing() {
           <div className="lp-nav-links">
             <button className="lp-nav-link" onClick={() => scrollTo('about')}>关于</button>
             <button className="lp-nav-link" onClick={() => scrollTo('share')}>分享</button>
-            <button className="lp-nav-link" onClick={() => scrollTo('shorts')}>短剧</button>
+            <Link to="/feedback" className="lp-nav-link">路线图</Link>
           </div>
           <Link to="/app" className="lp-nav-cta">立刻开始 →</Link>
         </div>
