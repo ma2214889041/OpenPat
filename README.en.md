@@ -163,7 +163,7 @@ After logging in, you get a personal link at `open-pat.com/u/your-username`, acc
 - Agent's current work state (green/orange/red dot)
 - Companion animation (real-time state)
 - Total tasks / level / achievement wall
-- AI-generated "commentary" auto-written from your stats
+- Auto-generated roast commentary based on your stats (the more you grind, the more savage it gets)
 
 ---
 
