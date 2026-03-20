@@ -82,13 +82,11 @@ serve(async (req) => {
     .update({ last_used_at: new Date().toISOString() })
     .eq('id', tokenRow.id);
 
-  // On done/tool_end: bump stats in profiles
-  if (eventType === 'done') {
-    await supabase.rpc('increment_tasks', { uid: tokenRow.user_id });
-  }
-  if (eventType === 'tool_end') {
-    await supabase.rpc('increment_tool_calls', { uid: tokenRow.user_id });
-  }
+  // NOTE: Cumulative stats (total_tasks, total_tool_calls, total_tokens) are
+  // intentionally NOT incremented here. The browser session (useProfileSync) is
+  // the sole source of truth for profile stats to prevent double-counting when
+  // both the Skill and browser are active simultaneously.
+  // The Skill's role is exclusively to update the real-time agent_status.
 
   return new Response(JSON.stringify({ ok: true, status }), {
     headers: { ...CORS, 'Content-Type': 'application/json' },

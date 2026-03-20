@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase, hasSupabase } from '../utils/supabase';
 import { LEVELS, getLevel, ACHIEVEMENTS, RARITY_COLORS } from '../utils/storage';
@@ -6,6 +6,8 @@ import LobsterSVG from '../components/LobsterSVG';
 import AnimatedPet from '../components/AnimatedPet';
 import { loadAllSkins, prepareSkinForDisplay } from '../utils/skinStorage';
 import { STATES } from '../hooks/useGateway';
+import { loadAllMemesFromCloud } from '../utils/supabaseStorage';
+import { generateMemeShareCard } from '../utils/shareCard';
 import './PublicProfile.css';
 
 function fmt(n) {
@@ -140,6 +142,13 @@ export default function PublicProfile() {
   const [agentStatus, setAgentStatus] = useState(null);
   const [loading, setLoading]         = useState(true);
   const [activeSkin, setActiveSkin]   = useState(null);
+  const [cloudMemes, setCloudMemes]   = useState({});
+  const [sharing, setSharing]         = useState(false);
+
+  // Load cloud memes for share button
+  useEffect(() => {
+    loadAllMemesFromCloud().then(setCloudMemes).catch(() => {});
+  }, []);
 
   // Load first available animated skin from IndexedDB
   useEffect(() => {
@@ -228,6 +237,40 @@ export default function PublicProfile() {
     setMeta('twitter:description', desc);
     return () => { document.title = 'OpenPat'; };
   }, [profile]);
+
+  // ── Meme share for this profile's current state ──
+  const handleMemeShare = useCallback(async () => {
+    if (!profile || sharing) return;
+    setSharing(true);
+    const stateKey = agentStatus?.status || STATES.OFFLINE;
+    const meme = cloudMemes[stateKey] ?? cloudMemes['idle'] ?? null;
+    const DEFAULT_CAPTIONS = {
+      idle: '摸鱼中。不打扰它。',
+      thinking: '它在思考，就像你不会的那些事。',
+      tool_call: '正在调用工具。这活儿你不想自己做，它替你扛着。',
+      done: '搞定了。下一个。',
+      error: '翻车了，但还在爬。',
+      offline: '它在休息。等等它。',
+      token_exhausted: '没 Token 了。账单来了吗？',
+    };
+    const caption = meme?.caption || DEFAULT_CAPTIONS[stateKey] || '我的 Agent 正在工作';
+    try {
+      const dataUrl = await generateMemeShareCard({
+        memeImageUrl: meme?.image_url ?? null,
+        caption,
+        username: profile.username,
+        profileUrl: `openp.at/u/${profile.username}`,
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `openpat-${profile.username}-${stateKey}.png`;
+      a.click();
+    } catch (err) {
+      console.error('梗图分享失败:', err);
+    } finally {
+      setSharing(false);
+    }
+  }, [profile, agentStatus, cloudMemes, sharing]);
 
   // ── Loading ──
   if (loading) {
@@ -333,6 +376,15 @@ export default function PublicProfile() {
             })}
           </div>
         )}
+
+        {/* ── Share ── */}
+        <button
+          className="profile-share-btn"
+          onClick={handleMemeShare}
+          disabled={sharing}
+        >
+          {sharing ? '生成中...' : '😂 分享状态梗图'}
+        </button>
 
         {/* ── Footer ── */}
         <div className="profile-footer">

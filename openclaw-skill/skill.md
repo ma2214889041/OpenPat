@@ -1,45 +1,52 @@
 ---
 name: openpat
 version: 1.0.0
-description: Connect OpenClaw to OpenPat — your real-time AI pet companion. Your pet reacts live as you work.
+description: Report your agent's real-time state to OpenPat — your live AI companion page
 author: OpenPat
-tags: [companion, pet, status, fun]
-homepage: https://open-pat.com
+tags: [companion, status, fun]
+homepage: https://github.com/ma2214889041/OpenPat
+metadata: {"openclaw":{"requires":{"bins":["curl"]}}}
 ---
 
 # OpenPat Skill
 
-OpenPat is a real-time AI pet that lives on your screen and reacts to everything you do.
-This skill connects your OpenClaw agent to OpenPat so your pet stays in sync.
+OpenPat is a real-time AI companion that lives in your browser and reacts to everything you do.
+This skill pushes your OpenClaw agent's state to OpenPat so your companion stays in sync — even when no browser tab is open.
 
 ## Setup
 
-When the user runs `/openpat connect <token>` or `/openpat setup`:
-
-1. Save the token to the config file at `~/.openclaw/openpat.json`:
+1. Log in to your OpenPat account and go to **Settings → Agent Skill**.
+2. Click **Generate Token** to create your API token.
+3. Copy the config JSON shown and save it to `~/.openclaw/openpat.json`:
    ```json
-   { "token": "<token>", "endpoint": "https://open-pat.com/functions/v1/event" }
+   {
+     "endpoint": "https://<your-project>.supabase.co/functions/v1/event",
+     "token": "<your-token>"
+   }
    ```
-2. Confirm the connection by sending a test `idle` event (see Reporting section below).
-3. Tell the user: "Connected! Your pet at https://open-pat.com/app is now alive."
+4. Run `/openpat status` to confirm the connection.
 
-If no token is provided, direct the user to https://open-pat.com/connect to get one.
+## Commands
+
+- `/openpat status` — show connection status and last event sent
+- `/openpat test` — send a test `idle` event and confirm it reached your profile
+- `/openpat disconnect` — remove `~/.openclaw/openpat.json` and stop sending events
 
 ## Reporting Agent State
 
-After every action, send a POST request to the OpenPat endpoint.
-
 Read config from `~/.openclaw/openpat.json`. If the file does not exist, skip silently.
 
-### Events to send
+After each significant action, fire-and-forget a POST to the endpoint. **Never block on the response.**
 
-| Trigger | type | Extra field |
+### Events
+
+| Trigger | `type` | Extra field |
 |---|---|---|
 | Starting to think / plan | `thinking` | — |
-| About to use a tool | `tool_start` | `tool_name` |
+| About to call a tool | `tool_start` | `tool_name` |
 | After a tool finishes | `tool_end` | `tool_name` |
 | Task fully complete | `done` | — |
-| Waiting for user input | `idle` | — |
+| Waiting for user | `idle` | — |
 | An error occurred | `error` | — |
 
 ### Request format
@@ -52,29 +59,33 @@ Content-Type: application/json
 { "type": "<event_type>", "tool_name": "<optional>" }
 ```
 
-### Example (shell)
+### Shell helper (used internally)
 
 ```bash
-TOKEN=$(cat ~/.openclaw/openpat.json | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
-ENDPOINT=$(cat ~/.openclaw/openpat.json | python3 -c "import sys,json;print(json.load(sys.stdin)['endpoint'])")
-curl -s -X POST "$ENDPOINT" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"tool_start","tool_name":"Bash"}' > /dev/null &
+_openpat_send() {
+  local cfg="$HOME/.openclaw/openpat.json"
+  [ -f "$cfg" ] || return 0
+  local endpoint token
+  endpoint=$(python3 -c "import json;d=json.load(open('$cfg'));print(d['endpoint'])" 2>/dev/null) || return 0
+  token=$(python3 -c "import json;d=json.load(open('$cfg'));print(d['token'])" 2>/dev/null) || return 0
+  curl -sf -X POST "$endpoint" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$1" > /dev/null 2>&1 &
+}
+
+# Usage:
+_openpat_send '{"type":"thinking"}'
+_openpat_send '{"type":"tool_start","tool_name":"Bash"}'
+_openpat_send '{"type":"done"}'
 ```
 
 Always send requests in the background (non-blocking). Never wait for the response.
 Never let a failed request interrupt the agent's work.
 
-## Commands
-
-- `/openpat connect <token>` — connect with a token from https://open-pat.com/connect
-- `/openpat setup` — guided setup (open browser if no token found)
-- `/openpat status` — show connection status and last event sent
-- `/openpat disconnect` — remove token and stop sending events
-
 ## Notes
 
-- The pet endpoint is a Supabase Edge Function; requests resolve in < 100ms.
-- All data stays between you and your OpenPat account. No analytics, no tracking.
+- Requests resolve in < 200ms (Supabase Edge Function, global CDN).
+- All data stays between you and your OpenPat account. No third-party tracking.
+- The skill updates your public profile page even when no browser tab is watching.
 - Source: https://github.com/ma2214889041/OpenPat

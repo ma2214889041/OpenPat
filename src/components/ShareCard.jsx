@@ -44,7 +44,7 @@ export default function ShareCard({ stats, status, skin, rank, username, petFram
                             <span className="stat-lbl">Tasks Done</span>
                         </div>
                         <div className="stat-item">
-                            <span className="stat-val">{Math.round(stats.totalTokens / 1000)}k</span>
+                            <span className="stat-val">{Math.round(((stats.tokensInput || 0) + (stats.tokensOutput || 0)) / 1000)}k</span>
                             <span className="stat-lbl">Tokens</span>
                         </div>
                         <div className="stat-item">

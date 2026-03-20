@@ -309,3 +309,29 @@
   .profile-live-pill { display: none; }
   .ps-value { font-size: 18px; }
 }
+
+/* ── Profile share button ── */
+.profile-share-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 0 16px 16px;
+  padding: 12px 0;
+  background: #111;
+  color: #ffe066;
+  border: 2px solid #ffe066;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Nunito', system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.profile-share-btn:hover:not(:disabled) {
+  background: #ffe066;
+  color: #111;
+  transform: translateY(-1px);
+}
+.profile-share-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

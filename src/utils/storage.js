@@ -168,12 +168,41 @@ export function checkAchievements(data, { stats, usedToolName, didShare, activeS
   return { ...data, achievements: ach, usedSkinIds, usedToolNames, totalShares };
 }
 
+/**
+ * Check admin-defined cloud achievements against current data.
+ * unlock_type values: 'first_connect' | 'first_tool' | 'tasks' | 'tokens' | 'night_owl'
+ * Only auto-checkable types are handled here; 'night_owl' is hour-based (handled in Home).
+ */
+export function checkCloudAchievements(data, adminDefs = []) {
+  if (!adminDefs.length) return data;
+  let ach = [...(data.achievements || [])];
+  const totalTokens = (data.totalTokensInput ?? 0) + (data.totalTokensOutput ?? 0);
+
+  for (const def of adminDefs) {
+    if (!def.is_active) continue;
+    if (ach.includes(def.id)) continue;
+
+    let unlocked = false;
+    switch (def.unlock_type) {
+      case 'first_connect': unlocked = !!data.firstConnectedAt; break;
+      case 'first_tool':    unlocked = (data.totalToolCalls ?? 0) >= 1; break;
+      case 'tasks':         unlocked = (data.totalTasks ?? 0)     >= (def.unlock_threshold ?? Infinity); break;
+      case 'tokens':        unlocked = totalTokens                >= (def.unlock_threshold ?? Infinity); break;
+      default: break; // 'night_owl' and manual types handled elsewhere
+    }
+
+    if (unlocked) ach.push(def.id);
+  }
+
+  return { ...data, achievements: ach };
+}
+
 export const LEVELS = [
-  { name: '虾苗',     min: 0,      max: 999    },
-  { name: '小龙虾',   min: 1000,   max: 9999   },
-  { name: '大龙虾',   min: 10000,  max: 49999  },
-  { name: '霸王龙虾', min: 50000,  max: 199999 },
-  { name: '龙虾神',   min: 200000, max: Infinity },
+  { name: 'Intern',    min: 0,      max: 999    },
+  { name: 'Junior',    min: 1000,   max: 9999   },
+  { name: 'Senior',    min: 10000,  max: 49999  },
+  { name: 'Staff',     min: 50000,  max: 199999 },
+  { name: 'Principal', min: 200000, max: Infinity },
 ];
 
 export function getLevel(totalTasks) {

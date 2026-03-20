@@ -20,7 +20,7 @@ import { useDemoMode } from '../hooks/useDemoMode';
 import {
   loadData, saveData, ACHIEVEMENTS, RARITY_COLORS,
   onGatewayConnect, tickUptimeCheck, recordError, checkNoErrorWeek,
-  checkAchievements,
+  checkAchievements, checkCloudAchievements,
 } from '../utils/storage';
 import { loadAllAchievementDefs } from '../utils/skinStorage';
 import { loadAllMemesFromCloud, loadAllAchievementsFromCloud } from '../utils/supabaseStorage';
@@ -74,6 +74,7 @@ export default function Home() {
   const sessionStartRef = useRef(null);
   const prevConnected = useRef(false);
   const prevStatus = useRef(null);
+  const adminAchDefsRef = useRef([]); // ref so setLocalData callbacks can access latest defs
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const { user, username } = useAuth();
@@ -83,7 +84,7 @@ export default function Home() {
   const animatedSkin = useAnimatedSkin();
   const { affinity, addAffinity, isHappy } = useAffinity();
   const { notify } = useNotifications();
-  const { status, connected, currentTool, errorLog, stats } = useGateway(wsUrl, token);
+  const { status, connected, currentTool, errorLog, authError, stats } = useGateway(wsUrl, token);
   const { demoStatus, demoTool, demoStats } = useDemoMode(!connected);
 
   useDynamicFavicon(connected ? status : demoStatus);
@@ -108,13 +109,28 @@ export default function Home() {
   // ── Load admin achievement defs (cloud first, IndexedDB fallback) ─────────
   useEffect(() => {
     loadAllAchievementsFromCloud()
-      .then((data) => { if (data.length) setAdminAchievementDefs(data); })
+      .then((data) => {
+        if (data.length) {
+          setAdminAchievementDefs(data);
+          adminAchDefsRef.current = data;
+        }
+      })
       .catch(() => {
         // fallback to local IndexedDB
         loadAllAchievementDefs()
-          .then(setAdminAchievementDefs)
+          .then((data) => {
+            setAdminAchievementDefs(data);
+            adminAchDefsRef.current = data;
+          })
           .catch((err) => console.error('[Home] failed to load achievement defs:', err));
       });
+  }, []);
+
+  // ── Reload from localStorage after bidirectional sync pull ────────────────
+  useEffect(() => {
+    const onSync = () => setLocalData(loadData());
+    window.addEventListener('openpat-sync', onSync);
+    return () => window.removeEventListener('openpat-sync', onSync);
   }, []);
 
   // ── Load cloud memes ───────────────────────────────────────────────────────
@@ -154,7 +170,8 @@ export default function Home() {
       addAffinity(10); // daily connect bonus
       setLocalData((prev) => {
         const updated = onGatewayConnect(prev);
-        const withAch = checkAchievements(updated, {});
+        const withBuiltin = checkAchievements(updated, {});
+        const withAch = checkCloudAchievements(withBuiltin, adminAchDefsRef.current);
         saveData(withAch);
         return withAch;
       });
@@ -176,15 +193,27 @@ export default function Home() {
         const base = prev.todayDate === today
           ? prev
           : { ...prev, todayTokensInput: 0, todayTokensOutput: 0, todayDate: today };
+        // Only add the delta not already flushed by the periodic checkpoint
+        const alreadyIn    = prev._flushedTokensIn    ?? 0;
+        const alreadyOut   = prev._flushedTokensOut   ?? 0;
+        const alreadyTools = prev._flushedToolCalls   ?? 0;
+        const remainIn    = Math.max(0, stats.tokensInput  - alreadyIn);
+        const remainOut   = Math.max(0, stats.tokensOutput - alreadyOut);
+        const remainTools = Math.max(0, stats.toolCalls    - alreadyTools);
         const updated = {
           ...base,
           todayTokensInput:  base.todayTokensInput  + stats.tokensInput,
           todayTokensOutput: base.todayTokensOutput + stats.tokensOutput,
-          totalToolCalls:    base.totalToolCalls    + stats.toolCalls,
-          totalTokensInput:  base.totalTokensInput  + stats.tokensInput,
-          totalTokensOutput: base.totalTokensOutput + stats.tokensOutput,
+          totalToolCalls:    base.totalToolCalls    + remainTools,
+          totalTokensInput:  base.totalTokensInput  + remainIn,
+          totalTokensOutput: base.totalTokensOutput + remainOut,
+          // Clear checkpoint state for the next session
+          _flushedTokensIn:  0,
+          _flushedTokensOut: 0,
+          _flushedToolCalls: 0,
         };
-        const withAch = checkAchievements(updated, {});
+        const withBuiltin2 = checkAchievements(updated, {});
+        const withAch = checkCloudAchievements(withBuiltin2, adminAchDefsRef.current);
         saveData(withAch);
         return withAch;
       });
@@ -204,6 +233,47 @@ export default function Home() {
         return updated;
       });
     }, 60_000);
+    return () => clearInterval(id);
+  }, [connected]);
+
+  // ── Periodic session stat checkpoint (every 2 min) ─────────────────────────
+  // Writes in-memory session stats to localStorage so data isn't lost on crash.
+  // stats ref so the interval always sees the latest values without re-creating.
+  const statsRef = useRef(stats);
+  useEffect(() => { statsRef.current = stats; }, [stats]);
+
+  useEffect(() => {
+    if (!connected) return;
+    const id = setInterval(() => {
+      const s = statsRef.current;
+      if (!s.tokensInput && !s.tokensOutput && !s.toolCalls) return;
+      setLocalData((prev) => {
+        const today = new Date().toDateString();
+        const base = prev.todayDate === today
+          ? prev
+          : { ...prev, todayTokensInput: 0, todayTokensOutput: 0, todayDate: today };
+        // Write current session delta into localData so it survives a crash.
+        // We track how much was already flushed to avoid double-counting.
+        const alreadyFlushedIn  = prev._flushedTokensIn  ?? 0;
+        const alreadyFlushedOut = prev._flushedTokensOut ?? 0;
+        const alreadyFlushedTools = prev._flushedToolCalls ?? 0;
+        const newIn    = Math.max(0, s.tokensInput  - alreadyFlushedIn);
+        const newOut   = Math.max(0, s.tokensOutput - alreadyFlushedOut);
+        const newTools = Math.max(0, s.toolCalls    - alreadyFlushedTools);
+        if (!newIn && !newOut && !newTools) return prev;
+        const updated = {
+          ...base,
+          totalTokensInput:  base.totalTokensInput  + newIn,
+          totalTokensOutput: base.totalTokensOutput + newOut,
+          totalToolCalls:    base.totalToolCalls    + newTools,
+          _flushedTokensIn:  s.tokensInput,
+          _flushedTokensOut: s.tokensOutput,
+          _flushedToolCalls: s.toolCalls,
+        };
+        saveData(updated);
+        return updated;
+      });
+    }, 120_000); // every 2 minutes
     return () => clearInterval(id);
   }, [connected]);
 
@@ -232,7 +302,8 @@ export default function Home() {
             ...extras.filter((id) => !withWeek.achievements.includes(id)),
           ],
         };
-        const withAch = checkAchievements(updated, {});
+        const withBuiltin3 = checkAchievements(updated, {});
+        const withAch = checkCloudAchievements(withBuiltin3, adminAchDefsRef.current);
         saveData(withAch);
         return withAch;
       });
@@ -306,7 +377,8 @@ export default function Home() {
   // ── Share ──────────────────────────────────────────────────────────────────
   const handleShareGenerated = useCallback(() => {
     setLocalData((prev) => {
-      const withAch = checkAchievements(prev, { didShare: true });
+      const withBuiltin = checkAchievements(prev, { didShare: true });
+      const withAch = checkCloudAchievements(withBuiltin, adminAchDefsRef.current);
       saveData(withAch);
       return withAch;
     });
@@ -394,7 +466,11 @@ export default function Home() {
         />
       )}
 
-      {!connected && !showModal && (
+      {authError && !showModal && (
+        <AuthErrorBanner error={authError} onReconnect={() => setShowModal(true)} />
+      )}
+
+      {!connected && !authError && !showModal && (
         <DemoModeBanner onConnect={() => setShowModal(true)} />
       )}
 
@@ -475,6 +551,32 @@ export default function Home() {
           💡 给我们反馈
         </Link>
       </main>
+    </div>
+  );
+}
+
+// ─── Auth error banner ────────────────────────────────────────────────────────
+const DEVICE_AUTH_HINTS = {
+  DEVICE_AUTH_NONCE_REQUIRED:    '设备认证失败：未提供 nonce。请更新 OpenPat 或在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true',
+  DEVICE_AUTH_NONCE_MISMATCH:    '设备 nonce 不匹配，请重新连接',
+  DEVICE_AUTH_SIGNATURE_INVALID: '设备签名无效。请在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true 或联系支持',
+  DEVICE_AUTH_SIGNATURE_EXPIRED: '设备签名已过期，请重新连接',
+  AUTH_TOKEN_MISMATCH:           'Token 不匹配，请检查 ~/.openclaw/openclaw.json 中的 gateway.auth.token',
+};
+
+function AuthErrorBanner({ error, onReconnect }) {
+  const friendly = DEVICE_AUTH_HINTS[error.code] ?? error.detail ?? '认证失败，请检查 Token';
+  return (
+    <div className="auth-error-banner">
+      <span className="auth-error-icon">🔑</span>
+      <div className="auth-error-body">
+        <strong>连接认证失败</strong>
+        <p>{friendly}</p>
+        {error.code?.startsWith('DEVICE_AUTH') && (
+          <code>openclaw config set gateway.controlUi.allowInsecureAuth true</code>
+        )}
+      </div>
+      <button className="auth-error-btn" onClick={onReconnect}>重新配置</button>
     </div>
   );
 }

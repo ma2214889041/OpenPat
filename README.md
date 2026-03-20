@@ -91,7 +91,7 @@ npx openpat
 在你的 GitHub `README.md` 加一行，实时显示你的 Agent 状态：
 
 ```markdown
-![My Agent](https://your-domain.pages.dev/api/badge/你的用户名)
+![My Agent](https://openpat.dev/api/badge/你的用户名)
 ```
 
 徽章显示：用户名 + 当前状态 + 累计任务数，颜色随状态实时变化：
@@ -208,9 +208,10 @@ create table public.profiles (
   id                uuid references auth.users primary key,
   username          text unique,
   avatar_url        text,
-  total_tasks       integer     default 0,
-  total_tool_calls  integer     default 0,
-  total_tokens      bigint      default 0,
+  total_tasks           integer     default 0,
+  total_tool_calls      integer     default 0,
+  total_tokens_input    bigint      default 0,
+  total_tokens_output   bigint      default 0,
   achievements      jsonb       default '[]',
   level             integer     default 0,
   updated_at        timestamptz default now()

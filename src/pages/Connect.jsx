@@ -53,8 +53,11 @@ export default function Connect() {
     );
   }
 
-  const skillCommand = token
-    ? `clawhub install openpat\n# 安装后在 OpenClaw 里运行：\n/openpat connect ${token}`
+  const configJson = token
+    ? JSON.stringify({
+        endpoint: `${import.meta.env.VITE_SUPABASE_URL ?? ''}/functions/v1/event`,
+        token,
+      }, null, 2)
     : '';
 
   return (
@@ -106,17 +109,17 @@ export default function Connect() {
           <div className={`connect-step${!token ? ' connect-step--dim' : ''}`}>
             <div className="connect-step-num">02</div>
             <div className="connect-step-body">
-              <h3 className="connect-step-title">在 OpenClaw 里安装 skill</h3>
-              <p className="connect-step-desc">在你的 OpenClaw 终端里依次运行：</p>
+              <h3 className="connect-step-title">配置 OpenClaw Skill</h3>
+              <p className="connect-step-desc">把下面的 JSON 保存到 <code style={{fontFamily:'monospace',fontSize:'12px'}}>~/.openclaw/openpat.json</code>：</p>
               {token && (
                 <div className="connect-code-wrap">
-                  <pre className="connect-code">{skillCommand}</pre>
+                  <pre className="connect-code">{configJson}</pre>
                   <button className="connect-btn connect-btn--ghost connect-btn--sm" onClick={() => {
-                    navigator.clipboard.writeText(skillCommand);
+                    navigator.clipboard.writeText(configJson);
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}>
-                    {copied ? '已复制 ✓' : '复制命令'}
+                    {copied ? '已复制 ✓' : '复制 JSON'}
                   </button>
                 </div>
               )}

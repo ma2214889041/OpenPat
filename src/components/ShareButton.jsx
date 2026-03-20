@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { toPng } from 'html-to-image';
 import ShareCard from './ShareCard';
 import './ShareButton.css';
@@ -68,17 +69,21 @@ export default function ShareButton({ stats, status, skinId, petFrameUrl, onGene
         </div>
       )}
 
-      {/* Hidden high-fidelity card for capture */}
-      <div style={{ position: 'fixed', left: '-9999px', top: '-9999px' }}>
-        <ShareCard
-          stats={stats}
-          status={status}
-          skin={skinId || 'default'}
-          rank={stats.totalTasks >= 50 ? 'gold' : stats.totalTasks >= 10 ? 'cyber' : 'bronze'}
-          username="User"
-          petFrameUrl={petFrameUrl}
-        />
-      </div>
+      {/* Hidden high-fidelity card for capture — rendered via portal to avoid
+          backdrop-filter containing-block interference */}
+      {createPortal(
+        <div style={{ position: 'fixed', left: '-9999px', top: 0, pointerEvents: 'none', zIndex: -1 }}>
+          <ShareCard
+            stats={stats}
+            status={status}
+            skin={skinId || 'default'}
+            rank={stats.totalTasks >= 50 ? 'gold' : stats.totalTasks >= 10 ? 'cyber' : 'bronze'}
+            username="User"
+            petFrameUrl={petFrameUrl}
+          />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

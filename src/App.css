@@ -12,8 +12,8 @@
   z-index: 0;
 }
 
-/* All pages sit above bg-grid */
-.app > *:not(.bg-grid) {
+/* Pages sit above bg-grid — exclude fixed overlays so they keep position:fixed */
+.app > *:not(.bg-grid):not(.settings-overlay):not(.modal-overlay) {
   position: relative;
   z-index: 1;
 }
