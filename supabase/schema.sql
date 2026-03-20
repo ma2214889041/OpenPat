@@ -1,37 +1,22 @@
--- Run this in your Supabase SQL editor
+-- OpenPat — 一次性运行此文件完成全部建表
+-- 在 Supabase SQL Editor 粘贴运行即可
 
--- User profiles
+-- ══ 1. 用户档案 ══════════════════════════════════════════
 create table if not exists profiles (
-  id uuid references auth.users(id) on delete cascade primary key,
-  username text unique not null,
-  avatar_url text,
-  total_tasks integer default 0,
+  id              uuid references auth.users(id) on delete cascade primary key,
+  username        text unique not null,
+  avatar_url      text,
+  total_tasks     integer  default 0,
   total_tool_calls integer default 0,
-  total_tokens_input bigint default 0,
+  total_tokens_input  bigint default 0,
   total_tokens_output bigint default 0,
-  achievements text[] default '{}',
-  level integer default 0,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  achievements    text[]   default '{}',
+  level           integer  default 0,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
 );
 
--- Public real-time status
-create table if not exists agent_status (
-  user_id uuid references profiles(id) on delete cascade primary key,
-  status text not null default 'offline',
-  current_tool text,
-  session_tokens bigint default 0,
-  session_tool_calls integer default 0,
-  is_public boolean default true,
-  updated_at timestamptz default now()
-);
-
--- Enable realtime on agent_status
-alter publication supabase_realtime add table agent_status;
-
--- RLS
 alter table profiles enable row level security;
-alter table agent_status enable row level security;
 
 create policy "Public profiles are viewable by everyone"
   on profiles for select using (true);
@@ -39,13 +24,61 @@ create policy "Public profiles are viewable by everyone"
 create policy "Users can update own profile"
   on profiles for update using (auth.uid() = id);
 
+-- ══ 2. 实时 Agent 状态 ════════════════════════════════════
+create table if not exists agent_status (
+  user_id           uuid references profiles(id) on delete cascade primary key,
+  status            text    not null default 'offline',
+  current_tool      text,
+  session_tokens    bigint  default 0,
+  session_tool_calls integer default 0,
+  is_public         boolean default true,
+  updated_at        timestamptz default now()
+);
+
+alter publication supabase_realtime add table agent_status;
+
+alter table agent_status enable row level security;
+
 create policy "Public status viewable if is_public"
-  on agent_status for select using (is_public = true or auth.uid() = user_id);
+  on agent_status for select
+  using (is_public = true or auth.uid() = user_id);
 
 create policy "Users can upsert own status"
-  on agent_status for all using (auth.uid() = user_id);
+  on agent_status for all
+  using (auth.uid() = user_id);
 
--- Auto-create profile on signup
+-- ══ 3. 用户反馈 ═══════════════════════════════════════════
+create table if not exists feedback_submissions (
+  id         uuid default gen_random_uuid() primary key,
+  user_id    uuid references profiles(id) on delete set null,
+  content    text not null,
+  created_at timestamptz default now()
+);
+
+alter table feedback_submissions enable row level security;
+
+-- 登录用户提交：user_id 必须等于自己
+create policy "Logged-in users can submit feedback"
+  on feedback_submissions for insert
+  with check (auth.uid() is not null and auth.uid() = user_id);
+
+-- 匿名用户提交：user_id 必须为 null
+create policy "Anonymous users can submit feedback"
+  on feedback_submissions for insert
+  with check (auth.uid() is null and user_id is null);
+
+-- 只有管理员可以读取反馈
+create policy "Admins can read feedback"
+  on feedback_submissions for select
+  using (
+    exists (
+      select 1 from profiles
+      where profiles.id = auth.uid()
+        and profiles.username = 'admin'
+    )
+  );
+
+-- ══ 4. 新用户自动建档 ════════════════════════════════════
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer as $$
 begin
@@ -64,65 +97,3 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure handle_new_user();
-
--- Roadmap items (admin managed)
-create table if not exists roadmap_items (
-  id uuid default gen_random_uuid() primary key,
-  title text not null,
-  description text,
-  status text default 'planned', -- 'live', 'planned', 'future'
-  emoji text default '✨',
-  vote_count integer default 0,
-  sort_order integer default 0,
-  created_at timestamptz default now()
-);
-
-alter table roadmap_items enable row level security;
-create policy "Roadmap items viewable by everyone" on roadmap_items for select using (true);
-create policy "Admins can manage roadmap" on roadmap_items for all using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.username = 'admin')
-);
-
--- Roadmap votes (one per user per item)
-create table if not exists roadmap_votes (
-  user_id uuid references profiles(id) on delete cascade,
-  item_id uuid references roadmap_items(id) on delete cascade,
-  created_at timestamptz default now(),
-  primary key (user_id, item_id)
-);
-
-alter table roadmap_votes enable row level security;
-create policy "Votes viewable by everyone" on roadmap_votes for select using (true);
-create policy "Users can manage own votes" on roadmap_votes for all using (auth.uid() = user_id);
-
--- Auto update vote_count on insert/delete
-create or replace function update_vote_count()
-returns trigger language plpgsql as $$
-begin
-  if TG_OP = 'INSERT' then
-    update roadmap_items set vote_count = vote_count + 1 where id = NEW.item_id;
-  elsif TG_OP = 'DELETE' then
-    update roadmap_items set vote_count = greatest(0, vote_count - 1) where id = OLD.item_id;
-  end if;
-  return null;
-end;
-$$;
-
-drop trigger if exists on_vote_change on roadmap_votes;
-create trigger on_vote_change
-  after insert or delete on roadmap_votes
-  for each row execute procedure update_vote_count();
-
--- Feedback submissions
-create table if not exists feedback_submissions (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references profiles(id) on delete set null,
-  content text not null,
-  created_at timestamptz default now()
-);
-
-alter table feedback_submissions enable row level security;
-create policy "Users can submit feedback" on feedback_submissions for insert with check (auth.uid() = user_id or auth.uid() is null);
-create policy "Admins can read feedback" on feedback_submissions for select using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.username = 'admin')
-);
