@@ -160,6 +160,39 @@ export async function loadAllAchievementsFromCloud() {
   return (data || []).map((r) => ({ ...r, desc: r.description }));
 }
 
+// ─── Site Config ──────────────────────────────────────────────────────────────
+
+/**
+ * Load all site config as a plain object: { hero_video_url: '...', ... }
+ */
+export async function loadSiteConfig() {
+  if (!hasSupabase) return {};
+  const { data, error } = await supabase.from('site_config').select('key, value');
+  if (error) throw error;
+  const cfg = {};
+  (data || []).forEach(({ key, value }) => { cfg[key] = value; });
+  return cfg;
+}
+
+/**
+ * Set a single site config value. If value is a File, uploads to Storage first.
+ * storagePath is used only when value is a File (e.g. 'site/hero.mp4').
+ */
+export async function setSiteConfig(key, value, storagePath) {
+  if (!hasSupabase) throw new Error('Supabase not configured');
+
+  let finalValue = value;
+  if (value instanceof File) {
+    finalValue = await uploadFile(storagePath || `site/${key}`, value);
+  }
+
+  const { error } = await supabase
+    .from('site_config')
+    .upsert({ key, value: finalValue, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  if (error) throw error;
+  return finalValue;
+}
+
 /**
  * Delete achievement row + storage icons.
  */

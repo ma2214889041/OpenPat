@@ -677,3 +677,81 @@
   padding: 2px 8px;
   border-radius: 100px;
 }
+
+/* ── Site Config Tab ─────────────────────────────────────────────────────── */
+
+.admin-content--single {
+  display: block;
+  padding: 24px;
+}
+
+.site-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 640px;
+}
+
+.site-config-item {
+  background: var(--a-surface);
+  border: 1px solid var(--a-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.site-config-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.site-config-info strong {
+  font-size: 15px;
+  color: var(--a-ink);
+}
+
+.site-config-desc {
+  font-size: 12px;
+  color: var(--a-ink-muted);
+}
+
+.site-config-url {
+  font-size: 11px;
+  color: var(--a-accent);
+  word-break: break-all;
+  text-decoration: none;
+}
+.site-config-url:hover { text-decoration: underline; }
+
+.site-config-preview-img {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--a-border);
+}
+
+.site-config-preview-video {
+  width: 100%;
+  max-height: 160px;
+  border-radius: 8px;
+  border: 1px solid var(--a-border);
+}
+
+.site-config-upload-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--a-accent);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+  transition: opacity 0.15s;
+}
+.site-config-upload-btn:hover { opacity: 0.85; }
+.site-config-upload-btn.uploading { opacity: 0.6; cursor: not-allowed; }

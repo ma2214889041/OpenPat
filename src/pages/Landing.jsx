@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { hasSupabase } from '../utils/supabase';
+import { loadSiteConfig } from '../utils/supabaseStorage';
 import './Landing.css';
 
 // ── Bilingual copy ────────────────────────────────────────────────────────────
@@ -265,6 +266,11 @@ export default function Landing() {
   const [navScrolled, setNavScrolled] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem('lp-lang') || 'zh');
+  const [siteConfig, setSiteConfigState] = useState({});
+
+  useEffect(() => {
+    loadSiteConfig().then(setSiteConfigState).catch(() => {});
+  }, []);
 
   const t = COPY[lang];
 
@@ -348,9 +354,9 @@ export default function Landing() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="lp-hero">
         <div className="lp-hero-video-wrap">
-          {import.meta.env.VITE_HERO_VIDEO_URL && (
+          {siteConfig.hero_video_url && (
             <video className="lp-hero-video" autoPlay muted loop playsInline aria-hidden="true">
-              <source src={import.meta.env.VITE_HERO_VIDEO_URL} type="video/mp4" />
+              <source src={siteConfig.hero_video_url} type="video/mp4" />
             </video>
           )}
           <div className="lp-hero-video-overlay" />
@@ -424,7 +430,7 @@ export default function Landing() {
             <Link to="/app" className="lp-btn lp-btn--green">{t.about.cta}</Link>
           </div>
           <div className="lp-about-image">
-            <img src="/about-us-image.svg" alt="OpenPat companions" className="lp-about-img" />
+            <img src={siteConfig.about_image_url || '/about-us-image.svg'} alt="OpenPat companions" className="lp-about-img" />
           </div>
         </div>
       </section>
