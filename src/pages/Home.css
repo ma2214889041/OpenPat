@@ -354,3 +354,79 @@
   background: rgba(131,255,193,0.08);
   transform: translateY(-1px);
 }
+
+/* ── Meme share button ── */
+.btn-meme-share {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+  color: #fbbf24;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.btn-meme-share:hover {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.6);
+}
+
+/* ── Pet speech bubble ── */
+.pet-bubble {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #111;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  pointer-events: none;
+  z-index: 10;
+  animation: bubblePop 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.pet-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #fff;
+}
+@keyframes bubblePop {
+  from { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+}
+
+/* ── Token exhausted: feed button ── */
+.btn-feed {
+  margin-top: 12px;
+  padding: 10px 28px;
+  border-radius: 100px;
+  border: 1.5px solid rgba(251,146,60,0.4);
+  background: rgba(251,146,60,0.1);
+  color: #fb923c;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  animation: feedPulse 2s ease-in-out infinite;
+}
+.btn-feed:hover {
+  background: rgba(251,146,60,0.2);
+  border-color: rgba(251,146,60,0.7);
+  transform: scale(1.05);
+  animation: none;
+}
+@keyframes feedPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251,146,60,0.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(251,146,60,0); }
+}

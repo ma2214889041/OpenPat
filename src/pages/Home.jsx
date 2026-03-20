@@ -23,8 +23,11 @@ import {
   checkAchievements,
 } from '../utils/storage';
 import { loadAllAchievementDefs } from '../utils/skinStorage';
+import { loadAllMemesFromCloud, loadAllAchievementsFromCloud } from '../utils/supabaseStorage';
 import { saveSession } from '../utils/sessionHistory';
 import { supabase, hasSupabase } from '../utils/supabase';
+import { useProfileSync } from '../hooks/useProfileSync';
+import { generateMemeShareCard } from '../utils/shareCard';
 import './Home.css';
 
 const CONN_KEY = 'openpat-connection';
@@ -66,6 +69,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(!saved);
   const [localData, setLocalData] = useState(loadData);
   const [adminAchievementDefs, setAdminAchievementDefs] = useState([]);
+  const [cloudMemes, setCloudMemes] = useState({});  // { [state]: { image_url, caption } }
 
   const sessionStartRef = useRef(null);
   const prevConnected = useRef(false);
@@ -73,6 +77,9 @@ export default function Home() {
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const { user, username } = useAuth();
+
+  // ── Always-on Supabase sync when logged in ─────────────────────────────────
+  useProfileSync(user, localData);
   const animatedSkin = useAnimatedSkin();
   const { affinity, addAffinity, isHappy } = useAffinity();
   const { notify } = useNotifications();
@@ -98,11 +105,23 @@ export default function Home() {
     adminAchievementDefs,
   );
 
-  // ── Load admin achievement defs from IndexedDB ────────────────────────────
+  // ── Load admin achievement defs (cloud first, IndexedDB fallback) ─────────
   useEffect(() => {
-    loadAllAchievementDefs()
-      .then(setAdminAchievementDefs)
-      .catch((err) => console.error('[Home] failed to load achievement defs:', err));
+    loadAllAchievementsFromCloud()
+      .then((data) => { if (data.length) setAdminAchievementDefs(data); })
+      .catch(() => {
+        // fallback to local IndexedDB
+        loadAllAchievementDefs()
+          .then(setAdminAchievementDefs)
+          .catch((err) => console.error('[Home] failed to load achievement defs:', err));
+      });
+  }, []);
+
+  // ── Load cloud memes ───────────────────────────────────────────────────────
+  useEffect(() => {
+    loadAllMemesFromCloud()
+      .then(setCloudMemes)
+      .catch((err) => console.error('[Home] failed to load memes:', err));
   }, []);
 
   // ── Auto-detect CLI config ─────────────────────────────────────────────────
@@ -293,10 +312,70 @@ export default function Home() {
     });
   }, []);
 
-  // ── Pet click → affinity ───────────────────────────────────────────────────
+  // ── Meme share: current state's meme image + caption ──────────────────────
+  const handleMemeShare = useCallback(async () => {
+    const stateKey = displayStatus ?? 'idle';
+    const meme = cloudMemes[stateKey] ?? cloudMemes['idle'] ?? null;
+    const DEFAULT_CAPTIONS = {
+      idle: '摸鱼中。不打扰它。',
+      thinking: '它在思考，就像你不会的那些事。',
+      tool_call: '正在调用工具。这活儿你不想自己做，它替你扛着。',
+      done: '搞定了。下一个。',
+      error: '翻车了，但还在爬。',
+      offline: '下线了。明天见。',
+      token_exhausted: '没 Token 了。账单来了吗？',
+      happy: '今天心情不错，继续干。',
+    };
+    const caption = meme?.caption || DEFAULT_CAPTIONS[stateKey] || '我的 Agent 正在工作';
+    try {
+      const dataUrl = await generateMemeShareCard({
+        memeImageUrl: meme?.image_url ?? null,
+        caption,
+        username: username ?? 'agent',
+        profileUrl: username ? `openp.at/u/${username}` : 'openp.at',
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `openpat-meme-${stateKey}.png`;
+      a.click();
+      handleShareGenerated();
+    } catch (err) {
+      console.error('梗图分享失败:', err);
+    }
+  }, [displayStatus, cloudMemes, username, handleShareGenerated]);
+
+  // ── Status bubble (click reaction) ────────────────────────────────────────
+  const [bubble, setBubble] = useState(null);
+  const bubbleTimerRef = useRef(null);
+
+  const CLICK_BUBBLES = {
+    [STATES.IDLE]:            ['别戳我，摸鱼中', '你再戳我我就开始工作了', '我在冥想，请勿打扰'],
+    [STATES.THINKING]:        ['别催！在想了在想了！', '脑子已经红温了，稍等', '要想出好答案是需要时间的'],
+    [STATES.TOOL_CALL]:       ['别分心！干活呢！', '这么忙还来戳我？', '工具还在跑，你等一下'],
+    [STATES.DONE]:            ['嘿嘿，厉害吧', '下一个任务来吧，我不怕', '给我点个赞谢谢'],
+    [STATES.ERROR]:           ['别踢我…已经够惨了', '我知道翻车了，但还在', '轻点，好痛的'],
+    [STATES.OFFLINE]:         ['嘿，我在睡觉', '有事明天说', 'zzZ…什么事？'],
+    [STATES.TOKEN_EXHAUSTED]: ['饿了…快充值', '不是不想干，是没粮了', '账单来了？'],
+  };
+
+  // ── Pet click → affinity + bubble ─────────────────────────────────────────
   const handlePetClick = useCallback(() => {
     addAffinity(2);
-  }, [addAffinity]);
+    const pool = CLICK_BUBBLES[displayStatus] ?? CLICK_BUBBLES[STATES.IDLE];
+    const text = pool[Math.floor(Math.random() * pool.length)];
+    setBubble(text);
+    clearTimeout(bubbleTimerRef.current);
+    bubbleTimerRef.current = setTimeout(() => setBubble(null), 2500);
+  }, [addAffinity, displayStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Token exhausted feed ───────────────────────────────────────────────────
+  const [fedCount, setFedCount] = useState(0);
+  const handleFeed = useCallback(() => {
+    addAffinity(5);
+    triggerConfetti();
+    setFedCount((n) => n + 1);
+    notify('喂食成功！', '它感受到了你的关爱，但还是没 Token ☕');
+  }, [addAffinity, notify]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -324,12 +403,24 @@ export default function Home() {
         {/* ── Companion card: pet + report + affinity ── */}
         <div className="home-companion-card">
           <div className="home-lobster-wrap">
+            {/* Speech bubble on click */}
+            {bubble && (
+              <div className="pet-bubble" key={bubble + Date.now()}>
+                {bubble}
+              </div>
+            )}
             <PetDisplay
               animatedSkin={animatedSkin.activeSkin}
               isHappy={isHappy}
               status={displayStatus}
               onClick={handlePetClick}
             />
+            {/* Token exhausted: feed button */}
+            {displayStatus === STATES.TOKEN_EXHAUSTED && (
+              <button className="btn-feed" onClick={handleFeed}>
+                🍤 投喂{fedCount > 0 ? ` ×${fedCount}` : ''}
+              </button>
+            )}
           </div>
           <div className="home-companion-footer">
             <LobsterReport status={displayStatus} currentTool={displayTool} />
@@ -348,6 +439,9 @@ export default function Home() {
 
         {/* ── Share actions ── */}
         <div className="home-actions">
+          <button className="btn-meme-share" onClick={handleMemeShare} title="用状态梗图分享">
+            😂 梗图分享
+          </button>
           <ShareButton
             stats={connected ? stats : demoStats}
             status={displayStatus}

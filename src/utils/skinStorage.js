@@ -1,5 +1,5 @@
 const DB_NAME = 'openpat-assets';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export function openDB() {
   return new Promise((resolve, reject) => {
@@ -14,6 +14,11 @@ export function openDB() {
 
       if (!db.objectStoreNames.contains('achievements')) {
         db.createObjectStore('achievements', { keyPath: 'id' });
+      }
+
+      // v2: state meme images (keyPath: state name)
+      if (!db.objectStoreNames.contains('memes')) {
+        db.createObjectStore('memes', { keyPath: 'state' });
       }
     };
 
@@ -94,6 +99,52 @@ export async function deleteAchievementDef(id) {
     const tx = db.transaction('achievements', 'readwrite');
     const store = tx.objectStore('achievements');
     const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ─── Meme storage (state → { state, imageDataUrl, caption }) ─────────────────
+
+export async function saveMeme(meme) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('memes', 'readwrite');
+    const store = tx.objectStore('memes');
+    const request = store.put(meme);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function loadAllMemes() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('memes', 'readonly');
+    const store = tx.objectStore('memes');
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function getMeme(state) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('memes', 'readonly');
+    const store = tx.objectStore('memes');
+    const request = store.get(state);
+    request.onsuccess = () => resolve(request.result ?? null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function deleteMeme(state) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('memes', 'readwrite');
+    const store = tx.objectStore('memes');
+    const request = store.delete(state);
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });

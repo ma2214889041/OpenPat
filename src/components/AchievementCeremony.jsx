@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { generateAchievementShareCard } from '../utils/shareCard';
+import { useAuth } from '../hooks/useAuth';
 import './AchievementCeremony.css';
 
 const RARITY_LABELS = {
@@ -31,8 +33,10 @@ const particles = generateParticles(20);
 
 export default function AchievementCeremony({ achievement, onClose }) {
   const [visible, setVisible] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const closeTimerRef = useRef(null);
   const visibleTimerRef = useRef(null);
+  const { username } = useAuth();
 
   const handleClose = useCallback(() => {
     setVisible(false);
@@ -44,26 +48,44 @@ export default function AchievementCeremony({ achievement, onClose }) {
   }, [onClose]);
 
   useEffect(() => {
-    // Slight delay before showing for mount transition
-    visibleTimerRef.current = setTimeout(() => {
-      setVisible(true);
-    }, 50);
-
-    // Auto-close after 4000ms
-    closeTimerRef.current = setTimeout(() => {
-      handleClose();
-    }, 4000);
-
+    visibleTimerRef.current = setTimeout(() => setVisible(true), 50);
+    // Auto-close after 6s (extended to give time to read caption)
+    closeTimerRef.current = setTimeout(() => handleClose(), 6000);
     return () => {
       clearTimeout(visibleTimerRef.current);
       clearTimeout(closeTimerRef.current);
     };
   }, [handleClose]);
 
+  const handleShare = useCallback(async (e) => {
+    e.stopPropagation();
+    // Pause auto-close while sharing
+    clearTimeout(closeTimerRef.current);
+    setSharing(true);
+    try {
+      const dataUrl = await generateAchievementShareCard({
+        achievement,
+        username: username ?? 'agent',
+        profileUrl: username ? `openp.at/u/${username}` : 'openp.at',
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `achievement-${achievement.id}.png`;
+      a.click();
+    } catch (err) {
+      console.error('生成成就卡片失败:', err);
+    } finally {
+      setSharing(false);
+      // Resume auto-close timer
+      closeTimerRef.current = setTimeout(() => handleClose(), 4000);
+    }
+  }, [achievement, username, handleClose]);
+
   if (!achievement) return null;
 
   const rarity = achievement.rarity ?? 'common';
   const rarityLabel = (RARITY_LABELS[rarity] ?? '普通') + ' 成就解锁';
+  const caption = achievement.unlock_caption ?? achievement.desc ?? '';
 
   return (
     <div
@@ -116,8 +138,25 @@ export default function AchievementCeremony({ achievement, onClose }) {
         </div>
 
         <div className="ceremony-name">{achievement.name}</div>
-        <div className="ceremony-desc">{achievement.desc}</div>
-        <div className="ceremony-hint">点击任意处关闭</div>
+
+        {/* Funny unlock caption — the main attraction */}
+        {caption && (
+          <div className="ceremony-caption">{caption}</div>
+        )}
+
+        {/* Actions */}
+        <div className="ceremony-actions">
+          <button
+            className="ceremony-share-btn"
+            onClick={handleShare}
+            disabled={sharing}
+          >
+            {sharing ? '生成中...' : '📸 分享这个成就'}
+          </button>
+          <button className="ceremony-close-btn" onClick={handleClose}>
+            关闭
+          </button>
+        </div>
       </div>
     </div>
   );

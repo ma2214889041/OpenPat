@@ -3,11 +3,18 @@ import {
   saveSkin,
   loadAllSkins,
   deleteSkin,
-  saveAchievementDef,
-  loadAllAchievementDefs,
-  deleteAchievementDef,
   prepareSkinForDisplay,
 } from '../utils/skinStorage';
+import {
+  saveMemeToCloud,
+  updateMemeCaptionInCloud,
+  loadAllMemesFromCloud,
+  deleteMemeFromCloud,
+  saveAchievementToCloud,
+  loadAllAchievementsFromCloud,
+  deleteAchievementFromCloud,
+} from '../utils/supabaseStorage';
+import { hasSupabase } from '../utils/supabase';
 import AnimatedPet from '../components/AnimatedPet';
 import { STATES } from '../hooks/useGateway';
 import './AdminSkins.css';
@@ -15,6 +22,17 @@ import './AdminSkins.css';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const FRAME_STATES = ['idle', 'happy', 'thinking', 'tool_call', 'done', 'error', 'offline', 'react'];
+
+const MEME_STATES = [
+  { key: 'idle',            label: '摸鱼中',   emoji: '😴' },
+  { key: 'thinking',        label: '深思熟虑', emoji: '🤔' },
+  { key: 'tool_call',       label: '调用工具', emoji: '🔧' },
+  { key: 'done',            label: '任务完成', emoji: '✅' },
+  { key: 'error',           label: '翻车了',   emoji: '💥' },
+  { key: 'offline',         label: '下线了',   emoji: '😴' },
+  { key: 'token_exhausted', label: 'Token耗尽', emoji: '💸' },
+  { key: 'happy',           label: '开心ing',  emoji: '😊' },
+];
 
 const RARITY_OPTIONS = ['common', 'rare', 'epic', 'legendary'];
 
@@ -74,6 +92,8 @@ function newAchievement() {
     icon_unlocked: null,
     unlock_type: 'first_connect',
     unlock_threshold: null,
+    unlock_caption: '',
+    share_caption: '',
     is_active: true,
   };
 }
@@ -482,6 +502,136 @@ function SkinEditor({ skin, onSave, onDelete }) {
   );
 }
 
+// ─── Meme Manager ─────────────────────────────────────────────────────────────
+
+function MemeManager({ memes, saveStatus, onSave, onDelete }) {
+  const fileRefs = useRef({});
+  // draft: { [stateKey]: { file: File|null, caption, previewUrl } }
+  const [drafts, setDrafts] = useState(() => {
+    const d = {};
+    MEME_STATES.forEach(({ key }) => { d[key] = { file: null, caption: '', previewUrl: null }; });
+    return d;
+  });
+
+  // Sync saved cloud memes into drafts (show existing image_url as preview)
+  useEffect(() => {
+    setDrafts((prev) => {
+      const next = { ...prev };
+      MEME_STATES.forEach(({ key }) => {
+        if (memes[key]) {
+          next[key] = {
+            file: null,                          // no pending upload
+            caption: memes[key].caption ?? '',
+            previewUrl: memes[key].image_url ?? null,
+          };
+        }
+      });
+      return next;
+    });
+  }, [memes]);
+
+  const handleFileChange = (stateKey, file) => {
+    if (!file) return;
+    // Show local preview immediately; store the File object for upload
+    const previewUrl = URL.createObjectURL(file);
+    setDrafts((prev) => ({
+      ...prev,
+      [stateKey]: { ...prev[stateKey], file, previewUrl },
+    }));
+  };
+
+  const handleCaption = (stateKey, val) => {
+    setDrafts((prev) => ({ ...prev, [stateKey]: { ...prev[stateKey], caption: val } }));
+  };
+
+  const canSave = (stateKey) => {
+    const draft = drafts[stateKey];
+    // Can save if: new file chosen, OR existing image + caption changed
+    return draft.file !== null || (memes[stateKey] && draft.caption !== (memes[stateKey].caption ?? ''));
+  };
+
+  return (
+    <div className="meme-manager">
+      {!hasSupabase && (
+        <div className="meme-manager-hint" style={{ borderColor: '#f97316', color: '#f97316' }}>
+          ⚠️ 未配置 Supabase，梗图无法保存到云端。请在 .env.local 中配置 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY。
+        </div>
+      )}
+      <p className="meme-manager-hint">
+        每个 Agent 状态配一张搞笑图片 + 一句文案，作为分享卡片的背景。
+        图片会上传到云端，所有设备共享。建议 1080×1080，支持 PNG / JPG / GIF / WebP（最大 5MB）。
+      </p>
+      <div className="meme-grid">
+        {MEME_STATES.map(({ key, label, emoji }) => {
+          const draft = drafts[key];
+          const status = saveStatus[key] ?? 'idle';
+          const isSaved = !!memes[key];
+          return (
+            <div key={key} className="meme-card">
+              <div className="meme-card-header">
+                <span className="meme-state-emoji">{emoji}</span>
+                <span className="meme-state-label">{label}</span>
+                <span className="meme-state-key">{key}</span>
+                {isSaved && <span className="meme-cloud-badge">☁️ 已同步</span>}
+              </div>
+
+              {/* Image upload area */}
+              <div
+                className={`meme-image-area${draft.previewUrl ? ' has-image' : ''}`}
+                onClick={() => fileRefs.current[key]?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileRefs.current[key]?.click(); }}
+              >
+                <input
+                  ref={(el) => { fileRefs.current[key] = el; }}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => { handleFileChange(key, e.target.files?.[0]); e.target.value = ''; }}
+                />
+                {draft.previewUrl ? (
+                  <img src={draft.previewUrl} alt={label} className="meme-preview-img" />
+                ) : (
+                  <div className="meme-upload-placeholder">
+                    <span style={{ fontSize: 32 }}>🖼️</span>
+                    <span>点击上传梗图</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Caption */}
+              <textarea
+                className="meme-caption-input"
+                value={draft.caption}
+                onChange={(e) => handleCaption(key, e.target.value)}
+                placeholder="配套文案，比如：它在思考，就像你不会的那些事"
+                rows={2}
+              />
+
+              {/* Actions */}
+              <div className="meme-card-actions">
+                <button
+                  className="btn-save"
+                  disabled={status === 'saving' || !canSave(key) || !hasSupabase}
+                  onClick={() => onSave(key, draft.file, draft.caption)}
+                >
+                  {status === 'saving' ? '上传中...' : status === 'saved' ? '已保存 ✓' : '保存到云端'}
+                </button>
+                {isSaved && (
+                  <button className="btn-delete" onClick={() => onDelete(key)}>
+                    删除
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Achievement Editor ───────────────────────────────────────────────────────
 
 function AchievementEditor({ ach, onSave, onDelete }) {
@@ -603,6 +753,31 @@ function AchievementEditor({ ach, onSave, onDelete }) {
         </div>
       </div>
 
+      {/* ── Caption / Funny Text ────────────────────── */}
+      <div className="form-section">
+        <h3 className="section-title">搞笑台词</h3>
+
+        <div className="form-group">
+          <label>解锁台词 <span className="label-hint">（弹窗里显示的那句话，要搞笑）</span></label>
+          <textarea
+            value={form.unlock_caption ?? ''}
+            onChange={(e) => setField('unlock_caption', e.target.value)}
+            placeholder="它睁开了眼睛，看了看世界，然后立刻开始工作..."
+            rows={3}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>分享文案 <span className="label-hint">（出现在分享卡片里的那句话）</span></label>
+          <textarea
+            value={form.share_caption ?? ''}
+            onChange={(e) => setField('share_caption', e.target.value)}
+            placeholder="我的 Agent 今天正式上岗了。它没有问五险一金..."
+            rows={3}
+          />
+        </div>
+      </div>
+
       {/* ── Icons ──────────────────────────────────── */}
       <div className="form-section">
         <h3 className="section-title">图标</h3>
@@ -647,7 +822,7 @@ function AchievementEditor({ ach, onSave, onDelete }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AdminSkins() {
-  const [activeTab, setActiveTab] = useState('skins'); // 'skins' | 'achievements'
+  const [activeTab, setActiveTab] = useState('skins'); // 'skins' | 'achievements' | 'memes'
 
   // Skins state
   const [skins, setSkins] = useState([]);
@@ -658,6 +833,10 @@ export default function AdminSkins() {
   const [achievements, setAchievements] = useState([]);
   const [selectedAchId, setSelectedAchId] = useState(null);
   const [achLoading, setAchLoading] = useState(true);
+
+  // Memes state: { [stateKey]: { state, imageDataUrl, caption } }
+  const [memes, setMemes] = useState({});
+  const [memeSaveStatus, setMemeSaveStatus] = useState({}); // { [stateKey]: 'idle'|'saving'|'saved' }
 
   // ── Load data ───────────────────────────────────────────────────────────────
 
@@ -676,7 +855,7 @@ export default function AdminSkins() {
   const refreshAchievements = useCallback(async () => {
     setAchLoading(true);
     try {
-      const data = await loadAllAchievementDefs();
+      const data = await loadAllAchievementsFromCloud();
       setAchievements(data);
     } catch (err) {
       console.error('加载成就失败:', err);
@@ -685,10 +864,20 @@ export default function AdminSkins() {
     }
   }, []);
 
+  const refreshMemes = useCallback(async () => {
+    try {
+      const map = await loadAllMemesFromCloud();
+      setMemes(map);
+    } catch (err) {
+      console.error('加载梗图失败:', err);
+    }
+  }, []);
+
   useEffect(() => {
     refreshSkins();
     refreshAchievements();
-  }, [refreshSkins, refreshAchievements]);
+    refreshMemes();
+  }, [refreshSkins, refreshAchievements, refreshMemes]);
 
   // ── Skin handlers ───────────────────────────────────────────────────────────
 
@@ -726,20 +915,20 @@ export default function AdminSkins() {
   };
 
   const handleSaveAchievement = async (form) => {
-    await saveAchievementDef(form);
+    const saved = await saveAchievementToCloud(form);
     setAchievements((prev) => {
-      const idx = prev.findIndex((a) => a.id === form.id);
+      const idx = prev.findIndex((a) => a.id === saved.id);
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = form;
+        next[idx] = saved;
         return next;
       }
-      return [form, ...prev];
+      return [saved, ...prev];
     });
   };
 
   const handleDeleteAchievement = async (id) => {
-    await deleteAchievementDef(id);
+    await deleteAchievementFromCloud(id);
     setAchievements((prev) => prev.filter((a) => a.id !== id));
     setSelectedAchId(null);
   };
@@ -770,6 +959,12 @@ export default function AdminSkins() {
           onClick={() => setActiveTab('achievements')}
         >
           🏆 成就管理
+        </button>
+        <button
+          className={`admin-tab${activeTab === 'memes' ? ' active' : ''}`}
+          onClick={() => setActiveTab('memes')}
+        >
+          😂 状态梗图
         </button>
       </div>
 
@@ -812,6 +1007,39 @@ export default function AdminSkins() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ── Memes Tab ─────────────────────────────────────────────────────────── */}
+      {activeTab === 'memes' && (
+        <MemeManager
+          memes={memes}
+          saveStatus={memeSaveStatus}
+          onSave={async (stateKey, file, caption) => {
+            setMemeSaveStatus((s) => ({ ...s, [stateKey]: 'saving' }));
+            try {
+              let saved;
+              if (file) {
+                // New image uploaded — upload to Supabase Storage
+                saved = await saveMemeToCloud(stateKey, file, caption);
+              } else {
+                // Caption-only update (no new image)
+                await updateMemeCaptionInCloud(stateKey, caption);
+                saved = { ...memes[stateKey], caption };
+              }
+              setMemes((prev) => ({ ...prev, [stateKey]: saved }));
+              setMemeSaveStatus((s) => ({ ...s, [stateKey]: 'saved' }));
+              setTimeout(() => setMemeSaveStatus((s) => ({ ...s, [stateKey]: 'idle' })), 2000);
+            } catch (err) {
+              console.error('保存梗图失败:', err);
+              setMemeSaveStatus((s) => ({ ...s, [stateKey]: 'idle' }));
+              alert('保存失败: ' + err.message);
+            }
+          }}
+          onDelete={async (stateKey) => {
+            await deleteMemeFromCloud(stateKey);
+            setMemes((prev) => { const next = { ...prev }; delete next[stateKey]; return next; });
+          }}
+        />
       )}
 
       {/* ── Achievements Tab ──────────────────────────────────────────────────── */}
