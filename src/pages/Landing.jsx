@@ -173,7 +173,7 @@ export default function Landing() {
           <div className="lp-how-step">
             <div className="lp-how-num" style={{ background: '#83FFC1' }}>01</div>
             <h3 className="lp-how-title">连接 OpenClaw</h3>
-            <p className="lp-how-desc">在你的 AI Agent 里安装 OpenPat 插件，授权后自动建立连接，全程不到一分钟。</p>
+            <p className="lp-how-desc">在 OpenClaw 里运行 <code>clawhub install openpat</code>，授权后自动建立连接，全程不到一分钟。<br /><a href="/connect" style={{color:'inherit',fontWeight:800}}>获取连接 Token →</a></p>
           </div>
           <div className="lp-how-connector" aria-hidden="true">→</div>
           <div className="lp-how-step">

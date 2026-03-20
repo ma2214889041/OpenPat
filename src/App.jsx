@@ -8,6 +8,7 @@ import PublicProfile from './pages/PublicProfile';
 import AdminSkins from './pages/AdminSkins';
 import Feedback from './pages/Feedback';
 import SignIn from './pages/SignIn';
+import Connect from './pages/Connect';
 import './App.css';
 
 // Navbar and settings only appear on app routes, not the landing page
@@ -15,9 +16,10 @@ function AppShell({ children }) {
   const { pathname } = useLocation();
   const isLanding = pathname === '/';
   const isSignIn  = pathname === '/signin';
+  const isConnect = pathname === '/connect';
   const [showSettings, setShowSettings] = useState(false);
 
-  if (isLanding || isSignIn) return children;
+  if (isLanding || isSignIn || isConnect) return children;
 
   return (
     <>
@@ -43,6 +45,7 @@ export default function App() {
             <Route path="/admin"         element={<AdminSkins />} />
             <Route path="/feedback"      element={<Feedback />} />
             <Route path="/signin"        element={<SignIn />} />
+            <Route path="/connect"       element={<Connect />} />
           </Routes>
         </AppShell>
       </div>

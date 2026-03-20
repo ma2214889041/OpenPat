@@ -80,7 +80,7 @@ create policy "Admins can read feedback"
 
 -- ══ 4. 新用户自动建档 ════════════════════════════════════
 create or replace function handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer set search_path = public as $$
 declare
   base_username text;
   final_username text;
@@ -88,12 +88,11 @@ declare
 begin
   base_username := coalesce(
     nullif(trim(new.raw_user_meta_data->>'user_name'), ''),
-    nullif(split_part(new.email, '@', 1), ''),
+    nullif(split_part(coalesce(new.email, ''), '@', 1), ''),
     'user_' || substr(new.id::text, 1, 8)
   );
   final_username := base_username;
 
-  -- 若用户名已被占用则加数字后缀，直到唯一
   while exists (select 1 from profiles where username = final_username) loop
     suffix := suffix + 1;
     final_username := base_username || '_' || suffix;
@@ -104,7 +103,40 @@ begin
   on conflict (id) do nothing;
 
   return new;
+exception when others then
+  -- 绝不阻断用户创建，profile 可后续补建
+  raise warning 'handle_new_user error: % %', sqlstate, sqlerrm;
+  return new;
 end;
+$$;
+
+-- ══ 5. OpenClaw API Token ═════════════════════════════════
+create table if not exists api_tokens (
+  id          uuid default gen_random_uuid() primary key,
+  user_id     uuid references profiles(id) on delete cascade not null,
+  token       text unique not null default encode(gen_random_bytes(32), 'hex'),
+  label       text default 'OpenClaw',
+  created_at  timestamptz default now(),
+  last_used_at timestamptz
+);
+
+alter table api_tokens enable row level security;
+
+create policy "Users can manage own tokens"
+  on api_tokens for all
+  using (auth.uid() = user_id);
+
+-- ══ 6. Stats 累加函数（供 Edge Function 调用）════════════
+create or replace function increment_tasks(uid uuid)
+returns void language sql security definer as $$
+  update profiles set total_tasks = total_tasks + 1, updated_at = now()
+  where id = uid;
+$$;
+
+create or replace function increment_tool_calls(uid uuid)
+returns void language sql security definer as $$
+  update profiles set total_tool_calls = total_tool_calls + 1, updated_at = now()
+  where id = uid;
 $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
