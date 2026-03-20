@@ -87,8 +87,9 @@ declare
   suffix int := 0;
 begin
   base_username := coalesce(
-    new.raw_user_meta_data->>'user_name',
-    split_part(new.email, '@', 1)
+    nullif(trim(new.raw_user_meta_data->>'user_name'), ''),
+    nullif(split_part(new.email, '@', 1), ''),
+    'user_' || substr(new.id::text, 1, 8)
   );
   final_username := base_username;
 

@@ -57,6 +57,18 @@ function NavAuth() {
 export default function Landing() {
   const marqueeRef = useRef(null);
   const [navScrolled, setNavScrolled] = useState(false);
+  const [authError, setAuthError] = useState(null);
+
+  // 检测 OAuth 回调错误（Supabase 重定向回来时带在 URL 里）
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get('error_description') || params.get('error');
+    if (err) {
+      setAuthError(decodeURIComponent(err.replace(/\+/g, ' ')));
+      // 清掉 URL 里的错误参数，避免刷新重复显示
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 40);
@@ -81,6 +93,14 @@ export default function Landing() {
 
   return (
     <div className="lp">
+
+      {/* ── OAuth 错误提示 ────────────────────────────────────────────────── */}
+      {authError && (
+        <div className="lp-auth-error">
+          <span>登录失败：{authError}</span>
+          <button className="lp-auth-error-close" onClick={() => setAuthError(null)}>×</button>
+        </div>
+      )}
 
       {/* ── 导航 ─────────────────────────────────────────────────────────── */}
       <nav className={`lp-nav${navScrolled ? ' lp-nav--scrolled' : ''}`}>

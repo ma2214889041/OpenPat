@@ -336,6 +336,39 @@
   box-shadow: none;
 }
 
+/* ── OAuth 错误 banner ────────────────────────────────────── */
+.lp-auth-error {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  background: #fff0f0;
+  border: 1.5px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: var(--r-md);
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  max-width: calc(100vw - 40px);
+}
+
+.lp-auth-error-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #b91c1c;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
 /* ── 导航右侧区域（登录 + CTA） ───────────────────────────── */
 .lp-nav-right {
   display: flex;
