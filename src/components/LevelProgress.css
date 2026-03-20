@@ -1,40 +1,59 @@
 .level-progress {
-  padding: 16px 20px;
-  background: #111111;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  padding: 18px 20px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   box-sizing: border-box;
   font-family: 'Nunito', system-ui, sans-serif;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 .level-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
-.level-icon { font-size: 26px; }
-.level-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
-.level-name { font-weight: 700; color: #83FFC1; font-size: 15px; font-family: 'Syne', system-ui, sans-serif; }
-.level-next { font-size: 11px; color: #475569; }
-.level-count { font-size: 12px; color: #64748b; font-variant-numeric: tabular-nums; }
+.level-icon { font-size: 28px; line-height: 1; }
+.level-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.level-name {
+  font-weight: 800;
+  color: #83FFC1;
+  font-size: 15px;
+  font-family: 'Syne', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+.level-next {
+  font-size: 11px;
+  color: #3f3f46;
+  font-weight: 600;
+}
+.level-count {
+  font-size: 13px;
+  color: #52525b;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-family: 'Syne', system-ui, sans-serif;
+}
 
 .progress-bar {
-  height: 6px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 3px;
+  height: 5px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 9999px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #8B8BFF, #FF94DB, #83FFC1);
-  border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  background: linear-gradient(90deg, #8B8BFF 0%, #FF94DB 50%, #83FFC1 100%);
+  border-radius: 9999px;
+  transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 0 8px rgba(131,255,193,0.4);
 }
 .progress-label {
   font-size: 11px;
-  color: #475569;
+  color: #3f3f46;
   text-align: right;
+  font-weight: 600;
 }

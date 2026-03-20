@@ -1,39 +1,40 @@
-.stats-bar-wrapper {
-  width: 100%;
-}
+.stats-bar-wrapper { width: 100%; }
 
 .stats-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  background: #111111;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
-  padding: 12px 16px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 14px 18px;
   cursor: pointer;
   font-family: 'Nunito', system-ui, sans-serif;
-  color: #71717a;
-  font-size: 12px;
   transition: background 0.15s, border-color 0.15s;
   flex-wrap: wrap;
   box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 .stats-bar:hover {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.12);
+  background: #161616;
+  border-color: rgba(255,255,255,0.14);
 }
 
 .stat-badge {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--color, #71717a);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-family: 'Syne', system-ui, sans-serif;
+  padding: 3px 10px 3px 6px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 .stat-dot {
   width: 7px;
@@ -41,30 +42,37 @@
   border-radius: 50%;
   background: var(--color, #71717a);
   flex-shrink: 0;
-  box-shadow: 0 0 6px var(--color, transparent);
+  box-shadow: 0 0 8px var(--color, transparent);
 }
 
 .stat-chip {
-  font-size: 11px;
+  font-size: 12px;
   color: #52525b;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: 'Nunito', system-ui, sans-serif;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.03);
+  transition: color 0.15s;
 }
 
 .stat-expand {
   margin-left: auto;
   font-size: 9px;
   color: #3f3f46;
+  opacity: 0.6;
 }
 
 .stats-detail {
-  margin-top: 4px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
-  padding: 12px 16px;
+  margin-top: 6px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 .sd-row {
@@ -73,14 +81,15 @@
   align-items: center;
 }
 .sd-label {
-  font-size: 11px;
+  font-size: 12px;
   color: #3f3f46;
   font-family: 'Nunito', system-ui, sans-serif;
   font-weight: 600;
 }
 .sd-val {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
   color: #a1a1aa;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: 'Syne', system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }

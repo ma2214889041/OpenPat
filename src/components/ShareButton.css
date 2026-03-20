@@ -2,67 +2,75 @@
 
 .share-controls {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
 }
 
 .format-toggle {
   display: flex;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
+  border-radius: 14px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .format-toggle button {
   background: none;
   border: none;
-  color: #64748b;
-  padding: 8px 14px;
+  color: #52525b;
+  padding: 0 14px;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   transition: all 0.15s;
+  font-family: 'Nunito', system-ui, sans-serif;
+  letter-spacing: 0.02em;
 }
 .format-toggle button.active {
-  background: rgba(232,64,28,0.2);
-  color: #f87171;
+  background: rgba(131,255,193,0.12);
+  color: #83FFC1;
 }
 
 .share-btn {
   flex: 1;
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #e8401c, #fb923c);
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #5757C4 0%, #FF94DB 60%, #FFE780 100%);
   border: none;
-  border-radius: 10px;
-  color: white;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: 14px;
+  color: #000;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
-  transition: transform 0.15s, opacity 0.15s;
-  box-shadow: 0 4px 16px rgba(232,64,28,0.35);
+  transition: transform 0.15s, filter 0.15s;
+  font-family: 'Nunito', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 20px rgba(87,87,196,0.3);
 }
-.share-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,64,28,0.45); }
-.share-btn:disabled { opacity: 0.6; cursor: wait; }
+.share-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 8px 28px rgba(87,87,196,0.4);
+}
+.share-btn:disabled { opacity: 0.5; cursor: wait; }
 
 /* Preview modal */
 .preview-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.9);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 200;
   gap: 20px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
 }
 .preview-img {
-  max-width: min(540px, 90vw);
-  max-height: 70vh;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  max-width: min(480px, 88vw);
+  max-height: 68vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.8);
   object-fit: contain;
 }
 .preview-actions {
@@ -70,21 +78,27 @@
   gap: 12px;
 }
 .btn-download {
-  padding: 12px 28px;
-  background: linear-gradient(135deg, #e8401c, #fb923c);
+  padding: 13px 32px;
+  background: linear-gradient(135deg, #5757C4, #FF94DB);
   border: none;
-  border-radius: 10px;
-  color: white;
+  border-radius: 9999px;
+  color: #fff;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
+  font-family: 'Nunito', system-ui, sans-serif;
+  transition: transform 0.15s, filter 0.15s;
 }
+.btn-download:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .btn-close {
-  padding: 12px 24px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 10px;
-  color: #94a3b8;
+  padding: 13px 24px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 9999px;
+  color: #71717a;
   font-size: 15px;
   cursor: pointer;
+  font-family: 'Nunito', system-ui, sans-serif;
+  transition: background 0.15s;
 }
+.btn-close:hover { background: rgba(255,255,255,0.12); color: #a1a1aa; }
