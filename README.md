@@ -91,7 +91,7 @@ npx openpat
 在你的 GitHub `README.md` 加一行，实时显示你的 Agent 状态：
 
 ```markdown
-![My Agent](https://openpat.dev/api/badge/你的用户名)
+![My Agent](https://open-pat.com/api/badge/你的用户名)
 ```
 
 徽章显示：用户名 + 当前状态 + 累计任务数，颜色随状态实时变化：
@@ -158,7 +158,7 @@ npx openpat
 
 ### 🌐 公开主页
 
-登录后获得专属链接 `openpat.dev/u/你的用户名`，任何人可以访问，Supabase Realtime 实时更新：
+登录后获得专属链接 `open-pat.com/u/你的用户名`，任何人可以访问，Supabase Realtime 实时更新：
 
 - Agent 当前工作状态（绿点/橙点/红点）
 - 宠物动画（实时状态）

@@ -345,7 +345,7 @@ export async function generateShareCard(stats, status, format = '4x5', _skinColo
         npx openpat
       </div>
       <div style="font-size:${is1x1 ? 22 : 26}px;font-weight:700;color:rgba(0,0,0,0.45);">
-        openpat.dev
+        open-pat.com
       </div>
     </div>
   `;

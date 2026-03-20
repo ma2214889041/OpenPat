@@ -231,7 +231,7 @@ export default function PublicProfile() {
     setMeta('description', desc);
     setMeta('og:title', title, true);
     setMeta('og:description', desc, true);
-    setMeta('og:url', `https://openpat.dev/u/${profile.username}`, true);
+    setMeta('og:url', `https://open-pat.com/u/${profile.username}`, true);
     setMeta('twitter:card', 'summary');
     setMeta('twitter:title', title);
     setMeta('twitter:description', desc);
@@ -389,7 +389,7 @@ export default function PublicProfile() {
         {/* ── Footer ── */}
         <div className="profile-footer">
           <code>npx openpat</code>
-          <span className="profile-watermark">openpat.dev</span>
+          <span className="profile-watermark">open-pat.com</span>
         </div>
       </div>
 
