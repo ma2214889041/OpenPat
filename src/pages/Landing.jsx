@@ -348,9 +348,11 @@ export default function Landing() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="lp-hero">
         <div className="lp-hero-video-wrap">
-          <video className="lp-hero-video" autoPlay muted loop playsInline aria-hidden="true">
-            <source src="/hero.mp4" type="video/mp4" />
-          </video>
+          {import.meta.env.VITE_HERO_VIDEO_URL && (
+            <video className="lp-hero-video" autoPlay muted loop playsInline aria-hidden="true">
+              <source src={import.meta.env.VITE_HERO_VIDEO_URL} type="video/mp4" />
+            </video>
+          )}
           <div className="lp-hero-video-overlay" />
           <div className="lp-hero-video-overlay-top" />
         </div>

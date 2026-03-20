@@ -1,0 +1,13 @@
+# Exclude large assets not needed by the CLI
+dist/hero.mp4
+
+# Dev files
+src/
+node_modules/
+.env*
+eslint.config.js
+vite.config.js
+supabase/
+openclaw-skill/
+api/
+functions/

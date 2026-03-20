@@ -1,3 +1,6 @@
+# Large media — host on Supabase Storage, reference via VITE_HERO_VIDEO_URL
+public/hero.mp4
+
 # Logs
 logs
 *.log
