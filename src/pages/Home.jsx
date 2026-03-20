@@ -406,8 +406,6 @@ function AffinityBar({ affinity, isHappy }) {
 // ─── Achievements wall ────────────────────────────────────────────────────────
 // Admin-uploaded defs take priority for icon + name display.
 function AchievementsWall({ achievements, adminDefs }) {
-  if (!achievements.length) return null;
-
   const unlocked = achievements.map((id) => {
     const adminDef = adminDefs.find((d) => d.id === id);
     const builtin  = ACHIEVEMENTS.find((a) => a.id === id);
@@ -416,33 +414,38 @@ function AchievementsWall({ achievements, adminDefs }) {
 
   return (
     <div className="achievements-wall">
-      <h3 className="ach-title">
-        成就 · {unlocked.length}/{ACHIEVEMENTS.length}
-      </h3>
-      <div className="ach-grid">
-        {unlocked.map((a) => {
-          const colors = RARITY_COLORS[a.rarity] ?? RARITY_COLORS.common;
-          return (
-            <div
-              key={a.id}
-              className="ach-item"
-              title={a.desc}
-              style={{
-                background: colors.bg,
-                borderColor: colors.border,
-                color: colors.text,
-              }}
-            >
-              {a.icon_unlocked ? (
-                <img src={a.icon_unlocked} alt={a.name} className="ach-icon-img" />
-              ) : (
-                <span className="ach-emoji">{a.emoji}</span>
-              )}
-              <span className="ach-name">{a.name}</span>
-            </div>
-          );
-        })}
+      <div className="ach-title-row">
+        <h3 className="ach-title">成就 · {unlocked.length}/{ACHIEVEMENTS.length}</h3>
+        <Link to="/achievements" className="ach-view-all">查看全部 →</Link>
       </div>
+      {unlocked.length === 0 ? (
+        <p className="ach-empty">完成任务后解锁成就</p>
+      ) : (
+        <div className="ach-grid">
+          {unlocked.map((a) => {
+            const colors = RARITY_COLORS[a.rarity] ?? RARITY_COLORS.common;
+            return (
+              <div
+                key={a.id}
+                className="ach-item"
+                title={a.desc}
+                style={{
+                  background: colors.bg,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }}
+              >
+                {a.icon_unlocked ? (
+                  <img src={a.icon_unlocked} alt={a.name} className="ach-icon-img" />
+                ) : (
+                  <span className="ach-emoji">{a.emoji}</span>
+                )}
+                <span className="ach-name">{a.name}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

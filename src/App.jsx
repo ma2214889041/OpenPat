@@ -9,6 +9,7 @@ import AdminSkins from './pages/AdminSkins';
 import Feedback from './pages/Feedback';
 import SignIn from './pages/SignIn';
 import Connect from './pages/Connect';
+import Achievements from './pages/Achievements';
 import './App.css';
 
 // Navbar and settings only appear on app routes, not the landing page
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="/feedback"      element={<Feedback />} />
             <Route path="/signin"        element={<SignIn />} />
             <Route path="/connect"       element={<Connect />} />
+            <Route path="/achievements"  element={<Achievements />} />
           </Routes>
         </AppShell>
       </div>

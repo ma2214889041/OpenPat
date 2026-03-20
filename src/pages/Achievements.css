@@ -1,0 +1,274 @@
+.ach-page {
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e4e4e7;
+  font-family: 'Nunito', system-ui, sans-serif;
+  padding-bottom: 80px;
+}
+
+/* ── Header ── */
+.ach-page-header {
+  padding: 24px 24px 32px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ach-back {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #71717a;
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition: color 0.15s;
+}
+.ach-back:hover { color: #e4e4e7; }
+
+.ach-page-title {
+  font-family: 'Syne', system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.ach-page-sub {
+  font-size: 14px;
+  color: #71717a;
+  margin-bottom: 28px;
+}
+
+/* ── Summary ── */
+.ach-summary {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ach-summary-progress {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ach-summary-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.ach-summary-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #83FFC1, #8B8BFF);
+  border-radius: 9999px;
+  transition: width 0.6s ease;
+}
+
+.ach-summary-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #a1a1aa;
+  white-space: nowrap;
+}
+
+.ach-summary-rarities {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ach-summary-rarity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid;
+  flex: 1;
+  min-width: 60px;
+}
+
+.ach-summary-rarity-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.ach-summary-rarity-count {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.ach-summary-rarity--common   { background: rgba(100,116,139,0.1); border-color: rgba(100,116,139,0.25); color: #94a3b8; }
+.ach-summary-rarity--rare     { background: rgba(59,130,246,0.1);  border-color: rgba(59,130,246,0.25);  color: #60a5fa; }
+.ach-summary-rarity--epic     { background: rgba(139,92,246,0.1);  border-color: rgba(139,92,246,0.25);  color: #a78bfa; }
+.ach-summary-rarity--legendary{ background: rgba(245,158,11,0.1);  border-color: rgba(245,158,11,0.25);  color: #fbbf24; }
+
+/* ── Body ── */
+.ach-page-body {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── Section ── */
+.ach-section-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.ach-section-label--common    { background: rgba(100,116,139,0.15); color: #94a3b8; }
+.ach-section-label--rare      { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+.ach-section-label--epic      { background: rgba(139,92,246,0.15);  color: #a78bfa; }
+.ach-section-label--legendary { background: rgba(245,158,11,0.15);  color: #fbbf24; }
+
+/* ── Grid ── */
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* ── Card ── */
+.ach-card {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.ach-card--unlocked {
+  background: rgba(255,255,255,0.04);
+}
+
+.ach-card--unlocked:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+}
+
+.ach-card--locked {
+  background: rgba(255,255,255,0.02);
+  opacity: 0.45;
+}
+
+.ach-card-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.ach-card-lock {
+  font-size: 16px;
+  filter: grayscale(1);
+}
+
+.ach-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ach-card-name {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach-card--locked .ach-card-name {
+  color: #52525b;
+}
+
+.ach-card-desc {
+  font-size: 12px;
+  color: #71717a;
+  line-height: 1.5;
+}
+
+/* Progress bar */
+.ach-card-progress {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ach-card-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.ach-card-progress-fill {
+  height: 100%;
+  background: #52525b;
+  border-radius: 9999px;
+  transition: width 0.5s ease;
+}
+
+.ach-card-progress-fill--done {
+  /* color set inline via style prop */
+}
+
+.ach-card-progress-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #52525b;
+  white-space: nowrap;
+}
+
+/* Unlocked corner badge dot */
+.ach-card-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.ach-card-badge--common    { background: #94a3b8; }
+.ach-card-badge--rare      { background: #60a5fa; }
+.ach-card-badge--epic      { background: #a78bfa; box-shadow: 0 0 6px #a78bfa80; }
+.ach-card-badge--legendary { background: #fbbf24; box-shadow: 0 0 8px #fbbf2480; }
+
+@media (max-width: 480px) {
+  .ach-grid {
+    grid-template-columns: 1fr;
+  }
+  .ach-summary-rarities {
+    gap: 8px;
+  }
+}
