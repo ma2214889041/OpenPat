@@ -81,14 +81,27 @@ create policy "Admins can read feedback"
 -- ══ 4. 新用户自动建档 ════════════════════════════════════
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer as $$
+declare
+  base_username text;
+  final_username text;
+  suffix int := 0;
 begin
+  base_username := coalesce(
+    new.raw_user_meta_data->>'user_name',
+    split_part(new.email, '@', 1)
+  );
+  final_username := base_username;
+
+  -- 若用户名已被占用则加数字后缀，直到唯一
+  while exists (select 1 from profiles where username = final_username) loop
+    suffix := suffix + 1;
+    final_username := base_username || '_' || suffix;
+  end loop;
+
   insert into profiles (id, username, avatar_url)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'user_name', split_part(new.email, '@', 1)),
-    new.raw_user_meta_data->>'avatar_url'
-  )
+  values (new.id, final_username, new.raw_user_meta_data->>'avatar_url')
   on conflict (id) do nothing;
+
   return new;
 end;
 $$;

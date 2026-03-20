@@ -336,6 +336,136 @@
   box-shadow: none;
 }
 
+/* ── 导航右侧区域（登录 + CTA） ───────────────────────────── */
+.lp-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 未登录 — 登录/注册链接 */
+.lp-nav-signin {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.lp-nav-signin:hover {
+  color: #fff;
+}
+
+.lp-nav--scrolled .lp-nav-signin {
+  color: var(--lp-muted);
+}
+
+.lp-nav--scrolled .lp-nav-signin:hover {
+  color: var(--lp-ink);
+}
+
+/* 已登录 — 用户头像 + 下拉 */
+.lp-nav-auth-user {
+  position: relative;
+}
+
+.lp-nav-auth-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--r-full);
+  padding: 5px 12px 5px 5px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.lp-nav-auth-avatar-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.lp-nav--scrolled .lp-nav-auth-avatar-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--lp-border);
+  color: var(--lp-ink);
+}
+
+.lp-nav-auth-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.lp-nav-auth-avatar-fallback {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--lp-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #000;
+}
+
+.lp-nav-auth-username {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lp-nav-auth-chevron {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.lp-nav-auth-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--lp-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  min-width: 160px;
+  overflow: hidden;
+  z-index: 200;
+}
+
+.lp-nav-auth-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lp-ink);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.lp-nav-auth-menu-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.lp-nav-auth-menu-item--danger {
+  color: #e53e3e;
+}
+
 /* ══════════════════════════════════════════════════════════
    首屏 Hero
    ══════════════════════════════════════════════════════════ */

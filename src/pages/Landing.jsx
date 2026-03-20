@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { hasSupabase } from '../utils/supabase';
 import './Landing.css';
 
 const STATES_VISIBLE = [
@@ -17,6 +19,39 @@ const SHORTS = [
 
 function scrollTo(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function NavAuth() {
+  const { user, username, signOut } = useAuth();
+  const [open, setOpen] = useState(false);
+
+  if (!hasSupabase) return null;
+
+  if (user) {
+    return (
+      <div className="lp-nav-auth-user">
+        <button className="lp-nav-auth-avatar-btn" onClick={() => setOpen(v => !v)}>
+          {user.user_metadata?.avatar_url
+            ? <img src={user.user_metadata.avatar_url} alt="" className="lp-nav-auth-avatar" />
+            : <span className="lp-nav-auth-avatar-fallback">{(username || '?')[0].toUpperCase()}</span>
+          }
+          <span className="lp-nav-auth-username">@{username}</span>
+          <span className="lp-nav-auth-chevron">{open ? '▲' : '▼'}</span>
+        </button>
+        {open && (
+          <div className="lp-nav-auth-dropdown">
+            <a href={`/u/${username}`} className="lp-nav-auth-menu-item">🌐 公开状态页</a>
+            <a href="/app" className="lp-nav-auth-menu-item">进入应用</a>
+            <button className="lp-nav-auth-menu-item lp-nav-auth-menu-item--danger" onClick={signOut}>退出登录</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Link to="/signin" className="lp-nav-signin">登录 / 注册</Link>
+  );
 }
 
 export default function Landing() {
@@ -58,7 +93,7 @@ export default function Landing() {
             <button className="lp-nav-link" onClick={() => scrollTo('share')}>分享</button>
             <Link to="/feedback" className="lp-nav-link">反馈</Link>
           </div>
-          <Link to="/app" className="lp-nav-cta">立刻开始 →</Link>
+          <NavAuth />
         </div>
       </nav>
 
