@@ -399,6 +399,32 @@
   color: var(--lp-ink);
 }
 
+/* Language toggle */
+.lp-nav-lang {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.7);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  letter-spacing: 0.04em;
+}
+.lp-nav-lang:hover {
+  border-color: rgba(255,255,255,0.6);
+  color: #fff;
+}
+.lp-nav--scrolled .lp-nav-lang {
+  border-color: rgba(0,0,0,0.2);
+  color: var(--lp-muted);
+}
+.lp-nav--scrolled .lp-nav-lang:hover {
+  border-color: var(--lp-ink);
+  color: var(--lp-ink);
+}
+
 /* 已登录 — 用户头像 + 下拉 */
 .lp-nav-auth-user {
   position: relative;
