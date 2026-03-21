@@ -292,36 +292,33 @@ export function useGateway(wsUrl, token) {
         const hint   = msg.error?.details?.recommendedNextStep;
         const detail = msg.error?.message ?? 'Authentication failed';
 
-        // Scope error fallback: retry once with reduced scopes (read+write only)
+        // Scope error fallback: retry once with reduced scopes
         if (!scopeErrorRetry.current && detail && /missing scope/i.test(detail)) {
           scopeErrorRetry.current = true;
           console.info('[useGateway] scope error — retrying with reduced scopes');
           ws.close();
-          // Reconnect will happen via onclose handler
           return;
         }
 
-        // Device identity mismatch — clear stale keys, skip device auth, and retry
-        if (code === 'DEVICE_AUTH_DEVICE_ID_MISMATCH' || /device.*(identity|mismatch)/i.test(detail)) {
-          try { localStorage.removeItem(DEVICE_KEY); } catch { /* ok */ }
-          try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch { /* ok */ }
-          if (!skipDeviceAuth.current) {
-            skipDeviceAuth.current = true;
-            console.info('[useGateway] device mismatch — retrying without device auth...');
-            ws.close();
-            return; // will reconnect via onclose
-          }
-        }
+        // Any device-related auth error — clear keys and retry with token-only
+        const isDeviceError = code.startsWith('DEVICE_AUTH')
+          || code === 'AUTH_TOKEN_MISMATCH'
+          || /device|identity|mismatch|pairing/i.test(detail);
 
-        // Clear saved device token on other auth errors — it may be stale
-        if (code.startsWith('DEVICE_AUTH') || code === 'AUTH_TOKEN_MISMATCH') {
-          try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch { /* ok */ }
+        if (isDeviceError && !skipDeviceAuth.current) {
+          // Clear browser-side device keys
           try { localStorage.removeItem(DEVICE_KEY); } catch { /* ok */ }
+          try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch { /* ok */ }
+          // Clear gateway-side stale paired device (dev server only, fire-and-forget)
+          fetch('/api/gateway-clear-device', { method: 'POST' }).catch(() => {});
+          skipDeviceAuth.current = true;
+          console.info('[useGateway] auth error (%s) — retrying token-only...', code);
+          ws.close();
+          return; // onclose will reconnect since skipDeviceAuth is true
         }
 
         setAuthError({ code, detail, hint });
         addEvent({ type: 'auth-error', code, time: Date.now() });
-        // Don't reconnect immediately for auth failures
         ws.close();
         return;
       }
@@ -414,9 +411,9 @@ export function useGateway(wsUrl, token) {
       setStatus(STATES.OFFLINE);
       setCurrentTool(null);
 
-      // Don't reconnect on auth errors (code 4001 or 4003) unless it's a scope retry
+      // Don't reconnect on auth errors (code 4001 or 4003) unless we're retrying
       const isAuthClose = ev.code === 4001 || ev.code === 4003;
-      if (isAuthClose && !scopeErrorRetry.current) return;
+      if (isAuthClose && !scopeErrorRetry.current && !skipDeviceAuth.current) return;
 
       const delay = nextBackoff(attemptRef.current);
       attemptRef.current += 1;

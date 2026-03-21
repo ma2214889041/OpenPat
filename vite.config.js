@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 
@@ -31,6 +31,30 @@ function openclawAutoDetect() {
           } catch { /* try next */ }
         }
         res.end(JSON.stringify({ autoDetected: false }));
+      });
+
+      // Clear stale webchat paired devices so new browsers can connect
+      server.middlewares.use('/api/gateway-clear-device', (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        if (req.method !== 'POST') { res.end('{}'); return; }
+        const pairedPath = join(homedir(), '.openclaw', 'devices', 'paired.json');
+        try {
+          if (!existsSync(pairedPath)) { res.end('{"ok":true}'); return; }
+          const paired = JSON.parse(readFileSync(pairedPath, 'utf8'));
+          let changed = false;
+          for (const [id, dev] of Object.entries(paired)) {
+            if (dev.clientMode === 'webchat' || dev.clientId === 'openclaw-control-ui') {
+              delete paired[id];
+              changed = true;
+            }
+          }
+          if (changed) {
+            writeFileSync(pairedPath, JSON.stringify(paired, null, 2) + '\n', 'utf8');
+          }
+          res.end(JSON.stringify({ ok: true, cleared: changed }));
+        } catch (err) {
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        }
       });
     },
   };
