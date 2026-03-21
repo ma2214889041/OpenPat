@@ -70,8 +70,16 @@ export function useProfileSync(user, localData) {
   useEffect(() => {
     if (!hasSupabase || !user?.id) return;
 
+    // Derive a username — use metadata or fallback to a stable default
+    const username = user.user_metadata?.user_name
+      || user.user_metadata?.preferred_username
+      || user.user_metadata?.name
+      || user.email?.split('@')[0]
+      || `user_${user.id.substring(0, 8)}`;
+
     const payload = {
       id:                   user.id,
+      username,
       total_tasks:          localData.totalTasks,
       total_tool_calls:     localData.totalToolCalls,
       total_tokens_input:   localData.totalTokensInput  ?? 0,

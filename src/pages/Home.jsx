@@ -143,7 +143,7 @@ export default function Home() {
   // ── Auto-detect CLI config ─────────────────────────────────────────────────
   useEffect(() => {
     if (saved) return;
-    fetch('/lobster-config.json')
+    fetch('http://localhost:4242/lobster-config.json')
       .then((r) => r.json())
       .then((cfg) => {
         if (cfg.autoDetected && cfg.wsUrl && cfg.token) {
@@ -557,23 +557,29 @@ export default function Home() {
 
 // ─── Auth error banner ────────────────────────────────────────────────────────
 const DEVICE_AUTH_HINTS = {
-  DEVICE_AUTH_NONCE_REQUIRED:    '设备认证失败：未提供 nonce。请更新 OpenPat 或在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true',
-  DEVICE_AUTH_NONCE_MISMATCH:    '设备 nonce 不匹配，请重新连接',
-  DEVICE_AUTH_SIGNATURE_INVALID: '设备签名无效。请在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true 或联系支持',
-  DEVICE_AUTH_SIGNATURE_EXPIRED: '设备签名已过期，请重新连接',
-  AUTH_TOKEN_MISMATCH:           'Token 不匹配，请检查 ~/.openclaw/openclaw.json 中的 gateway.auth.token',
+  DEVICE_AUTH_NONCE_REQUIRED:       '设备认证失败：未提供 nonce。请更新 OpenPat 或在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true',
+  DEVICE_AUTH_NONCE_MISMATCH:       '设备 nonce 不匹配，请重新连接',
+  DEVICE_AUTH_SIGNATURE_INVALID:    '设备签名无效。请在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true 或联系支持',
+  DEVICE_AUTH_SIGNATURE_EXPIRED:    '设备签名已过期，请重新连接',
+  AUTH_TOKEN_MISMATCH:              'Token 不匹配，请检查 ~/.openclaw/openclaw.json 中的 gateway.auth.token',
+  CONTROL_UI_ORIGIN_NOT_ALLOWED:    'Origin 未被允许。请运行 npx openpat（会自动配置），或手动在 ~/.openclaw/openclaw.json 的 gateway.controlUi.allowedOrigins 中添加本站地址',
 };
 
 function AuthErrorBanner({ error, onReconnect }) {
   const friendly = DEVICE_AUTH_HINTS[error.code] ?? error.detail ?? '认证失败，请检查 Token';
+  const isOriginError = error.code === 'CONTROL_UI_ORIGIN_NOT_ALLOWED';
+  const isDeviceError = error.code?.startsWith('DEVICE_AUTH');
   return (
     <div className="auth-error-banner">
       <span className="auth-error-icon">🔑</span>
       <div className="auth-error-body">
         <strong>连接认证失败</strong>
         <p>{friendly}</p>
-        {error.code?.startsWith('DEVICE_AUTH') && (
+        {isDeviceError && (
           <code>openclaw config set gateway.controlUi.allowInsecureAuth true</code>
+        )}
+        {isOriginError && (
+          <code>npx openpat</code>
         )}
       </div>
       <button className="auth-error-btn" onClick={onReconnect}>重新配置</button>

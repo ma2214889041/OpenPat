@@ -1,21 +1,57 @@
 #!/usr/bin/env node
 /**
  * npx openpat
- * Starts a local HTTP server serving the OpenPat UI,
- * auto-detects OpenClaw config, and opens the browser.
+ * Auto-detects OpenClaw config, exposes it on localhost:4242,
+ * then opens open-pat.com which reads it for auto-fill.
  */
 import { createServer } from 'http';
 import { readFileSync, existsSync } from 'fs';
 import { homedir } from 'os';
-import { join, extname } from 'path';
-import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
+import { join } from 'path';
 
-const require = createRequire(import.meta.url);
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
+import { writeFileSync } from 'fs';
 
 const PORT = process.env.PORT || 4242;
-const DIST_DIR = join(__dirname, '..', 'dist');
+const APP_URL = 'https://open-pat.com';
+
+// ─── Ensure gateway allows our origin ────────────────────────
+function ensureOriginAllowed() {
+  const candidates = [
+    join(homedir(), '.openclaw', 'openclaw.json'),
+    join(homedir(), '.openclaw', 'config.json'),
+    join(homedir(), '.config', 'openclaw', 'config.json'),
+  ];
+
+  for (const cfgPath of candidates) {
+    if (!existsSync(cfgPath)) continue;
+    try {
+      const raw = readFileSync(cfgPath, 'utf8');
+      const cfg = JSON.parse(raw);
+      if (!cfg.gateway) continue;
+
+      const ui = cfg.gateway.controlUi = cfg.gateway.controlUi || {};
+      const origins = ui.allowedOrigins = ui.allowedOrigins || [];
+      let changed = false;
+
+      if (!origins.includes(APP_URL)) {
+        origins.push(APP_URL);
+        changed = true;
+      }
+      if (!origins.some(o => o === 'http://localhost:*')) {
+        origins.push('http://localhost:*');
+        changed = true;
+      }
+
+      if (changed) {
+        writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + '\n', 'utf8');
+        console.log(`  ✅  Added ${APP_URL} to gateway.controlUi.allowedOrigins`);
+        return 'patched';
+      }
+      return 'ok';
+    } catch { /* skip */ }
+  }
+  return 'not-found';
+}
 
 // ─── Auto-detect OpenClaw Gateway config ─────────────────────
 function detectOpenClawConfig() {
@@ -23,95 +59,88 @@ function detectOpenClawConfig() {
     join(homedir(), '.openclaw', 'openclaw.json'),
     join(homedir(), '.openclaw', 'config.json'),
     join(homedir(), '.config', 'openclaw', 'config.json'),
+    join(homedir(), '.openclaw', 'gateway.json'),
   ];
 
   for (const path of candidates) {
     if (existsSync(path)) {
       try {
         const cfg = JSON.parse(readFileSync(path, 'utf8'));
-        const token = cfg.gateway_token || cfg.token || cfg.api_token;
-        const url = cfg.gateway_url || cfg.websocket_url || 'ws://localhost:18789';
-        if (token) {
-          return { token, url, path };
-        }
+        // Try multiple known token locations
+        const token = cfg.gateway?.auth?.token
+          || cfg.gateway?.token
+          || cfg.gateway_token
+          || cfg.token
+          || cfg.api_token;
+        // Resolve gateway URL from config
+        const host = cfg.gateway?.host || cfg.gateway?.hostname || 'localhost';
+        const port = cfg.gateway?.port || 18789;
+        const tls  = cfg.gateway?.tls === true || cfg.gateway?.ssl === true;
+        const url  = cfg.gateway_url
+          || cfg.gateway?.url
+          || cfg.websocket_url
+          || `${tls ? 'wss' : 'ws'}://${host}:${port}`;
+        if (token) return { token, url, path };
       } catch { /* skip */ }
     }
   }
   return null;
 }
 
-// ─── MIME types ───────────────────────────────────────────────
-const MIME = {
-  '.html': 'text/html',
-  '.js':   'application/javascript',
-  '.css':  'text/css',
-  '.svg':  'image/svg+xml',
-  '.png':  'image/png',
-  '.ico':  'image/x-icon',
-  '.json': 'application/json',
-  '.woff2':'font/woff2',
-};
-
-// ─── HTTP server ──────────────────────────────────────────────
+// ─── Tiny bridge server ───────────────────────────────────────
 function serve() {
+  // Ensure our origin is whitelisted before starting
+  const originResult = ensureOriginAllowed();
+  if (originResult === 'patched') {
+    console.log('  ℹ️   Gateway config updated — restart gateway to apply: openclaw gateway restart');
+  }
+
   const cfg = detectOpenClawConfig();
 
   const server = createServer((req, res) => {
-    // Inject auto-detected config
+    // CORS — allow open-pat.com and local dev origins
+    const origin = req.headers.origin || '';
+    const allowed = origin === APP_URL || /^http:\/\/localhost(:\d+)?$/.test(origin);
+    res.setHeader('Access-Control-Allow-Origin', allowed ? origin : APP_URL);
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+
     if (req.url === '/lobster-config.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(cfg
-        ? { wsUrl: cfg.url, token: cfg.token, autoDetected: true, configPath: cfg.path }
+        ? { wsUrl: cfg.url, token: cfg.token, autoDetected: true }
         : { autoDetected: false }
       ));
       return;
     }
 
-    // Serve static files from dist/
-    let filePath = join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
-
-    // SPA fallback — serve index.html for any non-file route
-    if (!existsSync(filePath) || !extname(filePath)) {
-      filePath = join(DIST_DIR, 'index.html');
-    }
-
-    try {
-      const content = readFileSync(filePath);
-      const mime = MIME[extname(filePath)] || 'application/octet-stream';
-      res.writeHead(200, { 'Content-Type': mime });
-      res.end(content);
-    } catch {
-      res.writeHead(404);
-      res.end('Not found');
-    }
+    res.writeHead(404);
+    res.end('Not found');
   });
 
   server.listen(PORT, () => {
-    const url = `http://localhost:${PORT}`;
     console.log('');
     console.log('  🦞  OpenPat');
     console.log('');
     if (cfg) {
-      console.log(`  ✅  Auto-detected OpenClaw config: ${cfg.path}`);
+      console.log(`  ✅  OpenClaw detected: ${cfg.path}`);
       console.log(`  🔗  Gateway: ${cfg.url}`);
     } else {
-      console.log('  ⚠️   Could not find OpenClaw config (~/.openclaw/openclaw.json)');
-      console.log('  👉  You can enter the Gateway URL and Token manually in the UI');
+      console.log('  ⚠️   OpenClaw config not found (~/.openclaw/openclaw.json)');
+      console.log('  👉  Enter Gateway URL and Token manually on the site');
     }
     console.log('');
-    console.log(`  🌐  Open: ${url}`);
+    console.log(`  🌐  Opening: ${APP_URL}`);
     console.log('');
     console.log('  Press Ctrl+C to stop');
     console.log('');
 
-    openBrowser(url);
+    openBrowser(APP_URL);
   });
 }
 
 function openBrowser(url) {
-  const { platform } = process;
-  const cmd = platform === 'darwin' ? 'open'
-    : platform === 'win32' ? 'start'
+  const cmd = process.platform === 'darwin' ? 'open'
+    : process.platform === 'win32' ? 'start'
     : 'xdg-open';
 
   import('child_process').then(({ exec }) => {

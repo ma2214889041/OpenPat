@@ -7,10 +7,10 @@ const PRESETS = [
   { label: 'SSH 隧道',    url: 'ws://127.0.0.1:18789' },
 ];
 
-// Try to auto-detect from the npx openpat CLI config file
+// Try to auto-detect from the npx openclaw-pat CLI config file
 async function tryAutoDetect() {
   try {
-    const r = await fetch('/lobster-config.json', { cache: 'no-store' });
+    const r = await fetch('http://localhost:4242/lobster-config.json', { cache: 'no-store' });
     if (!r.ok) return null;
     const cfg = await r.json();
     if (cfg.wsUrl && cfg.token) return { url: cfg.wsUrl, token: cfg.token };
@@ -21,21 +21,31 @@ async function tryAutoDetect() {
 // Try to ping a WebSocket URL to see if gateway is there
 async function pingGateway(wsUrl) {
   return new Promise((resolve) => {
-    const timer = setTimeout(() => { ws.close(); resolve(false); }, 3000);
+    const timer = setTimeout(() => {
+      try { ws.close(); } catch { /* ok */ }
+      resolve(false);
+    }, 4000);
     let ws;
     try { ws = new WebSocket(wsUrl); } catch { clearTimeout(timer); resolve(false); return; }
+    ws.onopen = () => {
+      // Connection opened — wait for challenge message
+    };
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        // Gateway sends {type:"event", event:"connect.challenge"} or legacy {type:"hello-ok"}
+        // Gateway sends {type:"event", event:"connect.challenge"} (v3 protocol)
+        // or legacy {type:"hello-ok"}
         const isChallenge = msg.type === 'event' && msg.event === 'connect.challenge';
         const isHello = msg.type === 'hello-ok' || (msg.type === 'res' && msg.payload?.type === 'hello-ok');
         if (isChallenge || isHello) {
-          clearTimeout(timer); ws.close(); resolve(true);
+          clearTimeout(timer);
+          try { ws.close(); } catch { /* ok */ }
+          resolve(true);
         }
       } catch { /* ignore */ }
     };
     ws.onerror = () => { clearTimeout(timer); resolve(false); };
+    ws.onclose = () => { clearTimeout(timer); };
   });
 }
 
@@ -148,8 +158,8 @@ export default function ConnectModal({ onConnect, onSkip }) {
             <summary>三种连接方式</summary>
             <div className="help-body">
               <p>🖥 方式 A — 命令行一键启动（推荐本地）</p>
-              <code>npx openpat</code>
-              <p>会自动读取 OpenClaw 配置并写入 /lobster-config.json，点「自动检测」即可完成连接。</p>
+              <code>npx openclaw-pat</code>
+              <p>会自动读取 <code>~/.openclaw/openclaw.json</code> 中的 Gateway 配置，点「自动检测」即可完成连接。</p>
               <p>📋 方式 B — 手动填写（适合任何场景）</p>
               <code>cat ~/.openclaw/openclaw.json | grep token</code>
               <p>把 gateway.auth.token 的值填到上面的 Token 框。</p>

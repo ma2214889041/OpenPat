@@ -6,12 +6,11 @@
  *
  * Handshake:
  *   1. Gateway → {type:"event", event:"connect.challenge", payload:{nonce, ts}}
- *   2. Client  → {type:"req", id, method:"connect", params:{minProtocol:3, maxProtocol:3,
- *                  client:{id,version,platform,mode}, role:"operator",
- *                  scopes:["operator.read","operator.write"],
- *                  auth:{token}, device:{id,publicKey,signature,signedAt,nonce}, …}}
- *   3. Gateway → {type:"res", id, ok:true, payload:{type:"hello-ok", protocol:3,
- *                  policy:{tickIntervalMs:15000}}}
+ *   2. Client  → {type:"req", id, method:"connect", params:{…}}
+ *   3. Gateway → {type:"res", id, ok:true, payload:{type:"hello-ok", …}}
+ *
+ * Device auth signing uses the official pipe-delimited v3 payload format:
+ *   v3|deviceId|clientId|clientMode|role|scopes-csv|signedAtMs|token|nonce|platform|deviceFamily
  *
  * Ongoing events (all wrapped as {type:"event", event:"…", payload:{…}}):
  *   agent    — agent lifecycle/tool/assistant stream events
@@ -33,15 +32,41 @@ export const STATES = {
   TOKEN_EXHAUSTED: 'token_exhausted',
 };
 
-// ── Reconnect back-off ─────────────────────────────────────────────────────
-const MIN_BACKOFF_MS = 1_000;
-const MAX_BACKOFF_MS = 30_000;
+// ── Protocol constants ─────────────────────────────────────────────────────
+const PROTOCOL_VERSION = 3;
+const CONNECT_TIMEOUT_MS = 8_000;
+const CLIENT_ID      = 'openclaw-control-ui';
+const CLIENT_VERSION = '1.0.0';
+const CLIENT_MODE    = 'webchat';
+const ROLE           = 'operator';
+const SCOPES         = [
+  'operator.admin',
+  'operator.read',
+  'operator.write',
+  'operator.approvals',
+  'operator.pairing',
+];
+const CAPS = ['tool-events'];
+
+// ── Reconnect back-off (factor 1.7, max 15s — matches openclaw-studio) ───
+const INITIAL_BACKOFF_MS = 1_000;
+const MAX_BACKOFF_MS     = 15_000;
+const BACKOFF_FACTOR     = 1.7;
 function nextBackoff(attempt) {
-  return Math.min(MIN_BACKOFF_MS * Math.pow(2, attempt), MAX_BACKOFF_MS);
+  return Math.min(INITIAL_BACKOFF_MS * Math.pow(BACKOFF_FACTOR, attempt), MAX_BACKOFF_MS);
+}
+
+// ── Base64url helpers ─────────────────────────────────────────────────────
+function arrayBufToBase64url(buf) {
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 // ── Device identity (persistent, WebCrypto Ed25519) ───────────────────────
-const DEVICE_KEY = 'openpat-device-v1';
+const DEVICE_KEY       = 'openpat-device-v1';
+const DEVICE_TOKEN_KEY = 'openpat-device-token-v1';
 
 async function getDeviceIdentity() {
   try {
@@ -67,27 +92,36 @@ async function getDeviceIdentity() {
   return { deviceId, privateKey: kp.privateKey, pubRaw: pubJwk.x };
 }
 
+function getSavedDeviceToken() {
+  try { return localStorage.getItem(DEVICE_TOKEN_KEY); }
+  catch { return null; }
+}
+function saveDeviceToken(token) {
+  try { localStorage.setItem(DEVICE_TOKEN_KEY, token); }
+  catch { /* ignore */ }
+}
+
 /**
- * Sign the challenge using the v3 payload format.
- * The exact serialization is not fully specified in the public docs, so we use
- * a stable JSON encoding of the key connect params. If the gateway rejects with
- * DEVICE_AUTH_SIGNATURE_INVALID the user needs to enable permissive auth or
- * update to a matching gateway version.
+ * Sign the challenge using the official v3 pipe-delimited payload format.
+ * Format: v3|deviceId|clientId|clientMode|role|scopes-csv|signedAtMs|token|nonce|platform|deviceFamily
+ * All string fields are lowercased ASCII for cross-runtime determinism.
  */
-async function signChallenge(privateKey, { nonce, deviceId, token, role, scopes }) {
-  const payload = JSON.stringify({
-    v:      'v3',
-    nonce,
-    device: deviceId,
-    platform:     'web',
-    deviceFamily: 'browser',
-    client:       'openpat',
-    role,
-    scopes,
+async function signChallenge(privateKey, { nonce, deviceId, token, signedAt }) {
+  const payload = [
+    'v3',
+    deviceId,
+    CLIENT_ID,
+    CLIENT_MODE,
+    ROLE,
+    SCOPES.join(','),
+    String(signedAt),
     token,
-  });
+    nonce,
+    'web',
+    'browser',
+  ].join('|');
   const sig = await crypto.subtle.sign('Ed25519', privateKey, new TextEncoder().encode(payload));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+  return arrayBufToBase64url(sig);
 }
 
 // ── Frame parser ───────────────────────────────────────────────────────────
@@ -127,10 +161,12 @@ export function useGateway(wsUrl, token) {
   });
   const [events, setEvents] = useState([]);
 
-  const wsRef          = useRef(null);
-  const reconnectTimer = useRef(null);
-  const attemptRef     = useRef(0);
-  const connectedRef   = useRef(false);
+  const wsRef           = useRef(null);
+  const reconnectTimer  = useRef(null);
+  const connectTimeout  = useRef(null);
+  const attemptRef      = useRef(0);
+  const connectedRef    = useRef(false);
+  const scopeErrorRetry = useRef(false); // tracks legacy-profile fallback
 
   const addEvent = useCallback((evt) => {
     setEvents(prev => [evt, ...prev].slice(0, 100));
@@ -142,11 +178,20 @@ export function useGateway(wsUrl, token) {
       wsRef.current.onclose = null;
       wsRef.current.close();
     }
+    clearTimeout(connectTimeout.current);
 
     let ws;
     try { ws = new WebSocket(wsUrl); }
     catch { setStatus(STATES.OFFLINE); return; }
     wsRef.current = ws;
+
+    // ── Connect timeout — close if handshake doesn't complete ──────────
+    connectTimeout.current = setTimeout(() => {
+      if (!connectedRef.current && ws.readyState !== WebSocket.CLOSED) {
+        console.warn('[useGateway] connect timeout after', CONNECT_TIMEOUT_MS, 'ms');
+        ws.close();
+      }
+    }, CONNECT_TIMEOUT_MS);
 
     ws.onopen = () => {
       // Do NOT send anything — wait for connect.challenge from the gateway
@@ -160,17 +205,21 @@ export function useGateway(wsUrl, token) {
 
       // ── Step 1: Challenge ─────────────────────────────────────────────
       if (eventName === 'connect.challenge') {
-        const nonce = payload.nonce;
-        const role   = 'operator';
-        const scopes = ['operator.read', 'operator.write'];
-        const ts     = Date.now();
+        const nonce   = payload.nonce;
+        const ts      = Date.now();
+
+        // Build auth section — prefer saved device token, fall back to gateway token
+        const savedDeviceToken = getSavedDeviceToken();
+        const authSection = savedDeviceToken
+          ? { deviceToken: savedDeviceToken, token }
+          : { token };
 
         // Generate/restore persistent device identity + sign the nonce
         let device = null;
         try {
           const identity = await getDeviceIdentity();
           const signature = await signChallenge(identity.privateKey, {
-            nonce, deviceId: identity.deviceId, token, role, scopes,
+            nonce, deviceId: identity.deviceId, token, signedAt: ts,
           });
           device = {
             id:        identity.deviceId,
@@ -186,23 +235,21 @@ export function useGateway(wsUrl, token) {
         }
 
         const connectParams = {
-          minProtocol: 3,
-          maxProtocol: 3,
+          minProtocol: PROTOCOL_VERSION,
+          maxProtocol: PROTOCOL_VERSION,
           client: {
-            id:         'openclaw-control-ui',
-            version:    '1.0.0',
+            id:         CLIENT_ID,
+            version:    CLIENT_VERSION,
             platform:   'web',
-            mode:       'webchat',
+            mode:       CLIENT_MODE,
             instanceId: device?.id,
           },
-          role,
-          scopes,
-          caps:        [],
-          commands:    [],
-          permissions: {},
-          auth:        { token },
+          role:        ROLE,
+          scopes:      SCOPES,
+          caps:        CAPS,
+          auth:        authSection,
           locale:      (typeof navigator !== 'undefined' ? navigator.language : null) || 'en-US',
-          userAgent:   'openpat/1.0.0',
+          userAgent:   'openpat/' + CLIENT_VERSION,
         };
 
         if (device) connectParams.device = device;
@@ -218,22 +265,45 @@ export function useGateway(wsUrl, token) {
 
       // ── Step 2: Hello-OK ──────────────────────────────────────────────
       if (eventName === 'hello-ok') {
-        connectedRef.current = true;
-        attemptRef.current   = 0;
+        clearTimeout(connectTimeout.current);
+        connectedRef.current  = true;
+        attemptRef.current    = 0;
+        scopeErrorRetry.current = false;
         setAuthError(null);
         setConnected(true);
         setStatus(STATES.IDLE);
         setStats(s => ({ ...s, sessionStart: Date.now() }));
         addEvent({ type: 'connected', time: Date.now() });
+
+        // Persist device token for future connections if gateway issued one
+        if (payload.auth?.deviceToken) {
+          saveDeviceToken(payload.auth.deviceToken);
+        }
         return;
       }
 
       // ── Auth errors ────────────────────────────────────────────────────
       // Res with ok:false during connect
       if (msg.type === 'res' && !msg.ok) {
+        clearTimeout(connectTimeout.current);
         const code   = msg.error?.details?.code ?? msg.error?.code ?? 'AUTH_ERROR';
         const hint   = msg.error?.details?.recommendedNextStep;
         const detail = msg.error?.message ?? 'Authentication failed';
+
+        // Scope error fallback: retry once with reduced scopes (read+write only)
+        if (!scopeErrorRetry.current && detail && /missing scope/i.test(detail)) {
+          scopeErrorRetry.current = true;
+          console.info('[useGateway] scope error — retrying with reduced scopes');
+          ws.close();
+          // Reconnect will happen via onclose handler
+          return;
+        }
+
+        // Clear saved device token on auth errors — it may be stale
+        if (code.startsWith('DEVICE_AUTH') || code === 'AUTH_TOKEN_MISMATCH') {
+          try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch { /* ok */ }
+        }
+
         setAuthError({ code, detail, hint });
         addEvent({ type: 'auth-error', code, time: Date.now() });
         // Don't reconnect immediately for auth failures
@@ -323,14 +393,15 @@ export function useGateway(wsUrl, token) {
     };
 
     ws.onclose = (ev) => {
+      clearTimeout(connectTimeout.current);
       connectedRef.current = false;
       setConnected(false);
       setStatus(STATES.OFFLINE);
       setCurrentTool(null);
 
-      // Don't reconnect on auth errors (code 4001 or explicit auth error set)
+      // Don't reconnect on auth errors (code 4001 or 4003) unless it's a scope retry
       const isAuthClose = ev.code === 4001 || ev.code === 4003;
-      if (isAuthClose) return;
+      if (isAuthClose && !scopeErrorRetry.current) return;
 
       const delay = nextBackoff(attemptRef.current);
       attemptRef.current += 1;
@@ -340,10 +411,12 @@ export function useGateway(wsUrl, token) {
 
   useEffect(() => {
     attemptRef.current = 0;
+    scopeErrorRetry.current = false;
     setAuthError(null);
     if (wsUrl && token) connect();
     return () => {
       clearTimeout(reconnectTimer.current);
+      clearTimeout(connectTimeout.current);
       if (wsRef.current) {
         wsRef.current.onclose = null;
         wsRef.current.close();
