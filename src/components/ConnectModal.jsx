@@ -54,6 +54,7 @@ export default function ConnectModal({ onConnect, onSkip }) {
   const [token,    setToken]    = useState('');
   const [detecting, setDetecting] = useState(false);
   const [detectMsg, setDetectMsg] = useState('');
+  const [showManual, setShowManual] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -65,17 +66,30 @@ export default function ConnectModal({ onConnect, onSkip }) {
     setDetecting(true);
     setDetectMsg('检测中...');
 
-    // 1. Try CLI config file first
+    // 1. Try Vite dev API / CLI bridge
+    const sources = ['/api/gateway-config', 'http://localhost:4242/lobster-config.json'];
+    for (const src of sources) {
+      try {
+        const cfg = await (await fetch(src)).json();
+        if (cfg.autoDetected && cfg.wsUrl && cfg.token) {
+          setDetectMsg('✅ 自动检测成功！');
+          setDetecting(false);
+          onConnect(cfg.wsUrl, cfg.token);
+          return;
+        }
+      } catch { /* next */ }
+    }
+
+    // 2. Try auto-detect via CLI config
     const cfg = await tryAutoDetect();
     if (cfg) {
-      setUrl(cfg.url);
-      setToken(cfg.token);
-      setDetectMsg('✅ 自动检测成功！已填入配置');
+      setDetectMsg('✅ 自动检测成功！');
       setDetecting(false);
+      onConnect(cfg.url, cfg.token);
       return;
     }
 
-    // 2. Probe default local ports
+    // 3. Probe default gateway
     const candidates = ['ws://localhost:18789', 'ws://127.0.0.1:18789'];
     for (const candidate of candidates) {
       setDetectMsg(`探测 ${candidate}...`);
@@ -83,14 +97,15 @@ export default function ConnectModal({ onConnect, onSkip }) {
       if (alive) {
         setUrl(candidate);
         setDetectMsg('✅ 找到 Gateway！填入 Token 后连接');
+        setShowManual(true);
         setDetecting(false);
         return;
       }
     }
 
-    setDetectMsg('❌ 未检测到 Gateway，请手动填写');
+    setDetectMsg('❌ 未检测到 Gateway');
     setDetecting(false);
-  }, []);
+  }, [onConnect]);
 
   return (
     <div className="modal-overlay">
@@ -101,7 +116,19 @@ export default function ConnectModal({ onConnect, onSkip }) {
           <p>连接你的 OpenClaw Agent，让它变成一只会动的虚拟伙伴</p>
         </div>
 
-        {/* Auto-detect */}
+        {/* Primary: one command */}
+        <div className="modal-quickstart">
+          <p className="quickstart-label">在终端运行一条命令即可连接：</p>
+          <div className="quickstart-code" onClick={() => {
+            navigator.clipboard?.writeText('npx openclaw-pat');
+          }}>
+            <code>npx openclaw-pat</code>
+            <span className="copy-hint">点击复制</span>
+          </div>
+          <p className="quickstart-desc">自动检测 OpenClaw 配置，打开浏览器一键连接</p>
+        </div>
+
+        {/* Auto-detect button */}
         <div className="modal-autodetect">
           <button
             type="button"
@@ -109,76 +136,66 @@ export default function ConnectModal({ onConnect, onSkip }) {
             onClick={handleAutoDetect}
             disabled={detecting}
           >
-            {detecting ? '⏳ 检测中...' : '⚡ 自动检测'}
+            {detecting ? '⏳ 检测中...' : '⚡ 已运行？点击自动连接'}
           </button>
           {detectMsg && <span className="detect-msg">{detectMsg}</span>}
         </div>
 
-        <div className="modal-divider">或手动填写</div>
-
-        <form onSubmit={handleSubmit} className="modal-form">
-
-          {/* URL presets */}
-          <div className="preset-row">
-            {PRESETS.map(p => (
-              <button
-                key={p.url}
-                type="button"
-                className={`preset-chip${url === p.url ? ' preset-chip--active' : ''}`}
-                onClick={() => setUrl(p.url)}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <label>
-            <span>Gateway 地址</span>
-            <input
-              type="text"
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              placeholder="ws://localhost:18789"
-              spellCheck={false}
-            />
-          </label>
-
-          <label>
-            <span>Gateway Token</span>
-            <input
-              type="password"
-              value={token}
-              onChange={e => setToken(e.target.value)}
-              placeholder="从 openclaw.json 中复制"
-            />
-            <small>Token 仅存本地，不会上传</small>
-          </label>
-
-          <details className="modal-help">
-            <summary>三种连接方式</summary>
-            <div className="help-body">
-              <p>🖥 方式 A — 命令行一键启动（推荐本地）</p>
-              <code>npx openclaw-pat</code>
-              <p>会自动读取 <code>~/.openclaw/openclaw.json</code> 中的 Gateway 配置，点「自动检测」即可完成连接。</p>
-              <p>📋 方式 B — 手动填写（适合任何场景）</p>
-              <code>cat ~/.openclaw/openclaw.json | grep token</code>
-              <p>把 gateway.auth.token 的值填到上面的 Token 框。</p>
-              <p>🌐 方式 C — SSH 隧道（连接远程服务器）</p>
-              <code>ssh -N -L 18789:127.0.0.1:18789 user@host</code>
-              <p>隧道建好后选「SSH 隧道」预设，填远程 Token。</p>
-            </div>
-          </details>
-
-          <button type="submit" className="connect-btn">
-            🦞 开始连接
+        {/* Manual fallback (collapsed by default) */}
+        {!showManual && (
+          <button type="button" className="toggle-manual" onClick={() => setShowManual(true)}>
+            手动填写 ▾
           </button>
+        )}
 
-          {onSkip && (
-            <button type="button" className="skip-btn" onClick={onSkip}>
-              先看看演示
+        {showManual && (
+          <form onSubmit={handleSubmit} className="modal-form">
+            <div className="preset-row">
+              {PRESETS.map(p => (
+                <button
+                  key={p.url}
+                  type="button"
+                  className={`preset-chip${url === p.url ? ' preset-chip--active' : ''}`}
+                  onClick={() => setUrl(p.url)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <label>
+              <span>Gateway 地址</span>
+              <input
+                type="text"
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                placeholder="ws://localhost:18789"
+                spellCheck={false}
+              />
+            </label>
+
+            <label>
+              <span>Gateway Token</span>
+              <input
+                type="password"
+                value={token}
+                onChange={e => setToken(e.target.value)}
+                placeholder="从 openclaw.json 中复制"
+              />
+              <small>Token 仅存本地，不会上传</small>
+            </label>
+
+            <button type="submit" className="connect-btn">
+              🦞 开始连接
             </button>
-          )}
-        </form>
+          </form>
+        )}
+
+        {onSkip && (
+          <button type="button" className="skip-btn" onClick={onSkip}>
+            先看看演示
+          </button>
+        )}
 
         <div className="modal-footer">
           <p>需要 <a href="https://openclaw.ai" target="_blank" rel="noreferrer">OpenClaw</a> Gateway 运行中</p>

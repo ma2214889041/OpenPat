@@ -326,18 +326,24 @@ function cmdServe() {
     console.log('  🦞  OpenPat');
     console.log('');
     if (cfg) {
+      const connectUrl = `${APP_URL}/app?gateway=${encodeURIComponent(cfg.url)}&token=${encodeURIComponent(cfg.token)}`;
       console.log(`  ✅  OpenClaw detected: ${cfg.path}`);
       console.log(`  🔗  Gateway: ${cfg.url}`);
+      console.log('');
+      console.log(`  🌐  一键连接:`);
+      console.log(`  ${connectUrl}`);
+      console.log('');
+      console.log('  Press Ctrl+C to stop');
+      console.log('');
+      openBrowser(connectUrl);
     } else {
       console.log('  ⚠️   OpenClaw config not found (~/.openclaw/openclaw.json)');
       console.log('  👉  Enter Gateway URL and Token manually on the site');
+      console.log('');
+      console.log('  Press Ctrl+C to stop');
+      console.log('');
+      openBrowser(APP_URL);
     }
-    console.log('');
-    console.log(`  🌐  Opening: ${APP_URL}`);
-    console.log('');
-    console.log('  Press Ctrl+C to stop');
-    console.log('');
-    openBrowser(APP_URL);
   });
 }
 

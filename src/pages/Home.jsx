@@ -63,8 +63,23 @@ function useCeremony(achievements, adminDefs) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+// Read ?gateway=...&token=... from URL (one-click connect from CLI)
+function getUrlParams() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const gateway = p.get('gateway');
+    const token = p.get('token');
+    if (gateway && token) {
+      const wsUrl = gateway.startsWith('ws') ? gateway : `ws://${gateway}`;
+      return { url: wsUrl, token };
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 export default function Home() {
-  const saved = loadConn();
+  const urlParams = getUrlParams();
+  const saved = urlParams || loadConn();
   const [wsUrl, setWsUrl] = useState(saved?.url ?? '');
   const [token, setToken] = useState(saved?.token ?? '');
   const [showModal, setShowModal] = useState(!saved);
@@ -131,8 +146,19 @@ export default function Home() {
     return () => window.removeEventListener('openpat-sync', onSync);
   }, []);
 
+  // ── One-click connect from URL params (CLI generates this URL) ──────────────
+  useEffect(() => {
+    if (urlParams) {
+      localStorage.setItem(CONN_KEY, JSON.stringify(urlParams));
+      // Clean URL params so token isn't visible in address bar / history
+      const clean = window.location.pathname + window.location.hash;
+      window.history.replaceState(null, '', clean);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Auto-detect OpenClaw gateway config ────────────────────────────────────
   useEffect(() => {
+    if (urlParams) return; // already connected via URL params
     async function autoDetect() {
       const urls = ['/api/gateway-config', 'http://localhost:4242/lobster-config.json'];
       for (const url of urls) {
