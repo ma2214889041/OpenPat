@@ -133,10 +133,7 @@ export default function Home() {
 
   // ── Auto-detect OpenClaw gateway config ────────────────────────────────────
   useEffect(() => {
-    if (saved) return;
     async function autoDetect() {
-      // Try Vite dev server API first (reads ~/.openclaw/ directly)
-      // Then fall back to CLI bridge at port 4242
       const urls = ['/api/gateway-config', 'http://localhost:4242/lobster-config.json'];
       for (const url of urls) {
         try {
