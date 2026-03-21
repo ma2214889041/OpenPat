@@ -131,20 +131,28 @@ export default function Home() {
     return () => window.removeEventListener('openpat-sync', onSync);
   }, []);
 
-  // ── Auto-detect CLI config ─────────────────────────────────────────────────
+  // ── Auto-detect OpenClaw gateway config ────────────────────────────────────
   useEffect(() => {
     if (saved) return;
-    fetch('http://localhost:4242/lobster-config.json')
-      .then((r) => r.json())
-      .then((cfg) => {
-        if (cfg.autoDetected && cfg.wsUrl && cfg.token) {
-          setWsUrl(cfg.wsUrl);
-          setToken(cfg.token);
-          localStorage.setItem(CONN_KEY, JSON.stringify({ url: cfg.wsUrl, token: cfg.token }));
-          setShowModal(false);
-        }
-      })
-      .catch(() => { });
+    async function autoDetect() {
+      // Try Vite dev server API first (reads ~/.openclaw/ directly)
+      // Then fall back to CLI bridge at port 4242
+      const urls = ['/api/gateway-config', 'http://localhost:4242/lobster-config.json'];
+      for (const url of urls) {
+        try {
+          const r = await fetch(url);
+          const cfg = await r.json();
+          if (cfg.autoDetected && cfg.wsUrl && cfg.token) {
+            setWsUrl(cfg.wsUrl);
+            setToken(cfg.token);
+            localStorage.setItem(CONN_KEY, JSON.stringify({ url: cfg.wsUrl, token: cfg.token }));
+            setShowModal(false);
+            return;
+          }
+        } catch { /* try next */ }
+      }
+    }
+    autoDetect();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleConnect = useCallback((url, tok) => {
