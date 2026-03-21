@@ -562,6 +562,7 @@ const DEVICE_AUTH_HINTS = {
   DEVICE_AUTH_SIGNATURE_INVALID:    '设备签名无效。请在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true 或联系支持',
   DEVICE_AUTH_SIGNATURE_EXPIRED:    '设备签名已过期，请重新连接',
   AUTH_TOKEN_MISMATCH:              'Token 不匹配，请检查 ~/.openclaw/openclaw.json 中的 gateway.auth.token',
+  DEVICE_AUTH_DEVICE_ID_MISMATCH:   '设备身份不匹配，已自动清除旧密钥并重试。如仍失败，请清除浏览器 localStorage 后刷新',
   CONTROL_UI_ORIGIN_NOT_ALLOWED:    'Origin 未被允许。请运行 npx openpat（会自动配置），或手动在 ~/.openclaw/openclaw.json 的 gateway.controlUi.allowedOrigins 中添加本站地址',
 };
 

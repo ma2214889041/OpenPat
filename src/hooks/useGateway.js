@@ -299,9 +299,22 @@ export function useGateway(wsUrl, token) {
           return;
         }
 
-        // Clear saved device token on auth errors — it may be stale
+        // Device identity mismatch — clear stale keys and auto-retry once
+        if (code === 'DEVICE_AUTH_DEVICE_ID_MISMATCH' || /device.*(identity|mismatch)/i.test(detail)) {
+          try { localStorage.removeItem(DEVICE_KEY); } catch { /* ok */ }
+          try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch { /* ok */ }
+          if (!scopeErrorRetry.current) {
+            scopeErrorRetry.current = true; // reuse flag to limit to one retry
+            console.info('[useGateway] device mismatch — cleared keys, reconnecting...');
+            ws.close();
+            return; // will reconnect via onclose
+          }
+        }
+
+        // Clear saved device token on other auth errors — it may be stale
         if (code.startsWith('DEVICE_AUTH') || code === 'AUTH_TOKEN_MISMATCH') {
           try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch { /* ok */ }
+          try { localStorage.removeItem(DEVICE_KEY); } catch { /* ok */ }
         }
 
         setAuthError({ code, detail, hint });
