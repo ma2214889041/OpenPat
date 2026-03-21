@@ -162,6 +162,7 @@ export function useGateway(wsUrl, token) {
   const attemptRef      = useRef(0);
   const connectedRef    = useRef(false);
   const scopeErrorRetry = useRef(false); // tracks legacy-profile fallback
+  const skipDeviceAuth  = useRef(false); // skip device signing after mismatch
 
   const addEvent = useCallback((evt) => {
     setEvents(prev => [evt, ...prev].slice(0, 100));
@@ -210,23 +211,28 @@ export function useGateway(wsUrl, token) {
           : { token };
 
         // Generate/restore persistent device identity + sign the nonce
+        // Skip device auth entirely after a mismatch — token-only works with allowInsecureAuth
         let device = null;
-        try {
-          const identity = await getDeviceIdentity();
-          const signature = await signChallenge(identity.privateKey, {
-            nonce, deviceId: identity.deviceId, token, signedAt: ts,
-          });
-          device = {
-            id:        identity.deviceId,
-            publicKey: identity.pubRaw,   // base64url Ed25519 public key
-            signature,
-            signedAt:  ts,
-            nonce,
-          };
-        } catch (err) {
-          console.warn('[useGateway] device signing failed:', err);
-          // Proceed without device section — works if gateway has
-          // gateway.controlUi.allowInsecureAuth=true
+        if (!skipDeviceAuth.current) {
+          try {
+            const identity = await getDeviceIdentity();
+            const signature = await signChallenge(identity.privateKey, {
+              nonce, deviceId: identity.deviceId, token, signedAt: ts,
+            });
+            device = {
+              id:        identity.deviceId,
+              publicKey: identity.pubRaw,   // base64url Ed25519 public key
+              signature,
+              signedAt:  ts,
+              nonce,
+            };
+          } catch (err) {
+            console.warn('[useGateway] device signing failed:', err);
+            // Proceed without device section — works if gateway has
+            // gateway.controlUi.allowInsecureAuth=true
+          }
+        } else {
+          console.info('[useGateway] skipping device auth, using token-only');
         }
 
         const connectParams = {
@@ -264,6 +270,7 @@ export function useGateway(wsUrl, token) {
         connectedRef.current  = true;
         attemptRef.current    = 0;
         scopeErrorRetry.current = false;
+        skipDeviceAuth.current  = false;
         setAuthError(null);
         setConnected(true);
         setStatus(STATES.IDLE);
@@ -294,13 +301,13 @@ export function useGateway(wsUrl, token) {
           return;
         }
 
-        // Device identity mismatch — clear stale keys and auto-retry once
+        // Device identity mismatch — clear stale keys, skip device auth, and retry
         if (code === 'DEVICE_AUTH_DEVICE_ID_MISMATCH' || /device.*(identity|mismatch)/i.test(detail)) {
           try { localStorage.removeItem(DEVICE_KEY); } catch { /* ok */ }
           try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch { /* ok */ }
-          if (!scopeErrorRetry.current) {
-            scopeErrorRetry.current = true; // reuse flag to limit to one retry
-            console.info('[useGateway] device mismatch — cleared keys, reconnecting...');
+          if (!skipDeviceAuth.current) {
+            skipDeviceAuth.current = true;
+            console.info('[useGateway] device mismatch — retrying without device auth...');
             ws.close();
             return; // will reconnect via onclose
           }
@@ -420,6 +427,7 @@ export function useGateway(wsUrl, token) {
   useEffect(() => {
     attemptRef.current = 0;
     scopeErrorRetry.current = false;
+    skipDeviceAuth.current = false;
     setAuthError(null);
     if (wsUrl && token) connect();
     return () => {
