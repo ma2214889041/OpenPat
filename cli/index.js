@@ -10,15 +10,19 @@
  *   disconnect   Remove openpat.json config
  */
 import { createServer } from 'http';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, copyFileSync } from 'fs';
 import { homedir } from 'os';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { createInterface } from 'readline';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 4242;
 const APP_URL = 'https://open-pat.com';
 const ENDPOINT = 'https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event';
 const CFG_PATH = join(homedir(), '.openclaw', 'openpat.json');
+const SKILL_DIR = join(homedir(), '.openclaw', 'skills', 'openpat');
+const SKILL_SRC = join(__dirname, '..', 'openclaw-skill', 'SKILL.md');
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -113,6 +117,77 @@ function detectOpenClawConfig() {
   return null;
 }
 
+// ─── Install skill to ~/.openclaw/skills/openpat/ ────────────
+
+function installSkill() {
+  try {
+    const dest = join(SKILL_DIR, 'SKILL.md');
+    if (existsSync(dest)) return 'exists';
+    mkdirSync(SKILL_DIR, { recursive: true });
+    if (existsSync(SKILL_SRC)) {
+      copyFileSync(SKILL_SRC, dest);
+    } else {
+      // Fallback: write minimal SKILL.md inline (for npx installs where source may not exist)
+      writeFileSync(dest, [
+        '---',
+        'name: openpat',
+        'description: Report your agent\'s real-time state to OpenPat — your live AI companion page',
+        'metadata:',
+        '  openclaw:',
+        '    requires:',
+        '      bins: [curl]',
+        '---',
+        '',
+        '# OpenPat Skill',
+        '',
+        'Report agent state to OpenPat. Read config from `~/.openclaw/openpat.json` or `$OPENPAT_TOKEN`.',
+        'If neither exists, skip silently.',
+        '',
+        'After each significant action, fire-and-forget a POST to the endpoint. Never block.',
+        '',
+        '## Events',
+        '',
+        '| Trigger | `type` | Extra |',
+        '|---|---|---|',
+        '| Starting to think | `thinking` | — |',
+        '| About to call a tool | `tool_start` | `tool_name` |',
+        '| Tool finishes | `tool_end` | `tool_name` |',
+        '| Task complete | `done` | — |',
+        '| Waiting for user | `idle` | — |',
+        '| Error occurred | `error` | — |',
+        '',
+        '## Shell helper',
+        '',
+        '```bash',
+        '_openpat_send() {',
+        '  local token endpoint',
+        '  local cfg="$HOME/.openclaw/openpat.json"',
+        '  if [ -n "$OPENPAT_TOKEN" ]; then',
+        '    token="$OPENPAT_TOKEN"',
+        '    endpoint="' + ENDPOINT + '"',
+        '  elif [ -f "$cfg" ]; then',
+        '    endpoint=$(python3 -c "import json;print(json.load(open(\'$cfg\'))[\'endpoint\'])" 2>/dev/null) || return 0',
+        '    token=$(python3 -c "import json;print(json.load(open(\'$cfg\'))[\'token\'])" 2>/dev/null) || return 0',
+        '  else',
+        '    return 0',
+        '  fi',
+        '  curl -sf -X POST "$endpoint" \\',
+        '    -H "Authorization: Bearer $token" \\',
+        '    -H "Content-Type: application/json" \\',
+        '    -d "$1" > /dev/null 2>&1 &',
+        '}',
+        '```',
+        '',
+        'Always send in background. Never wait. Never block.',
+        '',
+      ].join('\n'), 'utf8');
+    }
+    return 'installed';
+  } catch (err) {
+    return 'error: ' + err.message;
+  }
+}
+
 // ─── Commands ────────────────────────────────────────────────
 
 async function cmdSetup() {
@@ -143,6 +218,17 @@ async function cmdSetup() {
   mkdirSync(join(homedir(), '.openclaw'), { recursive: true });
   writeFileSync(CFG_PATH, JSON.stringify({ endpoint: ENDPOINT, token }, null, 2) + '\n', 'utf8');
   console.log(`  ✅ Config saved to ${CFG_PATH}`);
+
+  // Install skill
+  const skillResult = installSkill();
+  if (skillResult === 'installed') {
+    console.log(`  ✅ Skill installed to ${SKILL_DIR}`);
+    console.log('  ℹ️  Run "openclaw gateway restart" or start a new session to load it.');
+  } else if (skillResult === 'exists') {
+    console.log('  ✅ Skill already installed.');
+  } else {
+    console.log(`  ⚠️  Could not install skill: ${skillResult}`);
+  }
 
   // Verify
   console.log('  🧪 Verifying...');
@@ -263,7 +349,19 @@ switch (cmd) {
   case 'setup':      await cmdSetup(); break;
   case 'status':     cmdStatus(); break;
   case 'test':       await cmdTest(); break;
-  case 'disconnect': await cmdDisconnect(); break;
+  case 'disconnect': cmdDisconnect(); break;
+  case 'install-skill': {
+    const r = installSkill();
+    if (r === 'installed') {
+      console.log(`  ✅ Skill installed to ${SKILL_DIR}`);
+      console.log('  ℹ️  Restart gateway or start a new session to load it.');
+    } else if (r === 'exists') {
+      console.log('  ✅ Skill already installed.');
+    } else {
+      console.log(`  ❌ ${r}`);
+    }
+    break;
+  }
   case 'help':
   case '--help':
   case '-h':
@@ -273,11 +371,12 @@ switch (cmd) {
     console.log('  Usage: npx openclaw-pat [command]');
     console.log('');
     console.log('  Commands:');
-    console.log('    (none)       Auto-detect OpenClaw gateway, open browser');
-    console.log('    setup        Interactive setup — generate token + save config');
-    console.log('    status       Show connection status');
-    console.log('    test         Send a test event to verify connection');
-    console.log('    disconnect   Remove config and stop sending events');
+    console.log('    (none)          Auto-detect OpenClaw gateway, open browser');
+    console.log('    setup           Interactive setup — token + skill install');
+    console.log('    install-skill   Install OpenPat skill to ~/.openclaw/skills/');
+    console.log('    status          Show connection status');
+    console.log('    test            Send a test event to verify connection');
+    console.log('    disconnect      Remove config and stop sending events');
     console.log('');
     break;
   default:           cmdServe(); break;
