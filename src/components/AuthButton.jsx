@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../hooks/useAuth';
 import { hasSupabase } from '../utils/supabase';
 import './AuthButton.css';
@@ -9,10 +10,16 @@ export default function AuthButton({ onSettings }) {
   const [dropPos, setDropPos] = useState(null);
   const ref = useRef(null);
 
+  const dropRef = useRef(null);
+
   // Close dropdown on outside click
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      if (ref.current && ref.current.contains(e.target)) return;
+      if (dropRef.current && dropRef.current.contains(e.target)) return;
+      setOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
@@ -38,14 +45,15 @@ export default function AuthButton({ onSettings }) {
           <span className="auth-username">@{username}</span>
           <span className="auth-chevron">{open ? '▲' : '▼'}</span>
         </button>
-        {open && (
-          <div className="auth-dropdown" style={dropPos ? { top: dropPos.top, right: dropPos.right } : undefined}>
+        {open && dropPos && createPortal(
+          <div className="auth-dropdown" ref={dropRef} style={{ top: dropPos.top, right: dropPos.right }}>
             <a href={`/u/${username}`} className="auth-menu-item" onClick={() => setOpen(false)}>🌐 我的公开主页</a>
             {onSettings && (
               <button className="auth-menu-item" onClick={() => { setOpen(false); onSettings(); }}>⚙️ 个人设置</button>
             )}
             <button className="auth-menu-item danger" onClick={signOut}>退出登录</button>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
