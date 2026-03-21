@@ -6,6 +6,7 @@ import './AuthButton.css';
 export default function AuthButton({ onSettings }) {
   const { user, username, signInWithGitHub, signInWithGoogle, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState(null);
   const ref = useRef(null);
 
   // Close dropdown on outside click
@@ -21,7 +22,15 @@ export default function AuthButton({ onSettings }) {
   if (user) {
     return (
       <div className="auth-user" ref={ref}>
-        <button className="auth-avatar-btn" onClick={() => setOpen(v => !v)}>
+        <button className="auth-avatar-btn" onClick={() => {
+          setOpen(v => {
+            if (!v && ref.current) {
+              const r = ref.current.getBoundingClientRect();
+              setDropPos({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) });
+            }
+            return !v;
+          });
+        }}>
           {user.user_metadata?.avatar_url
             ? <img src={user.user_metadata.avatar_url} alt="" className="auth-avatar" />
             : <span className="auth-avatar-fallback">{(username || '?')[0].toUpperCase()}</span>
@@ -30,7 +39,7 @@ export default function AuthButton({ onSettings }) {
           <span className="auth-chevron">{open ? '▲' : '▼'}</span>
         </button>
         {open && (
-          <div className="auth-dropdown">
+          <div className="auth-dropdown" style={dropPos ? { top: dropPos.top, right: dropPos.right } : undefined}>
             <a href={`/u/${username}`} className="auth-menu-item" onClick={() => setOpen(false)}>🌐 我的公开主页</a>
             {onSettings && (
               <button className="auth-menu-item" onClick={() => { setOpen(false); onSettings(); }}>⚙️ 个人设置</button>
