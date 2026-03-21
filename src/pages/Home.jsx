@@ -18,13 +18,14 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useDynamicFavicon } from '../hooks/useDynamicFavicon';
 import { useDemoMode } from '../hooks/useDemoMode';
 import { useMemeShare } from '../hooks/useMemeShare';
+import { useCloudMemes } from '../hooks/useCloudMemes';
 import { useSessionTracking } from '../hooks/useSessionTracking';
 import { useStatusEffects } from '../hooks/useStatusEffects';
 import {
   loadData, saveData, ACHIEVEMENTS, RARITY_COLORS,
   checkAchievements, checkCloudAchievements,
 } from '../utils/storage';
-import { loadAllAchievementsFromCloud, loadAllMemesFromCloud } from '../utils/supabaseStorage';
+import { loadAllAchievementsFromCloud } from '../utils/supabaseStorage';
 import { loadAllAchievementDefs } from '../utils/skinStorage';
 import { useProfileSync } from '../hooks/useProfileSync';
 import { STORAGE_KEYS } from '../utils/constants';
@@ -69,7 +70,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(!saved);
   const [localData, setLocalData] = useState(loadData);
   const [adminAchievementDefs, setAdminAchievementDefs] = useState([]);
-  const [cloudMemes, setCloudMemes] = useState({});  // { [state]: { image_url, caption } }
+  const { cloudMemes } = useCloudMemes();
 
   const adminAchDefsRef = useRef([]); // ref so setLocalData callbacks can access latest defs
 
@@ -128,13 +129,6 @@ export default function Home() {
     const onSync = () => setLocalData(loadData());
     window.addEventListener('openpat-sync', onSync);
     return () => window.removeEventListener('openpat-sync', onSync);
-  }, []);
-
-  // ── Load cloud memes ───────────────────────────────────────────────────────
-  useEffect(() => {
-    loadAllMemesFromCloud()
-      .then(setCloudMemes)
-      .catch((err) => console.error('[Home] failed to load memes:', err));
   }, []);
 
   // ── Auto-detect CLI config ─────────────────────────────────────────────────
@@ -319,11 +313,6 @@ export default function Home() {
         <button className="btn-connect" onClick={() => setShowModal(true)}>
           {connected ? '切换连接' : '连接 Gateway'}
         </button>
-
-        {/* ── Feedback ── */}
-        <Link to="/feedback" className="btn-feedback">
-          💡 给我们反馈
-        </Link>
       </main>
     </div>
   );

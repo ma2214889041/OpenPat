@@ -2,33 +2,33 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SettingsPanel from './components/SettingsPanel';
+import FeedbackModal from './components/FeedbackModal';
 import Landing from './pages/Landing';
 import Home from './pages/Home';
 import PublicProfile from './pages/PublicProfile';
 import AdminSkins from './pages/AdminSkins';
-import Feedback from './pages/Feedback';
 import SignIn from './pages/SignIn';
-import Connect from './pages/Connect';
 import Achievements from './pages/Achievements';
 import './App.css';
 
-// Navbar and settings only appear on app routes, not the landing page
 function AppShell({ children }) {
   const { pathname } = useLocation();
   const isLanding = pathname === '/';
   const isSignIn  = pathname === '/signin';
-  const isConnect = pathname === '/connect';
   const [showSettings, setShowSettings] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
-  if (isLanding || isSignIn || isConnect) return children;
+  if (isLanding || isSignIn) return children;
 
   return (
     <>
       <div className="bg-grid" />
-      <Navbar onSettings={() => setShowSettings(true)} />
-      {showSettings && (
-        <SettingsPanel onClose={() => setShowSettings(false)} />
-      )}
+      <Navbar
+        onSettings={() => setShowSettings(true)}
+        onFeedback={() => setShowFeedback(true)}
+      />
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
       {children}
     </>
   );
@@ -44,9 +44,7 @@ export default function App() {
             <Route path="/app"           element={<Home />} />
             <Route path="/u/:username"   element={<PublicProfile />} />
             <Route path="/admin"         element={<AdminSkins />} />
-            <Route path="/feedback"      element={<Feedback />} />
             <Route path="/signin"        element={<SignIn />} />
-            <Route path="/connect"       element={<Connect />} />
             <Route path="/achievements"  element={<Achievements />} />
           </Routes>
         </AppShell>

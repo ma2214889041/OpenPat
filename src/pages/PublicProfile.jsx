@@ -6,8 +6,8 @@ import LobsterSVG from '../components/LobsterSVG';
 import AnimatedPet from '../components/AnimatedPet';
 import { loadAllSkins, prepareSkinForDisplay } from '../utils/skinStorage';
 import { STATES } from '../hooks/useGateway';
-import { loadAllMemesFromCloud } from '../utils/supabaseStorage';
 import { useMemeShare } from '../hooks/useMemeShare';
+import { useCloudMemes } from '../hooks/useCloudMemes';
 import { fmt } from '../utils/format';
 import { STATUS_COLORS, STATUS_TEXT } from '../utils/constants';
 import './PublicProfile.css';
@@ -119,12 +119,7 @@ export default function PublicProfile() {
   const [agentStatus, setAgentStatus] = useState(null);
   const [loading, setLoading]         = useState(true);
   const [activeSkin, setActiveSkin]   = useState(null);
-  const [cloudMemes, setCloudMemes]   = useState({});
-
-  // Load cloud memes for share button
-  useEffect(() => {
-    loadAllMemesFromCloud().then(setCloudMemes).catch(() => {});
-  }, []);
+  const { cloudMemes } = useCloudMemes();
 
   const { handleMemeShare, sharing } = useMemeShare({
     cloudMemes,

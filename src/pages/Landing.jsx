@@ -342,7 +342,7 @@ export default function Landing() {
           <div className="lp-nav-links">
             <button className="lp-nav-link" onClick={() => scrollTo('about')}>{t.nav.about}</button>
             <button className="lp-nav-link" onClick={() => scrollTo('share')}>{t.nav.share}</button>
-            <Link to="/feedback" className="lp-nav-link">{t.nav.feedback}</Link>
+            <Link to="/app" className="lp-nav-link">{t.nav.feedback}</Link>
             <button className="lp-nav-link lp-nav-lang" onClick={toggleLang} title="Switch language">
               {lang === 'zh' ? 'EN' : '中'}
             </button>
@@ -399,7 +399,7 @@ export default function Landing() {
               {t.how.steps[0].desc} <code>{t.how.steps[0].code}</code>
               {t.how.steps[0].desc2} <code>{t.how.steps[0].code2}</code>
               {t.how.steps[0].desc3}
-              <br /><a href="/connect" style={{ color: 'inherit', fontWeight: 800 }}>{t.how.steps[0].link}</a>
+              <br /><a href="/app" style={{ color: 'inherit', fontWeight: 800 }}>{t.how.steps[0].link}</a>
             </p>
           </div>
           <div className="lp-how-connector" aria-hidden="true">→</div>

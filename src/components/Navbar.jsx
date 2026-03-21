@@ -5,17 +5,20 @@ import { hasSupabase } from '../utils/supabase';
 import './Navbar.css';
 
 const LINKS = [
-  { to: '/', label: '主页' },
+  { to: '/app', label: '主页' },
+  { to: '/achievements', label: '成就' },
 ];
 
-export default function Navbar({ onSettings }) {
+export default function Navbar({ onSettings, onFeedback }) {
   const { pathname } = useLocation();
   const { user } = useAuth();
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <span className="navbar-logo">🦞</span>
-        <span className="navbar-title">OpenPat</span>
+        <Link to="/" className="navbar-brand-link">
+          <span className="navbar-logo">🦞</span>
+          <span className="navbar-title">OpenPat</span>
+        </Link>
       </div>
       <div className="navbar-links">
         {LINKS.map(l => (
@@ -29,11 +32,16 @@ export default function Navbar({ onSettings }) {
         ))}
       </div>
       <div className="navbar-auth">
-        <button className="nav-settings-btn" onClick={onSettings} title="设置">⚙️</button>
+        {onFeedback && (
+          <button className="nav-icon-btn" onClick={onFeedback} title="反馈">💡</button>
+        )}
+        {!user && (
+          <button className="nav-icon-btn" onClick={onSettings} title="设置">⚙️</button>
+        )}
         {hasSupabase && !user && (
           <Link to="/signin" className="nav-signin-btn">登录</Link>
         )}
-        <AuthButton />
+        <AuthButton onSettings={onSettings} />
       </div>
     </nav>
   );

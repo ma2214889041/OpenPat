@@ -1,17 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { hasSupabase } from '../utils/supabase';
 import './AuthButton.css';
 
-export default function AuthButton() {
+export default function AuthButton({ onSettings }) {
   const { user, username, signInWithGitHub, signInWithGoogle, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
 
   if (!hasSupabase) return null;
 
   if (user) {
     return (
-      <div className="auth-user">
+      <div className="auth-user" ref={ref}>
         <button className="auth-avatar-btn" onClick={() => setOpen(v => !v)}>
           {user.user_metadata?.avatar_url
             ? <img src={user.user_metadata.avatar_url} alt="" className="auth-avatar" />
@@ -22,7 +31,10 @@ export default function AuthButton() {
         </button>
         {open && (
           <div className="auth-dropdown">
-            <a href={`/u/${username}`} className="auth-menu-item">🌐 公开状态页</a>
+            <a href={`/u/${username}`} className="auth-menu-item" onClick={() => setOpen(false)}>🌐 我的公开主页</a>
+            {onSettings && (
+              <button className="auth-menu-item" onClick={() => { setOpen(false); onSettings(); }}>⚙️ 个人设置</button>
+            )}
             <button className="auth-menu-item danger" onClick={signOut}>退出登录</button>
           </div>
         )}
@@ -32,7 +44,6 @@ export default function AuthButton() {
 
   return (
     <div className="auth-login">
-      <span className="auth-hint">登录解锁公开状态页</span>
       <button className="auth-btn github" onClick={signInWithGitHub}>
         <GitHubIcon /> GitHub
       </button>
