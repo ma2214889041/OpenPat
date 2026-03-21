@@ -744,7 +744,7 @@
 .site-config-upload-btn {
   display: inline-block;
   padding: 8px 16px;
-  background: var(--a-accent);
+  background: #1a1a1a;
   color: #fff;
   border-radius: 8px;
   font-size: 13px;

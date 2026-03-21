@@ -1,22 +1,21 @@
 {
-  "name": "openpat",
+  "name": "openclaw-pat",
   "version": "1.0.0",
   "description": "Turn your OpenClaw AI Agent into a living digital companion 🦞",
   "type": "module",
   "bin": {
+    "openclaw-pat": "cli/index.js",
     "openpat": "cli/index.js"
   },
   "files": [
-    "cli/",
-    "dist/"
+    "cli/"
   ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node cli/index.js",
-    "prepublishOnly": "npm run build"
+    "start": "node cli/index.js"
   },
   "keywords": [
     "openclaw",

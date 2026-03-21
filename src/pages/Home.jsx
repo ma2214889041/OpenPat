@@ -18,15 +18,14 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useDynamicFavicon } from '../hooks/useDynamicFavicon';
 import { useDemoMode } from '../hooks/useDemoMode';
 import { useMemeShare } from '../hooks/useMemeShare';
+import { useSessionTracking } from '../hooks/useSessionTracking';
+import { useStatusEffects } from '../hooks/useStatusEffects';
 import {
   loadData, saveData, ACHIEVEMENTS, RARITY_COLORS,
-  onGatewayConnect, tickUptimeCheck, recordError, checkNoErrorWeek,
   checkAchievements, checkCloudAchievements,
 } from '../utils/storage';
 import { loadAllAchievementsFromCloud, loadAllMemesFromCloud } from '../utils/supabaseStorage';
 import { loadAllAchievementDefs } from '../utils/skinStorage';
-import { saveSession } from '../utils/sessionHistory';
-import { supabase, hasSupabase } from '../utils/supabase';
 import { useProfileSync } from '../hooks/useProfileSync';
 import { STORAGE_KEYS } from '../utils/constants';
 import './Home.css';
@@ -72,9 +71,6 @@ export default function Home() {
   const [adminAchievementDefs, setAdminAchievementDefs] = useState([]);
   const [cloudMemes, setCloudMemes] = useState({});  // { [state]: { image_url, caption } }
 
-  const sessionStartRef = useRef(null);
-  const prevConnected = useRef(false);
-  const prevStatus = useRef(null);
   const adminAchDefsRef = useRef([]); // ref so setLocalData callbacks can access latest defs
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
@@ -164,216 +160,17 @@ export default function Home() {
     setShowModal(false);
   }, []);
 
-  // ── Session start / end ────────────────────────────────────────────────────
-  useEffect(() => {
-    if (connected && !prevConnected.current) {
-      sessionStartRef.current = Date.now();
-      addAffinity(10); // daily connect bonus
-      setLocalData((prev) => {
-        const updated = onGatewayConnect(prev);
-        const withBuiltin = checkAchievements(updated, {});
-        const withAch = checkCloudAchievements(withBuiltin, adminAchDefsRef.current);
-        saveData(withAch);
-        return withAch;
-      });
-    }
+  // ── Session tracking (connect/disconnect, uptime, periodic checkpoint) ────
+  useSessionTracking({
+    connected, stats, errorLog, addAffinity,
+    adminAchDefsRef, setLocalData,
+  });
 
-    if (!connected && prevConnected.current && sessionStartRef.current) {
-      saveSession({
-        startTime: sessionStartRef.current,
-        tokensInput: stats.tokensInput,
-        tokensOutput: stats.tokensOutput,
-        toolCalls: stats.toolCalls,
-        toolCallsSuccess: stats.toolCallsSuccess,
-        errorCount: errorLog.length,
-        modelName: stats.modelName,
-        status: 'disconnected',
-      });
-      setLocalData((prev) => {
-        const today = new Date().toDateString();
-        const base = prev.todayDate === today
-          ? prev
-          : { ...prev, todayTokensInput: 0, todayTokensOutput: 0, todayDate: today };
-        // Only add the delta not already flushed by the periodic checkpoint
-        const alreadyIn    = prev._flushedTokensIn    ?? 0;
-        const alreadyOut   = prev._flushedTokensOut   ?? 0;
-        const alreadyTools = prev._flushedToolCalls   ?? 0;
-        const remainIn    = Math.max(0, stats.tokensInput  - alreadyIn);
-        const remainOut   = Math.max(0, stats.tokensOutput - alreadyOut);
-        const remainTools = Math.max(0, stats.toolCalls    - alreadyTools);
-        const updated = {
-          ...base,
-          todayTokensInput:  base.todayTokensInput  + stats.tokensInput,
-          todayTokensOutput: base.todayTokensOutput + stats.tokensOutput,
-          totalToolCalls:    base.totalToolCalls    + remainTools,
-          totalTokensInput:  base.totalTokensInput  + remainIn,
-          totalTokensOutput: base.totalTokensOutput + remainOut,
-          // Clear checkpoint state for the next session
-          _flushedTokensIn:  0,
-          _flushedTokensOut: 0,
-          _flushedToolCalls: 0,
-        };
-        const withBuiltin2 = checkAchievements(updated, {});
-        const withAch = checkCloudAchievements(withBuiltin2, adminAchDefsRef.current);
-        saveData(withAch);
-        return withAch;
-      });
-      sessionStartRef.current = null;
-    }
-
-    prevConnected.current = connected;
-  }, [connected]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Uptime tick (marathon achievement) ────────────────────────────────────
-  useEffect(() => {
-    if (!connected) return;
-    const id = setInterval(() => {
-      setLocalData((prev) => {
-        const { data: updated, newAch } = tickUptimeCheck(prev);
-        if (newAch) saveData(updated);
-        return updated;
-      });
-    }, 60_000);
-    return () => clearInterval(id);
-  }, [connected]);
-
-  // ── Periodic session stat checkpoint (every 2 min) ─────────────────────────
-  // Writes in-memory session stats to localStorage so data isn't lost on crash.
-  // stats ref so the interval always sees the latest values without re-creating.
-  const statsRef = useRef(stats);
-  useEffect(() => { statsRef.current = stats; }, [stats]);
-
-  useEffect(() => {
-    if (!connected) return;
-    const id = setInterval(() => {
-      const s = statsRef.current;
-      if (!s.tokensInput && !s.tokensOutput && !s.toolCalls) return;
-      setLocalData((prev) => {
-        const today = new Date().toDateString();
-        const base = prev.todayDate === today
-          ? prev
-          : { ...prev, todayTokensInput: 0, todayTokensOutput: 0, todayDate: today };
-        // Write current session delta into localData so it survives a crash.
-        // We track how much was already flushed to avoid double-counting.
-        const alreadyFlushedIn  = prev._flushedTokensIn  ?? 0;
-        const alreadyFlushedOut = prev._flushedTokensOut ?? 0;
-        const alreadyFlushedTools = prev._flushedToolCalls ?? 0;
-        const newIn    = Math.max(0, s.tokensInput  - alreadyFlushedIn);
-        const newOut   = Math.max(0, s.tokensOutput - alreadyFlushedOut);
-        const newTools = Math.max(0, s.toolCalls    - alreadyFlushedTools);
-        if (!newIn && !newOut && !newTools) return prev;
-        const updated = {
-          ...base,
-          totalTokensInput:  base.totalTokensInput  + newIn,
-          totalTokensOutput: base.totalTokensOutput + newOut,
-          totalToolCalls:    base.totalToolCalls    + newTools,
-          _flushedTokensIn:  s.tokensInput,
-          _flushedTokensOut: s.tokensOutput,
-          _flushedToolCalls: s.toolCalls,
-        };
-        saveData(updated);
-        return updated;
-      });
-    }, 120_000); // every 2 minutes
-    return () => clearInterval(id);
-  }, [connected]);
-
-  // ── Task complete / error ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (status === prevStatus.current) return;
-    const prevSt = prevStatus.current;
-    prevStatus.current = status;
-
-    if (status === STATES.DONE) {
-      triggerConfetti();
-      addAffinity(5);
-      setLocalData((prev) => {
-        const sessionErrors = prev._sessionErrors ?? 0;
-        const extras = [];
-        if (!prev.achievements.includes('perfect_task') && sessionErrors === 0) {
-          extras.push('perfect_task');
-        }
-        const withWeek = checkNoErrorWeek(prev);
-        const updated = {
-          ...withWeek,
-          totalTasks: withWeek.totalTasks + 1,
-          _sessionErrors: 0,
-          achievements: [
-            ...withWeek.achievements,
-            ...extras.filter((id) => !withWeek.achievements.includes(id)),
-          ],
-        };
-        const withBuiltin3 = checkAchievements(updated, {});
-        const withAch = checkCloudAchievements(withBuiltin3, adminAchDefsRef.current);
-        saveData(withAch);
-        return withAch;
-      });
-      notify('任务完成！', '伙伴完成了一个任务 ✔');
-    }
-
-    if (status === STATES.ERROR && prevSt !== STATES.ERROR) {
-      setLocalData((prev) => {
-        const updated = recordError({ ...prev, _sessionErrors: (prev._sessionErrors ?? 0) + 1 });
-        return updated;
-      });
-      notify('遇到了问题', '不用担心，伙伴还在努力');
-    }
-  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Tool calls → saver achievement ────────────────────────────────────────
-  useEffect(() => {
-    setLocalData((prev) => {
-      if (
-        !prev.achievements.includes('saver') &&
-        stats.toolCalls >= 50 &&
-        stats.toolCallsSuccess === stats.toolCalls &&
-        stats.tokensInput < 50_000
-      ) {
-        const updated = { ...prev, achievements: [...prev.achievements, 'saver'] };
-        saveData(updated);
-        return updated;
-      }
-      return prev;
-    });
-  }, [stats.toolCalls]);
-
-  // ── Night owl ──────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!connected) return;
-    const h = new Date().getHours();
-    if (h >= 2 && h < 5) {
-      setLocalData((prev) => {
-        if (prev.achievements.includes('night_owl')) return prev;
-        const updated = { ...prev, achievements: [...prev.achievements, 'night_owl'] };
-        saveData(updated);
-        return updated;
-      });
-    }
-  }, [connected]);
-
-
-  // ── Sync to Supabase ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!hasSupabase || !user || !connected) return;
-    supabase.from('agent_status').upsert({
-      user_id: user.id,
-      status,
-      current_tool: currentTool?.name ?? null,
-      session_tokens: stats.tokensInput + stats.tokensOutput,
-      session_tool_calls: stats.toolCalls,
-      updated_at: new Date().toISOString(),
-    });
-  }, [status, user, connected, currentTool, stats]);
-
-  // ── Dynamic title ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    const titles = {
-      [STATES.ERROR]:     '[Error] 出错了',
-      [STATES.TOOL_CALL]: '[Working] 正在工作中 ⚡',
-      [STATES.DONE]:      '[Done] 任务完成 ✔',
-    };
-    document.title = titles[displayStatus] ?? 'OpenPat 🦞';
-  }, [displayStatus]);
+  // ── Status effects (task complete, error, night owl, supabase sync, title) ─
+  useStatusEffects({
+    status, displayStatus, connected, stats, user, currentTool,
+    addAffinity, notify, adminAchDefsRef, setLocalData,
+  });
 
   // ── Share ──────────────────────────────────────────────────────────────────
   const handleShareGenerated = useCallback(() => {
