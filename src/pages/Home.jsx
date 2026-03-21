@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import PetDisplay from '../components/PetDisplay';
 import StatsPanel from '../components/StatsPanel';
@@ -17,20 +17,21 @@ import { useAffinity } from '../hooks/useAffinity';
 import { useNotifications } from '../hooks/useNotifications';
 import { useDynamicFavicon } from '../hooks/useDynamicFavicon';
 import { useDemoMode } from '../hooks/useDemoMode';
+import { useMemeShare } from '../hooks/useMemeShare';
 import {
   loadData, saveData, ACHIEVEMENTS, RARITY_COLORS,
   onGatewayConnect, tickUptimeCheck, recordError, checkNoErrorWeek,
   checkAchievements, checkCloudAchievements,
 } from '../utils/storage';
+import { loadAllAchievementsFromCloud, loadAllMemesFromCloud } from '../utils/supabaseStorage';
 import { loadAllAchievementDefs } from '../utils/skinStorage';
-import { loadAllMemesFromCloud, loadAllAchievementsFromCloud } from '../utils/supabaseStorage';
 import { saveSession } from '../utils/sessionHistory';
 import { supabase, hasSupabase } from '../utils/supabase';
 import { useProfileSync } from '../hooks/useProfileSync';
-import { generateMemeShareCard } from '../utils/shareCard';
+import { STORAGE_KEYS } from '../utils/constants';
 import './Home.css';
 
-const CONN_KEY = 'openpat-connection';
+const CONN_KEY = STORAGE_KEYS.GATEWAY_CONNECTION;
 
 function loadConn() {
   try { return JSON.parse(localStorage.getItem(CONN_KEY) || 'null'); }
@@ -384,37 +385,13 @@ export default function Home() {
     });
   }, []);
 
-  // ── Meme share: current state's meme image + caption ──────────────────────
-  const handleMemeShare = useCallback(async () => {
-    const stateKey = displayStatus ?? 'idle';
-    const meme = cloudMemes[stateKey] ?? cloudMemes['idle'] ?? null;
-    const DEFAULT_CAPTIONS = {
-      idle: '摸鱼中。不打扰它。',
-      thinking: '它在思考，就像你不会的那些事。',
-      tool_call: '正在调用工具。这活儿你不想自己做，它替你扛着。',
-      done: '搞定了。下一个。',
-      error: '翻车了，但还在爬。',
-      offline: '下线了。明天见。',
-      token_exhausted: '没 Token 了。账单来了吗？',
-      happy: '今天心情不错，继续干。',
-    };
-    const caption = meme?.caption || DEFAULT_CAPTIONS[stateKey] || '我的 Agent 正在工作';
-    try {
-      const dataUrl = await generateMemeShareCard({
-        memeImageUrl: meme?.image_url ?? null,
-        caption,
-        username: username ?? 'agent',
-        profileUrl: username ? `openp.at/u/${username}` : 'openp.at',
-      });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `openpat-meme-${stateKey}.png`;
-      a.click();
-      handleShareGenerated();
-    } catch (err) {
-      console.error('梗图分享失败:', err);
-    }
-  }, [displayStatus, cloudMemes, username, handleShareGenerated]);
+  // ── Meme share (shared hook) ───────────────────────────────────────────────
+  const { handleMemeShare } = useMemeShare({
+    cloudMemes,
+    username,
+    status: displayStatus,
+    onGenerated: handleShareGenerated,
+  });
 
   // ── Status bubble (click reaction) ────────────────────────────────────────
   const [bubble, setBubble] = useState(null);

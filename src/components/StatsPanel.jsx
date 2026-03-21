@@ -1,41 +1,7 @@
 import { useState } from 'react';
 import './StatsPanel.css';
-import { STATES } from '../hooks/useGateway';
-
-function fmt(n) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-  return String(n);
-}
-
-function fmtTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
-}
-
-const STATUS_LABELS = {
-  [STATES.OFFLINE]: '离线',
-  [STATES.IDLE]: '空闲',
-  [STATES.THINKING]: '思考中',
-  [STATES.TOOL_CALL]: '调用中',
-  [STATES.DONE]: '完成',
-  [STATES.ERROR]: '报错',
-  [STATES.TOKEN_EXHAUSTED]: 'Token耗尽',
-};
-
-const STATUS_COLORS = {
-  [STATES.OFFLINE]: '#94a3b8',
-  [STATES.IDLE]: '#22c55e',
-  [STATES.THINKING]: '#f59e0b',
-  [STATES.TOOL_CALL]: '#3b82f6',
-  [STATES.DONE]: '#10b981',
-  [STATES.ERROR]: '#ef4444',
-  [STATES.TOKEN_EXHAUSTED]: '#f97316',
-};
+import { fmt, fmtTime } from '../utils/format';
+import { STATUS_LABELS, STATUS_COLORS } from '../utils/constants';
 
 export default function StatsPanel({ status, stats, totalTasks }) {
   const [expanded, setExpanded] = useState(false);

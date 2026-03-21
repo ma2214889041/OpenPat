@@ -21,16 +21,11 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { STORAGE_KEYS } from '../utils/constants';
+import { STATES } from '../utils/states';
 
-export const STATES = {
-  OFFLINE:         'offline',
-  IDLE:            'idle',
-  THINKING:        'thinking',
-  TOOL_CALL:       'tool_call',
-  DONE:            'done',
-  ERROR:           'error',
-  TOKEN_EXHAUSTED: 'token_exhausted',
-};
+// Re-export so existing consumers of `import { STATES } from '../hooks/useGateway'` still work
+export { STATES };
 
 // ── Protocol constants ─────────────────────────────────────────────────────
 const PROTOCOL_VERSION = 3;
@@ -65,8 +60,8 @@ function arrayBufToBase64url(buf) {
 }
 
 // ── Device identity (persistent, WebCrypto Ed25519) ───────────────────────
-const DEVICE_KEY       = 'openpat-device-v1';
-const DEVICE_TOKEN_KEY = 'openpat-device-token-v1';
+const DEVICE_KEY       = STORAGE_KEYS.DEVICE_KEY;
+const DEVICE_TOKEN_KEY = STORAGE_KEYS.DEVICE_TOKEN;
 
 async function getDeviceIdentity() {
   try {

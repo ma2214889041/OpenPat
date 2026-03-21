@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { loadAllSkins, prepareSkinForDisplay } from '../utils/skinStorage';
+import { STORAGE_KEYS } from '../utils/constants';
 
-const STORAGE_KEY = 'openpat-active-animated-skin';
+const STORAGE_KEY = STORAGE_KEYS.ACTIVE_ANIMATED_SKIN;
 
 /**
  * Manages animated skins loaded from IndexedDB.

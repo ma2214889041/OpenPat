@@ -1,4 +1,6 @@
-const STORAGE_KEY = 'openpat-data';
+import { STORAGE_KEYS } from './constants';
+
+const STORAGE_KEY = STORAGE_KEYS.APP_DATA;
 
 const defaultData = {
   totalTasks: 0,

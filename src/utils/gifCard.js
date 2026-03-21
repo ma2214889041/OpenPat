@@ -4,6 +4,7 @@
  * Uses gifenc for pure-JS encoding (no native deps).
  */
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
+import { fmt } from './format';
 
 /**
  * Renders the lobster SVG string to a canvas frame.
@@ -36,15 +37,9 @@ async function svgToPixels(svgStr, w, h) {
  */
 function buildFrameSVG(stats, skinColors, t) {
   const { primary, secondary } = skinColors;
-  const swayAngle = Math.sin(t * Math.PI * 2) * 12;
   const breatheScale = 1 + Math.sin(t * Math.PI * 2) * 0.02;
 
   const totalTokens = (stats.tokensInput + stats.tokensOutput) || 0;
-  function fmt(n) {
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-    if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-    return String(n);
-  }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
     <!-- Background -->
@@ -99,7 +94,7 @@ function buildFrameSVG(stats, skinColors, t) {
     <text x="160" y="358" font-family="sans-serif" font-size="20" font-weight="bold" fill="#f1f5f9">${stats.toolCalls}</text>
     <text x="280" y="338" font-family="sans-serif" font-size="13" fill="#64748b">成功率</text>
     <text x="280" y="358" font-family="sans-serif" font-size="20" font-weight="bold" fill="#22c55e">${stats.toolCalls > 0 ? ((stats.toolCallsSuccess / stats.toolCalls) * 100).toFixed(0) + '%' : '—'}</text>
-    <text x="200" y="392" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#334155">🦞 open-pat.com · npx openpat</text>
+    <text x="200" y="392" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#334155">🦞 open-pat.com · npx openclaw-pat</text>
   </svg>`;
 }
 
@@ -129,11 +124,6 @@ async function imageUrlToPixels(url, w, h) {
   ctx.font = 'bold 20px sans-serif';
   ctx.fillStyle = '#f1f5f9';
   const totalTokens = (stats.tokensInput + stats.tokensOutput) || 0;
-  function fmt(n) {
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-    if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-    return String(n);
-  }
   ctx.fillText(fmt(totalTokens), 20, h - 55);
   ctx.fillText(stats.toolCalls, 160, h - 55);
   ctx.fillStyle = '#22c55e';

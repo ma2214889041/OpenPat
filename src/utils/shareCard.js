@@ -1,10 +1,5 @@
 import { toPng } from 'html-to-image';
-
-function fmt(n) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-  return String(n);
-}
+import { fmt } from './format';
 
 function pickTemplate(stats, status) {
   if (status === 'error') return 'crash';
@@ -342,7 +337,7 @@ export async function generateShareCard(stats, status, format = '4x5', _skinColo
         padding:14px 32px;border-radius:9999px;
         font-size:${is1x1 ? 24 : 28}px;font-weight:900;
         font-family:'Courier New',monospace;letter-spacing:0.01em;">
-        npx openpat
+        npx openclaw-pat
       </div>
       <div style="font-size:${is1x1 ? 22 : 26}px;font-weight:700;color:rgba(0,0,0,0.45);">
         open-pat.com

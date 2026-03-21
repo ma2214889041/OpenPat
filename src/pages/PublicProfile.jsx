@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase, hasSupabase } from '../utils/supabase';
 import { LEVELS, getLevel, ACHIEVEMENTS, RARITY_COLORS } from '../utils/storage';
@@ -7,14 +7,10 @@ import AnimatedPet from '../components/AnimatedPet';
 import { loadAllSkins, prepareSkinForDisplay } from '../utils/skinStorage';
 import { STATES } from '../hooks/useGateway';
 import { loadAllMemesFromCloud } from '../utils/supabaseStorage';
-import { generateMemeShareCard } from '../utils/shareCard';
+import { useMemeShare } from '../hooks/useMemeShare';
+import { fmt } from '../utils/format';
+import { STATUS_COLORS, STATUS_TEXT } from '../utils/constants';
 import './PublicProfile.css';
-
-function fmt(n) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-  return String(n);
-}
 
 const MOCK_PROFILE = {
   username: 'demo_user',
@@ -50,25 +46,6 @@ function getTitle(totalTasks, achievements) {
   return TITLES.find(t => totalTasks >= t.minTasks)?.title ?? '新手上路';
 }
 
-const STATUS_COLORS = {
-  [STATES.OFFLINE]:         '#aaaaaa',
-  [STATES.IDLE]:            '#22c55e',
-  [STATES.THINKING]:        '#f59e0b',
-  [STATES.TOOL_CALL]:       '#8B8BFF',
-  [STATES.DONE]:            '#83FFC1',
-  [STATES.ERROR]:           '#ef4444',
-  [STATES.TOKEN_EXHAUSTED]: '#f97316',
-};
-
-const STATUS_TEXT = {
-  [STATES.OFFLINE]:         '离线中',
-  [STATES.IDLE]:            '待命中',
-  [STATES.THINKING]:        '思考中...',
-  [STATES.TOOL_CALL]:       '调用工具中 ⚡',
-  [STATES.DONE]:            '任务完成 ✓',
-  [STATES.ERROR]:           '发生错误',
-  [STATES.TOKEN_EXHAUSTED]: 'Token 耗尽',
-};
 
 // ── 段子生成器 ───────────────────────────────────────────────────────────────
 function generateDuanzi(profile, agentStatus) {
@@ -143,12 +120,17 @@ export default function PublicProfile() {
   const [loading, setLoading]         = useState(true);
   const [activeSkin, setActiveSkin]   = useState(null);
   const [cloudMemes, setCloudMemes]   = useState({});
-  const [sharing, setSharing]         = useState(false);
 
   // Load cloud memes for share button
   useEffect(() => {
     loadAllMemesFromCloud().then(setCloudMemes).catch(() => {});
   }, []);
+
+  const { handleMemeShare, sharing } = useMemeShare({
+    cloudMemes,
+    username: profile?.username,
+    status: agentStatus?.status || STATES.OFFLINE,
+  });
 
   // Load first available animated skin from IndexedDB
   useEffect(() => {
@@ -237,40 +219,6 @@ export default function PublicProfile() {
     setMeta('twitter:description', desc);
     return () => { document.title = 'OpenPat'; };
   }, [profile]);
-
-  // ── Meme share for this profile's current state ──
-  const handleMemeShare = useCallback(async () => {
-    if (!profile || sharing) return;
-    setSharing(true);
-    const stateKey = agentStatus?.status || STATES.OFFLINE;
-    const meme = cloudMemes[stateKey] ?? cloudMemes['idle'] ?? null;
-    const DEFAULT_CAPTIONS = {
-      idle: '摸鱼中。不打扰它。',
-      thinking: '它在思考，就像你不会的那些事。',
-      tool_call: '正在调用工具。这活儿你不想自己做，它替你扛着。',
-      done: '搞定了。下一个。',
-      error: '翻车了，但还在爬。',
-      offline: '它在休息。等等它。',
-      token_exhausted: '没 Token 了。账单来了吗？',
-    };
-    const caption = meme?.caption || DEFAULT_CAPTIONS[stateKey] || '我的 Agent 正在工作';
-    try {
-      const dataUrl = await generateMemeShareCard({
-        memeImageUrl: meme?.image_url ?? null,
-        caption,
-        username: profile.username,
-        profileUrl: `openp.at/u/${profile.username}`,
-      });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `openpat-${profile.username}-${stateKey}.png`;
-      a.click();
-    } catch (err) {
-      console.error('梗图分享失败:', err);
-    } finally {
-      setSharing(false);
-    }
-  }, [profile, agentStatus, cloudMemes, sharing]);
 
   // ── Loading ──
   if (loading) {
@@ -388,7 +336,7 @@ export default function PublicProfile() {
 
         {/* ── Footer ── */}
         <div className="profile-footer">
-          <code>npx openpat</code>
+          <code>npx openclaw-pat</code>
           <span className="profile-watermark">open-pat.com</span>
         </div>
       </div>
