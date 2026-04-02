@@ -92,7 +92,7 @@ function SpeciesGallery() {
 
 // ── Post: Agent Pets Era ────────────────────────────────────────────────────
 function AgentPetsEra() {
-  const [showDemo, setShowDemo] = useState(false);
+
 
   return (
     <>
@@ -189,24 +189,6 @@ function AgentPetsEra() {
             <span className="bp-reaction-text">{r.reaction}</span>
           </div>
         ))}
-      </div>
-
-      <h2>亲自试试</h2>
-
-      <p>我们把 Buddy 的 Web 演示版做成了可交互的体验。输入任意 ID，孵化你的专属伙伴：</p>
-
-      <div className="bp-demo-wrap">
-        {!showDemo ? (
-          <button className="bp-demo-btn" onClick={() => setShowDemo(true)}>
-            🐾 启动 Buddy 互动演示
-          </button>
-        ) : (
-          <iframe
-            src="/demos/buddy/index.html"
-            className="bp-demo-iframe"
-            title="Buddy Interactive Demo"
-          />
-        )}
       </div>
 
       <h2>Buddy vs OpenPat：轻量旁观 vs 深度陪伴</h2>
