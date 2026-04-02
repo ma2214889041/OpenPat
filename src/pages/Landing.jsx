@@ -342,7 +342,7 @@ export default function Landing() {
           <div className="lp-nav-links">
             <button className="lp-nav-link" onClick={() => scrollTo('about')}>{t.nav.about}</button>
             <button className="lp-nav-link" onClick={() => scrollTo('share')}>{t.nav.share}</button>
-            <Link to="/app" className="lp-nav-link">{t.nav.feedback}</Link>
+            <Link to="/blog" className="lp-nav-link">Blog</Link>
             <button className="lp-nav-link lp-nav-lang" onClick={toggleLang} title="Switch language">
               {lang === 'zh' ? 'EN' : '中'}
             </button>

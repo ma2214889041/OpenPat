@@ -4,7 +4,7 @@
 }
 
 .bp-inner {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 40px 24px 100px;
 }
@@ -14,10 +14,7 @@
   text-decoration: none;
   font-size: 14px;
 }
-
-.bp-back:hover {
-  color: #000;
-}
+.bp-back:hover { color: #000; }
 
 .bp-meta {
   display: flex;
@@ -32,12 +29,12 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  background: #f0f0ff;
+  padding: 3px 10px;
+  border-radius: 99px;
 }
 
-.bp-date {
-  font-size: 13px;
-  color: #999;
-}
+.bp-date { font-size: 13px; color: #999; }
 
 .bp-title {
   font-family: 'Syne', system-ui, sans-serif;
@@ -50,9 +47,9 @@
 
 .bp-subtitle {
   font-size: 18px;
-  color: #666;
+  color: #555;
   margin: 0 0 40px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* ── Article Content ── */
@@ -66,25 +63,19 @@
   font-family: 'Syne', system-ui, sans-serif;
   font-size: 24px;
   font-weight: 700;
-  margin: 48px 0 16px;
+  margin: 56px 0 16px;
   letter-spacing: -0.02em;
 }
 
-.bp-content p {
-  margin: 0 0 20px;
-}
-
-.bp-content ul {
-  padding-left: 24px;
-  margin: 0 0 24px;
-}
-
-.bp-content li {
-  margin-bottom: 8px;
-}
-
-.bp-content strong {
-  color: #000;
+.bp-content p { margin: 0 0 20px; }
+.bp-content ul { padding-left: 24px; margin: 0 0 24px; }
+.bp-content li { margin-bottom: 8px; }
+.bp-content strong { color: #000; }
+.bp-content code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .bp-lead {
@@ -94,6 +85,99 @@
   border-left: 3px solid #8B8BFF;
   padding-left: 20px;
   margin: 0 0 32px;
+}
+
+/* ── Callout ── */
+.bp-callout {
+  display: flex;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #faf9f5;
+  border: 1px solid #e8e5dc;
+  margin: 24px 0 32px;
+  align-items: flex-start;
+}
+
+.bp-callout-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+.bp-callout p { margin: 0; font-size: 15px; color: #555; }
+
+/* ── Species Gallery ── */
+.bp-gallery {
+  margin: 24px 0 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0d1117;
+}
+
+.bp-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1px;
+  background: #21262d;
+}
+
+.bp-species-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: #0d1117;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: #8b949e;
+}
+
+.bp-species-btn:hover { background: #161b22; }
+.bp-species-btn--active { background: #1c2128; color: #e6edf3; }
+
+.bp-species-name {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bp-species-detail {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  border-top: 1px solid #21262d;
+  color: #e6edf3;
+}
+
+.bp-species-info h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+  color: #e6edf3;
+}
+
+.bp-species-id { color: #8b949e; font-weight: 400; font-size: 14px; }
+
+.bp-species-info p {
+  font-size: 14px;
+  color: #8b949e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── ASCII Sprite ── */
+.bp-ascii {
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.2;
+  color: #e6edf3;
+  margin: 0;
+  white-space: pre;
+  user-select: none;
+}
+
+.bp-ascii--sm {
+  font-size: 9px;
+  line-height: 1.1;
 }
 
 /* ── Feature Grid ── */
@@ -111,23 +195,146 @@
   border: 1px solid #e5e7eb;
 }
 
-.bp-feature-icon {
-  font-size: 28px;
-  display: block;
-  margin-bottom: 8px;
+.bp-feature-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+.bp-feature h3 { font-size: 16px; font-weight: 700; margin: 0 0 10px; }
+.bp-feature p { font-size: 14px; color: #666; margin: 0; line-height: 1.5; }
+
+.bp-eyes-row, .bp-hats-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.bp-feature h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0 0 6px;
+.bp-eye-chip {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1117;
+  color: #e6edf3;
+  border-radius: 8px;
+  font-size: 18px;
+  font-family: 'Space Mono', monospace;
 }
 
-.bp-feature p {
-  font-size: 14px;
-  color: #666;
+.bp-hat-chip pre {
   margin: 0;
-  line-height: 1.5;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  line-height: 1;
+  background: #0d1117;
+  color: #e6edf3;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+/* ── Rarity Table ── */
+.bp-rarity-table {
+  margin: 24px 0 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fafafa;
+}
+
+.bp-rarity-row {
+  display: grid;
+  grid-template-columns: 80px 100px 50px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.bp-rarity-stars { font-size: 14px; }
+.bp-rarity-name { font-weight: 700; font-size: 14px; }
+.bp-rarity-chance { font-size: 13px; color: #888; text-align: right; }
+
+.bp-rarity-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bp-rarity-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+
+.bp-rarity-note {
+  font-size: 13px;
+  color: #888;
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+/* ── Reaction Grid ── */
+.bp-reaction-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin: 24px 0 32px;
+}
+
+.bp-reaction-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 20px 12px;
+  border-radius: 12px;
+  background: #f8f9fa;
+  border: 1px solid #e5e7eb;
+}
+
+.bp-reaction-emoji { font-size: 32px; }
+.bp-reaction-card strong { font-size: 14px; }
+
+.bp-reaction-text {
+  font-size: 12px;
+  color: #888;
+  font-family: 'Space Mono', monospace;
+  font-style: italic;
+}
+
+/* ── Compare Table ── */
+.bp-compare-table {
+  margin: 24px 0 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bp-compare-header, .bp-compare-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr;
+  gap: 0;
+}
+
+.bp-compare-header {
+  background: #f3f4f6;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.bp-compare-header span, .bp-compare-row span {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.bp-compare-label {
+  font-weight: 600;
+  background: #f9fafb;
+  color: #555;
+}
+
+.bp-compare-highlight {
+  color: #7c3aed;
+  font-weight: 500;
 }
 
 /* ── Demo ── */
@@ -142,7 +349,7 @@
 .bp-demo-btn {
   display: block;
   width: 100%;
-  padding: 48px 24px;
+  padding: 56px 24px;
   background: #0d1117;
   color: #e6edf3;
   border: none;
@@ -152,21 +359,23 @@
   transition: background 0.2s;
 }
 
-.bp-demo-btn:hover {
-  background: #161b22;
-}
+.bp-demo-btn:hover { background: #161b22; }
 
 .bp-demo-iframe {
   width: 100%;
-  height: 700px;
+  height: 750px;
   border: none;
   background: #0d1117;
 }
 
 /* ── CTA ── */
 .bp-cta {
-  margin-top: 48px;
+  margin-top: 56px;
   text-align: center;
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .bp-cta-btn {
@@ -181,15 +390,34 @@
   transition: opacity 0.2s;
 }
 
-.bp-cta-btn:hover {
-  opacity: 0.9;
+.bp-cta-btn:hover { opacity: 0.9; }
+
+.bp-cta-ghost {
+  display: inline-block;
+  padding: 14px 32px;
+  background: transparent;
+  color: #333;
+  text-decoration: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 16px;
+  border: 1px solid #d1d5db;
+  transition: background 0.2s;
 }
 
-@media (max-width: 600px) {
-  .bp-feature-grid {
-    grid-template-columns: 1fr;
+.bp-cta-ghost:hover { background: #f3f4f6; }
+
+/* ── Mobile ── */
+@media (max-width: 700px) {
+  .bp-feature-grid { grid-template-columns: 1fr; }
+  .bp-reaction-grid { grid-template-columns: 1fr 1fr; }
+  .bp-gallery-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+  .bp-demo-iframe { height: 550px; }
+  .bp-species-detail { flex-direction: column; }
+  .bp-compare-header, .bp-compare-row {
+    grid-template-columns: 70px 1fr 1fr;
   }
-  .bp-demo-iframe {
-    height: 500px;
+  .bp-rarity-row {
+    grid-template-columns: 60px 80px 40px 1fr;
   }
 }
