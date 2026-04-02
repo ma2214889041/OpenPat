@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import QRCode from 'qrcode';
-import LobsterSVG from './LobsterSVG';
+import PetSVG from './PetSVG';
 import './ShareCard.css';
 
 export default function ShareCard({ stats, status, skin, rank, username, petFrameUrl }) {
@@ -24,17 +24,17 @@ export default function ShareCard({ stats, status, skin, rank, username, petFram
             <div className="card-inner">
                 <header className="card-header">
                     <div className="brand">
-                        <span className="logo">🦞</span>
+                        <span className="logo">🐾</span>
                         <span className="name">OpenPat</span>
                     </div>
                     <div className="rank-badge">{rank.toUpperCase()}</div>
                 </header>
 
                 <main className="card-main">
-                    <div className="lobster-display">
+                    <div className="pet-display">
                         {petFrameUrl
                           ? <img src={petFrameUrl} alt="pet" className="share-card-pet-img" />
-                          : <LobsterSVG status={status} skin={skin} rank={rank} />
+                          : <PetSVG status={status} skin={skin} rank={rank} />
                         }
                     </div>
 

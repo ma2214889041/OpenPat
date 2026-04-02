@@ -78,7 +78,7 @@ export default function Feedback() {
       </section>
 
       <section className="fb-cta">
-        <Link to="/app" className="fb-cta-btn">← 回到我的龙虾</Link>
+        <Link to="/app" className="fb-cta-btn">← 回到我的拍拍</Link>
         <a
           href="https://github.com/ma2214889041/OpenPat"
           target="_blank"

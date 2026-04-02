@@ -16,7 +16,7 @@ export default function Navbar({ onSettings, onFeedback }) {
     <nav className="navbar">
       <div className="navbar-brand">
         <Link to="/" className="navbar-brand-link">
-          <span className="navbar-logo">🦞</span>
+          <span className="navbar-logo">🐾</span>
           <span className="navbar-title">OpenPat</span>
         </Link>
       </div>

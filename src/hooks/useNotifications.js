@@ -13,7 +13,7 @@ export function useNotifications() {
     return result === 'granted';
   }, []);
 
-  const notify = useCallback((title, body, icon = '🦞') => {
+  const notify = useCallback((title, body, icon = '🐾') => {
     if (typeof Notification === 'undefined') return;
     if (document.visibilityState === 'visible') return; // Only notify when tab is hidden
     if (permissionRef.current !== 'granted') return;

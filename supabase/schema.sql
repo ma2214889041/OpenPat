@@ -110,12 +110,12 @@ exception when others then
 end;
 $$;
 
--- ══ 5. OpenClaw API Token ═════════════════════════════════
+-- ══ 5. API Token ═════════════════════════════════
 create table if not exists api_tokens (
   id          uuid default gen_random_uuid() primary key,
   user_id     uuid references profiles(id) on delete cascade not null,
   token       text unique not null default encode(gen_random_bytes(32), 'hex'),
-  label       text default 'OpenClaw',
+  label       text default 'OpenPat',
   created_at  timestamptz default now(),
   last_used_at timestamptz
 );

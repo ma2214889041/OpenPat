@@ -110,6 +110,6 @@ export function useStatusEffects({
       [STATES.TOOL_CALL]: '[Working] 正在工作中 ⚡',
       [STATES.DONE]:      '[Done] 任务完成 ✔',
     };
-    document.title = titles[displayStatus] ?? 'OpenPat 🦞';
+    document.title = titles[displayStatus] ?? 'OpenPat 🐾';
   }, [displayStatus]);
 }

@@ -5,8 +5,8 @@ export const SKINS = [
   {
     id: 'default',
     name: '经典红虾',
-    description: '最原汁原味的赛博龙虾',
-    emoji: '🦞',
+    description: '最原汁原味的赛博拍拍',
+    emoji: '🐾',
     rarity: 'common',
     display_type: 'svg',
     colors: {
@@ -18,7 +18,7 @@ export const SKINS = [
   },
   {
     id: 'cyber',
-    name: '赛博龙虾',
+    name: '赛博拍拍',
     description: '赛博朋克风格，霓虹蓝紫',
     emoji: '🤖',
     rarity: 'rare',
@@ -31,7 +31,7 @@ export const SKINS = [
   },
   {
     id: 'pixel',
-    name: '像素龙虾',
+    name: '像素拍拍',
     description: '8-bit 复古风格',
     emoji: '👾',
     rarity: 'uncommon',
@@ -45,7 +45,7 @@ export const SKINS = [
   },
   {
     id: 'golden',
-    name: '黄金龙虾',
+    name: '黄金拍拍',
     description: '稀有金色传说皮肤',
     emoji: '👑',
     rarity: 'legendary',
@@ -58,7 +58,7 @@ export const SKINS = [
   },
   {
     id: 'space',
-    name: '太空龙虾',
+    name: '太空拍拍',
     description: '星际探索者，深空蓝',
     emoji: '🚀',
     rarity: 'rare',
@@ -71,7 +71,7 @@ export const SKINS = [
   },
   {
     id: 'guochao',
-    name: '国潮龙虾',
+    name: '国潮拍拍',
     description: '中国风，朱砂红+金',
     emoji: '🐉',
     rarity: 'epic',
@@ -106,7 +106,7 @@ export function useSkins() {
           const idx = merged.findIndex(s => s.id === cloudRecord.id);
           const formatted = {
             ...cloudRecord,
-            emoji: cloudRecord.emoji || '🦞',
+            emoji: cloudRecord.emoji || '🐾',
             // Ensure colors exists even for image skins for UI styling
             colors: cloudRecord.colors || { primary: '#666', secondary: '#444' }
           };
@@ -134,7 +134,7 @@ export function useSkins() {
     '--lp': activeSkin?.colors?.primary,
     '--ls': activeSkin?.colors?.secondary,
     '--ls-dark': activeSkin?.colors?.dark || activeSkin?.colors?.secondary,
-    '--lobster-shadow': activeSkin?.colors?.shadow,
+    '--pet-shadow': activeSkin?.colors?.shadow,
   };
 
   return {

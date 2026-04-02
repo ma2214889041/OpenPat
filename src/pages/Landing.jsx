@@ -21,7 +21,7 @@ const COPY = {
       eyebrow: 'AI 时代的电子宠物',
       h1:      ['你曾希望那只小宠物，', '能真正懂你。'],
       sub1:    '在 AI 时代，这件事或许真的可以了。',
-      sub2:    '连接你的 OpenClaw，OpenPat 会实时感受它的状态 — 陪你经历每一个当下，见证你们一起走过的每一步。',
+      sub2:    '连接你的 Agent，OpenPat 会实时感受它的状态 — 陪你经历每一个当下，见证你们一起走过的每一步。',
       cta:     '唤醒你的伙伴 →',
       more:    '了解更多 ↓',
     },
@@ -35,11 +35,11 @@ const COPY = {
       h2: ['简单到', '不需要教程。'],
       steps: [
         {
-          title: '连接 OpenClaw',
+          title: '连接 Agent',
           desc:  '在设置页面生成 API Token，复制 JSON 配置到',
-          code:  '~/.openclaw/openpat.json',
+          code:  '~/.openpat/openpat.json',
           desc2: '，或运行',
-          code2: 'npx openclaw-pat',
+          code2: 'npx open-pat',
           desc3: '一键自动完成。',
           link:  '获取连接 Token →',
         },
@@ -105,7 +105,7 @@ const COPY = {
     cta: {
       eyebrow: '随时开始。',
       h2: ['找到', '属于你的', '那份陪伴。'],
-      body: '连接 OpenClaw，开始你们的故事。\n然后，把它分享给你在乎的人。',
+      body: '连接 Agent，开始你们的故事。\n然后，把它分享给你在乎的人。',
       start: '立刻开始',
     },
     footer: {
@@ -129,7 +129,7 @@ const COPY = {
       eyebrow: 'The Digital Pet for the AI Era',
       h1:      ['You always wanted a digital pet', 'that truly knew you.'],
       sub1:    'In the age of AI, that might finally be possible.',
-      sub2:    'Connect your OpenClaw and OpenPat will sense its state in real time — walking with you through every moment, witnessing every step you take together.',
+      sub2:    'Connect your AI Agent and OpenPat will sense its state in real time — walking with you through every moment, witnessing every step you take together.',
       cta:     'Awaken your companion →',
       more:    'Learn more ↓',
     },
@@ -143,11 +143,11 @@ const COPY = {
       h2: ['So simple', 'no tutorial needed.'],
       steps: [
         {
-          title: 'Connect OpenClaw',
+          title: 'Connect Agent',
           desc:  'Generate an API Token in Settings, copy the JSON config to',
-          code:  '~/.openclaw/openpat.json',
+          code:  '~/.openpat/openpat.json',
           desc2: ', or run',
-          code2: 'npx openclaw-pat',
+          code2: 'npx open-pat',
           desc3: 'to set up automatically.',
           link:  'Get your Token →',
         },
@@ -213,7 +213,7 @@ const COPY = {
     cta: {
       eyebrow: 'Start anytime.',
       h2: ['Find the companionship', 'that\'s yours.', ''],
-      body: 'Connect OpenClaw and begin your story.\nThen share it with the people you care about.',
+      body: 'Connect Agent and begin your story.\nThen share it with the people you care about.',
       start: 'Start now',
     },
     footer: {

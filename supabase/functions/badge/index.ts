@@ -8,7 +8,7 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-const LEVELS = ['虾苗','小龙虾','大龙虾','霸王龙虾','龙虾神'];
+const LEVELS = ['虾苗','小拍拍','大拍拍','霸王拍拍','拍拍神'];
 const LEVEL_MINS = [0, 1000, 10000, 50000, 200000];
 
 function getLevel(tasks: number): string {
@@ -68,15 +68,15 @@ serve(async (req) => {
   const levelName = getLevel(profile?.total_tasks ?? 0);
   const color = STATUS_COLORS[status] ?? '#64748b';
   const statusLabel = STATUS_LABELS[status] ?? 'offline';
-  const leftText = `🦞 ${username}`;
+  const leftText = `🐾 ${username}`;
   const rightText = statusLabel;
 
   const leftW = leftText.length * 7 + 18;
   const rightW = rightText.length * 7 + 18;
   const totalW = leftW + rightW;
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="20" role="img" aria-label="lobster-pet: ${statusLabel}">
-  <title>lobster-pet: ${username} ${statusLabel}</title>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="20" role="img" aria-label="open-pat: ${statusLabel}">
+  <title>open-pat: ${username} ${statusLabel}</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>

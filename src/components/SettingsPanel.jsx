@@ -85,7 +85,7 @@ export default function SettingsPanel({ onClose }) {
     }
     const { data: created, error } = await supabase
       .from('api_tokens')
-      .insert({ user_id: user.id, label: 'OpenClaw' })
+      .insert({ user_id: user.id, label: 'OpenPat' })
       .select('token')
       .single();
     if (!error && created?.token) setApiToken(created.token);
@@ -223,7 +223,7 @@ export default function SettingsPanel({ onClose }) {
             {profileTab === 'skill' && (
               <div className="sp-skill-body">
                 <div className="sp-desc">
-                  让 OpenClaw 在后台推送 Agent 状态，即使没有浏览器标签也能同步
+                  让 Agent 在后台推送 Agent 状态，即使没有浏览器标签也能同步
                 </div>
                 {!apiToken ? (
                   <button
@@ -242,15 +242,15 @@ export default function SettingsPanel({ onClose }) {
                       {copied ? '✅ 已复制' : '复制 JSON'}
                     </button>
                     <div className="sp-desc sp-desc--mono">
-                      保存到 <code>~/.openclaw/openpat.json</code>
+                      保存到 <code>~/.openpat/openpat.json</code>
                     </div>
                   </>
                 )}
                 <details className="sp-skill-help">
                   <summary>如何安装 Skill？</summary>
                   <div className="sp-skill-steps">
-                    <p>把项目里的 <code>openclaw-skill/SKILL.md</code> 复制到你的 OpenClaw skills 目录，然后保存上方 JSON 即可。</p>
-                    <p>安装后在 OpenClaw 里运行 <code>/openpat status</code> 确认连接。</p>
+                    <p>把项目里的 <code>skill/SKILL.md</code> 复制到你的 Agent skills 目录，然后保存上方 JSON 即可。</p>
+                    <p>安装后在 Agent 里运行 <code>/openpat status</code> 确认连接。</p>
                   </div>
                 </details>
               </div>

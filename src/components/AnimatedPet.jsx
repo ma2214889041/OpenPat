@@ -125,7 +125,7 @@ export default function AnimatedPet({ skin, status, isHappy, onClick }) {
           draggable={false}
         />
       ) : (
-        <div className="animated-pet-placeholder">🦞</div>
+        <div className="animated-pet-placeholder">🐾</div>
       )}
     </div>
   );

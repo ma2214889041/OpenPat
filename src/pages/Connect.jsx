@@ -18,7 +18,7 @@ export default function Connect() {
       .from('api_tokens')
       .select('token')
       .eq('user_id', user.id)
-      .eq('label', 'OpenClaw')
+      .eq('label', 'OpenPat')
       .maybeSingle()
       .then(({ data }) => { if (data) setToken(data.token); });
   }, [user]);
@@ -26,10 +26,10 @@ export default function Connect() {
   async function generateToken() {
     setLoading(true);
     // Delete old token first, then insert new one
-    await supabase.from('api_tokens').delete().eq('user_id', user.id).eq('label', 'OpenClaw');
+    await supabase.from('api_tokens').delete().eq('user_id', user.id).eq('label', 'OpenPat');
     const { data } = await supabase
       .from('api_tokens')
-      .insert({ user_id: user.id, label: 'OpenClaw' })
+      .insert({ user_id: user.id, label: 'OpenPat' })
       .select('token')
       .single();
     setToken(data.token);
@@ -46,7 +46,7 @@ export default function Connect() {
     return (
       <div className="connect-page">
         <div className="connect-center">
-          <p className="connect-login-hint">请先登录才能连接 OpenClaw</p>
+          <p className="connect-login-hint">请先登录才能连接 Agent</p>
           <Link to="/signin" className="connect-btn connect-btn--primary">去登录 →</Link>
         </div>
       </div>
@@ -76,8 +76,8 @@ export default function Connect() {
               : <span>{(username || '?')[0].toUpperCase()}</span>
             }
           </div>
-          <h1 className="connect-h1">连接你的 OpenClaw</h1>
-          <p className="connect-sub">三步完成连接，之后龙虾会自动感知你的 Agent 状态。</p>
+          <h1 className="connect-h1">连接你的 Agent</h1>
+          <p className="connect-sub">三步完成连接，之后拍拍会自动感知你的 Agent 状态。</p>
         </div>
 
         {/* Steps */}
@@ -87,7 +87,7 @@ export default function Connect() {
             <div className="connect-step-num">01</div>
             <div className="connect-step-body">
               <h3 className="connect-step-title">生成你的专属 Token</h3>
-              <p className="connect-step-desc">Token 用于让 OpenClaw skill 安全地向你的龙虾发送状态。</p>
+              <p className="connect-step-desc">Token 用于让 Agent skill 安全地向你的拍拍发送状态。</p>
               {token ? (
                 <div className="connect-token-wrap">
                   <code className="connect-token">{token}</code>
@@ -109,8 +109,8 @@ export default function Connect() {
           <div className={`connect-step${!token ? ' connect-step--dim' : ''}`}>
             <div className="connect-step-num">02</div>
             <div className="connect-step-body">
-              <h3 className="connect-step-title">配置 OpenClaw Skill</h3>
-              <p className="connect-step-desc">把下面的 JSON 保存到 <code style={{fontFamily:'monospace',fontSize:'12px'}}>~/.openclaw/openpat.json</code>：</p>
+              <h3 className="connect-step-title">配置 Agent Skill</h3>
+              <p className="connect-step-desc">把下面的 JSON 保存到 <code style={{fontFamily:'monospace',fontSize:'12px'}}>~/.openpat/openpat.json</code>：</p>
               {token && (
                 <div className="connect-code-wrap">
                   <pre className="connect-code">{configJson}</pre>
@@ -129,11 +129,11 @@ export default function Connect() {
           <div className={`connect-step${!token ? ' connect-step--dim' : ''}`}>
             <div className="connect-step-num">03</div>
             <div className="connect-step-body">
-              <h3 className="connect-step-title">开始工作，看龙虾动起来</h3>
-              <p className="connect-step-desc">连接成功后，OpenClaw 每次工作都会实时更新你的龙虾状态。</p>
+              <h3 className="connect-step-title">开始工作，看拍拍动起来</h3>
+              <p className="connect-step-desc">连接成功后，Agent 每次工作都会实时更新你的拍拍状态。</p>
               {token && (
                 <Link to="/app" className="connect-btn connect-btn--primary">
-                  去看我的龙虾 →
+                  去看我的拍拍 →
                 </Link>
               )}
             </div>

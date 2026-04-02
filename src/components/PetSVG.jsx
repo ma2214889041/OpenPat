@@ -1,5 +1,5 @@
-import { STATES } from '../hooks/useGateway';
-import './LobsterSVG.css';
+import { STATES } from '../utils/states';
+import './PetSVG.css';
 
 // Colors driven by CSS vars --lp (primary) and --ls (secondary),
 // falling back to classic red so the SVG always looks right
@@ -7,8 +7,8 @@ const P = 'var(--lp, #e8401c)';
 const S = 'var(--ls, #c83010)';
 const SD = 'var(--ls-dark, #b02008)';
 
-export default function LobsterSVG({ status, onClick, fatness = 1, skin = 'default', rank = 'bronze', accessory = 'none' }) {
-  const cls = `lobster lobster--${status} lobster--skin-${skin} lobster--rank-${rank} lobster--acc-${accessory}`;
+export default function PetSVG({ status, onClick, fatness = 1, skin = 'default', rank = 'bronze', accessory = 'none', idleActivity = '' }) {
+  const cls = `pet pet--${status} pet--skin-${skin} pet--rank-${rank} pet--acc-${accessory} ${status === STATES.IDLE && idleActivity ? idleActivity : ''}`;
   const scaleX = 0.9 + fatness * 0.2;
 
   // Colors are primarily driven by CSS vars passed from the wrapper
@@ -24,7 +24,7 @@ export default function LobsterSVG({ status, onClick, fatness = 1, skin = 'defau
       <svg
         viewBox="0 0 200 240"
         xmlns="http://www.w3.org/2000/svg"
-        className="lobster-svg"
+        className="pet-svg"
         style={{ transform: `scaleX(${scaleX})` }}
       >
         <defs>
@@ -54,8 +54,8 @@ export default function LobsterSVG({ status, onClick, fatness = 1, skin = 'defau
           </linearGradient>
         </defs>
 
-        {/* Shadow under the lobster */}
-        <ellipse cx="100" cy="200" rx="45" ry="10" fill="rgba(0,0,0,0.15)" className="lobster-ground-shadow" />
+        {/* Shadow under the pet */}
+        <ellipse cx="100" cy="200" rx="45" ry="10" fill="rgba(0,0,0,0.15)" className="pet-ground-shadow" />
 
         {/* Body */}
         <ellipse cx="100" cy="130" rx="42" ry="52" fill="url(#bodyGradient)" className="body" />
@@ -251,6 +251,41 @@ export default function LobsterSVG({ status, onClick, fatness = 1, skin = 'defau
             <text x="130" y="50" fontSize="16" fill="#94a3b8" fontWeight="bold" className="z z1">Z</text>
             <text x="145" y="35" fontSize="22" fill="#94a3b8" fontWeight="bold" className="z z2">Z</text>
             <text x="165" y="20" fontSize="28" fill="#94a3b8" fontWeight="bold" className="z z3">Z</text>
+          </g>
+        )}
+
+        {/* ── Idle activity overlays ── */}
+        {status === STATES.IDLE && idleActivity === 'idle-coffee' && (
+          <text x="160" y="95" fontSize="22" className="activity-icon">☕</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-phone' && (
+          <text x="85" y="125" fontSize="18" className="activity-icon">📱</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-snack' && (
+          <text x="35" y="85" fontSize="20" className="activity-icon">🍿</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-guitar' && (
+          <text x="55" y="140" fontSize="24" className="activity-icon">🎸</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-cook' && (
+          <text x="155" y="100" fontSize="22" className="activity-icon">🍳</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-paint' && (
+          <text x="160" y="100" fontSize="20" className="activity-icon">🎨</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-game' && (
+          <text x="82" y="125" fontSize="20" className="activity-icon">🎮</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-crown' && (
+          <text x="85" y="48" fontSize="26" className="activity-icon">👑</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-yoga' && (
+          <text x="155" y="35" fontSize="18" className="activity-icon">✨</text>
+        )}
+        {status === STATES.IDLE && idleActivity === 'idle-dance' && (
+          <g className="dance-notes">
+            <text x="140" y="50" fontSize="16" className="activity-icon dance-n1">🎵</text>
+            <text x="55" y="40" fontSize="14" className="activity-icon dance-n2">🎶</text>
           </g>
         )}
       </svg>

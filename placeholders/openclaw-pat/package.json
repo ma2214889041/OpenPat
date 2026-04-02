@@ -1,0 +1,12 @@
+{
+  "name": "openclaw-pat",
+  "version": "1.1.1",
+  "description": "This package has moved to open-pat. Install open-pat instead.",
+  "bin": {
+    "openclaw-pat": "index.js"
+  },
+  "dependencies": {
+    "open-pat": "*"
+  },
+  "license": "MIT"
+}

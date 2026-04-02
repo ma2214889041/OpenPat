@@ -4,7 +4,7 @@ import { STATES } from './useGateway';
 // Status → emoji char for favicon
 const STATUS_EMOJI = {
   [STATES.OFFLINE]:         '😴',
-  [STATES.IDLE]:            '🦞',
+  [STATES.IDLE]:            '🐾',
   [STATES.THINKING]:        '🤔',
   [STATES.TOOL_CALL]:       '⚡',
   [STATES.DONE]:            '✅',
@@ -37,7 +37,7 @@ function getFaviconEl() {
 }
 
 function buildFaviconSVG(status) {
-  const emoji = STATUS_EMOJI[status] || '🦞';
+  const emoji = STATUS_EMOJI[status] || '🐾';
   const bg = STATUS_BG[status] || '#080d1a';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <rect width="32" height="32" rx="8" fill="${bg}" opacity="${status === STATES.IDLE ? '0' : '0.85'}"/>

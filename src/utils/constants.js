@@ -49,6 +49,17 @@ export const DEFAULT_CAPTIONS = {
   happy:           '今天心情不错，继续干。',
 };
 
+// ── Status labels for companion mode (Chinese) ──────────────────────────────
+export const COMPANION_STATUS_LABELS = {
+  [STATES.OFFLINE]:         '休息中',
+  [STATES.IDLE]:            '待命',
+  [STATES.THINKING]:        '专注中',
+  [STATES.TOOL_CALL]:       '完成任务！',
+  [STATES.DONE]:            '休息中',
+  [STATES.ERROR]:           '需要关注',
+  [STATES.TOKEN_EXHAUSTED]: '饿了',
+};
+
 // ── localStorage keys ─────────────────────────────────────────────────────
 export const STORAGE_KEYS = {
   APP_DATA:            'openpat-data',
@@ -57,4 +68,8 @@ export const STORAGE_KEYS = {
   ACTIVE_ANIMATED_SKIN:'openpat-active-animated-skin',
   DEVICE_KEY:          'openpat-device-v1',
   DEVICE_TOKEN:        'openpat-device-token-v1',
+  POMODORO_DATA:       'openpat-pomodoro-data',
+  TODO_LIST:           'openpat-todos',
+  TODO_STATS:          'openpat-todo-stats',
+  COMPANION:           'openpat-companion',
 };

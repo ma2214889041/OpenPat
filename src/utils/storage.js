@@ -28,6 +28,13 @@ const defaultData = {
   activeDays: [],
   // accessory
   selectedAccessory: 'none',
+  // pomodoro tracking
+  totalPomodoros: 0,
+  totalFocusMinutes: 0,
+  totalTodosCompleted: 0,
+  // streak tracking
+  pomodoroStreak: 0,     // consecutive pomodoros without skipping
+  bestPomodoroStreak: 0,
 };
 
 function isoWeek(date = new Date()) {
@@ -149,20 +156,33 @@ export function checkAchievements(data, { stats, usedToolName, didShare, activeS
   if (totalTasks >= 10) add('tasks_10');
   if (totalTokens >= 1000) add('tokens_1k');
 
+  // 普通 — 番茄钟
+  if ((data.totalPomodoros || 0) >= 1) add('first_pomodoro');
+  if ((data.totalTodosCompleted || 0) >= 1) add('first_todo');
+
   // 稀有
   if (totalTasks >= 100) add('tasks_100');
   if (usedSkinIds.length >= 3) add('skin_changer');
   if (totalShares >= 5) add('share_5');
 
+  // 稀有 — 番茄钟
+  if ((data.totalPomodoros || 0) >= 10) add('pomodoro_10');
+  if ((data.totalFocusMinutes || 0) >= 60) add('focus_hour');
+
   // 史诗
   if (totalTasks >= 1000) add('tasks_1000');
   if (usedToolNames.length >= 10) add('tool_variety');
+
+  // 史诗 — 番茄钟
+  if ((data.bestPomodoroStreak || 0) >= 4) add('focus_marathon');
+  if ((data.totalPomodoros || 0) >= 100) add('pomodoro_100');
+  if ((data.totalTodosCompleted || 0) >= 50) add('task_master');
 
   // Resident: 7 different active days
   if ((data.activeDays || []).length >= 7) add('resident');
 
   // 传说
-  if (totalTasks >= 200000) add('lobster_god');
+  if (totalTasks >= 200000) add('pet_legend');
   if (usedSkinIds.length >= 6) add('skin_collector');
 
   // night_owl from existing logic (hour-based, called elsewhere)
@@ -212,7 +232,45 @@ export function getLevel(totalTasks) {
 }
 
 export const ACHIEVEMENTS = [
-  // 普通
+  // 普通 — 番茄钟
+  {
+    id: 'first_pomodoro', emoji: '🍅', name: '第一个番茄', desc: '完成第一个番茄钟', rarity: 'common',
+    unlock_caption: '第一个番茄钟完成了！25分钟的专注，就这么简单。它比你想象的容易，也比你想象的有用。',
+    share_caption: '完成了第一个番茄钟。我和我的拍拍伴侣正式开始了高效办公生涯。',
+  },
+  {
+    id: 'first_todo', emoji: '📝', name: '开始记录', desc: '完成第一个待办事项', rarity: 'common',
+    unlock_caption: '第一个任务划掉了。那条删除线，是世界上最治愈的线。',
+    share_caption: '今天完成了第一个任务。勾选的那一刻，我的拍拍比我还开心。',
+  },
+  // 稀有 — 番茄钟
+  {
+    id: 'pomodoro_10', emoji: '🍅', name: '番茄达人', desc: '累计完成 10 个番茄钟', rarity: 'rare',
+    unlock_caption: '10 个番茄钟。你已经专注了 250 分钟，差不多四个小时。这比大多数人一天的有效工作时间还长。',
+    share_caption: '10 个番茄钟达成！我和拍拍的默契越来越好了。',
+  },
+  {
+    id: 'focus_hour', emoji: '⏰', name: '专注一小时', desc: '累计专注满 1 小时', rarity: 'rare',
+    unlock_caption: '整整一个小时的专注。在这个注意力碎片化的时代，这已经算是超能力了。',
+    share_caption: '专注累计 1 小时！是拍拍给了我力量（和压力）。',
+  },
+  // 史诗 — 番茄钟
+  {
+    id: 'focus_marathon', emoji: '🏃', name: '番茄马拉松', desc: '连续完成 4 个番茄钟不跳过', rarity: 'epic',
+    unlock_caption: '四连番茄！不间断的两个小时专注。你的拍拍看着你的背影，默默竖起了钳子。',
+    share_caption: '连续 4 个番茄钟！两小时不间断专注。拍拍说这是它见过最努力的人类。',
+  },
+  {
+    id: 'pomodoro_100', emoji: '🍅', name: '番茄收割机', desc: '累计完成 100 个番茄钟', rarity: 'epic',
+    unlock_caption: '100 个番茄。如果每个番茄是一颗种子，你已经种出了一片番茄田。拍拍在田里快乐地打滚。',
+    share_caption: '100 个番茄钟！累计专注超过 40 小时。拍拍表示这个人类值得尊敬。',
+  },
+  {
+    id: 'task_master', emoji: '✨', name: '任务大师', desc: '完成 50 个待办事项', rarity: 'epic',
+    unlock_caption: '50 个任务。划掉的每一条，都是你认真生活的证据。拍拍在旁边感动得流出了虾汁。',
+    share_caption: '完成了 50 个任务！拍拍说要给我颁一个"最佳搭档"奖。',
+  },
+  // 普通 — Agent
   {
     id: 'first_connect', emoji: '🐣', name: '破壳', desc: '第一次连接 Agent', rarity: 'common',
     unlock_caption: '它睁开了眼睛，看了看世界，然后立刻开始工作。没有自我介绍，没有寒暄，直接开干。',
@@ -255,7 +313,7 @@ export const ACHIEVEMENTS = [
     share_caption: '凌晨三点，我的 Agent 比我清醒。妈妈不知道，我也假装不知道。',
   },
   {
-    id: 'tasks_100', emoji: '💪', name: '勤劳龙虾', desc: '累计完成 100 个任务', rarity: 'rare',
+    id: 'tasks_100', emoji: '💪', name: '勤劳拍拍', desc: '累计完成 100 个任务', rarity: 'rare',
     unlock_caption: '一百个任务。它没有说过一次"这不在我的职责范围内"，没有一次。',
     share_caption: '100 个任务！它没有请过一天假，没有摸过一秒鱼。我不知道该感谢它还是自我反省。',
   },
@@ -270,7 +328,7 @@ export const ACHIEVEMENTS = [
     share_caption: '我的 Agent 已经换了 3 套皮肤。它比我更在意穿搭，这让我有点受伤。',
   },
   {
-    id: 'share_5', emoji: '📸', name: '社交龙虾', desc: '生成过 5 张分享卡片', rarity: 'rare',
+    id: 'share_5', emoji: '📸', name: '社交拍拍', desc: '生成过 5 张分享卡片', rarity: 'rare',
     unlock_caption: '五次分享。你在炫耀。这没什么不好，你本来就该炫耀。',
     share_caption: '第 5 次炫耀我的 AI。我不后悔，而且准备继续。',
   },
@@ -297,9 +355,9 @@ export const ACHIEVEMENTS = [
   },
   // 传说
   {
-    id: 'lobster_god', emoji: '👑', name: '龙虾神', desc: '达到最高等级（200K 任务）', rarity: 'legendary',
+    id: 'pet_legend', emoji: '👑', name: '拍拍神', desc: '达到最高等级（200K 任务）', rarity: 'legendary',
     unlock_caption: '二十万个任务完成的那一刻，什么都没发生。它只是开始了第二十万零一个。这就是传说。',
-    share_caption: '20 万个任务。它已经超越了大部分人类员工的职业生涯总量。请叫它龙虾神，谢谢。',
+    share_caption: '20 万个任务。它已经超越了大部分人类员工的职业生涯总量。请叫它拍拍神，谢谢。',
   },
   {
     id: 'popular', emoji: '🌟', name: '万人迷', desc: '公开状态页被 100 人访问', rarity: 'legendary',

@@ -1,0 +1,105 @@
+/* ── Activity Selector ── */
+.activity-selector {
+  width: 100%;
+}
+
+.activity-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--dk-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  color: var(--dk-text-2);
+}
+.activity-bar:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--dk-border-2);
+}
+
+.activity-bar-current {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.activity-bar-emoji { font-size: 16px; }
+.activity-bar-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.activity-bar-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--dk-text-3);
+  opacity: 0.6;
+}
+.activity-bar-toggle {
+  font-size: 10px;
+  color: var(--dk-text-3);
+  opacity: 0.4;
+}
+
+/* ── Grid ── */
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 8px 0 0;
+  animation: actGridIn 0.2s ease-out;
+}
+@keyframes actGridIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.activity-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 6px 10px;
+  background: var(--dk-surface);
+  border: 1px solid var(--dk-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.activity-tile:hover:not(:disabled) {
+  background: var(--dk-surface-2);
+  border-color: var(--dk-border-2);
+  transform: translateY(-1px);
+}
+.activity-tile--active {
+  border-color: rgba(255,231,128,0.35) !important;
+  background: rgba(255,231,128,0.06) !important;
+}
+.activity-tile--locked {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.activity-tile-emoji { font-size: 22px; }
+.activity-tile-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dk-text);
+}
+.activity-tile-desc {
+  font-size: 9px;
+  color: var(--dk-text-3);
+  opacity: 0.6;
+  text-align: center;
+  line-height: 1.3;
+}
+.activity-tile-req {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--dk-text-3);
+}

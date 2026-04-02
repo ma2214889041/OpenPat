@@ -30,7 +30,7 @@ export default function GifButton({ stats, skinColors, petFrameUrls }) {
   if (state === 'done' && gifUrl) {
     return (
       <div className="gif-preview-modal">
-        <img src={gifUrl} className="gif-preview-img" alt="animated lobster gif" />
+        <img src={gifUrl} className="gif-preview-img" alt="animated pet gif" />
         <div className="gif-actions">
           <button className="gif-dl-btn" onClick={download}>⬇ 保存 GIF</button>
           <button className="gif-reset-btn" onClick={() => { setState('idle'); setGifUrl(null); }}>重新生成</button>

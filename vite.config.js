@@ -4,17 +4,17 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 
-/** Vite plugin: serve OpenClaw gateway config at /api/gateway-config */
-function openclawAutoDetect() {
+/** Vite plugin: serve gateway config at /api/gateway-config */
+function gatewayAutoDetect() {
   return {
-    name: 'openclaw-auto-detect',
+    name: 'gateway-auto-detect',
     configureServer(server) {
       server.middlewares.use('/api/gateway-config', (_req, res) => {
         res.setHeader('Content-Type', 'application/json');
         const candidates = [
-          join(homedir(), '.openclaw', 'openclaw.json'),
-          join(homedir(), '.openclaw', 'config.json'),
-          join(homedir(), '.config', 'openclaw', 'config.json'),
+          join(homedir(), '.openpat', 'openpat.json'),
+          join(homedir(), '.openpat', 'config.json'),
+          join(homedir(), '.config', 'openpat', 'config.json'),
         ];
         for (const cfgPath of candidates) {
           try {
@@ -37,13 +37,13 @@ function openclawAutoDetect() {
       server.middlewares.use('/api/gateway-clear-device', (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         if (req.method !== 'POST') { res.end('{}'); return; }
-        const pairedPath = join(homedir(), '.openclaw', 'devices', 'paired.json');
+        const pairedPath = join(homedir(), '.openpat', 'devices', 'paired.json');
         try {
           if (!existsSync(pairedPath)) { res.end('{"ok":true}'); return; }
           const paired = JSON.parse(readFileSync(pairedPath, 'utf8'));
           let changed = false;
           for (const [id, dev] of Object.entries(paired)) {
-            if (dev.clientMode === 'webchat' || dev.clientId === 'openclaw-control-ui') {
+            if (dev.clientMode === 'webchat' || dev.clientId === 'openpat-control-ui') {
               delete paired[id];
               changed = true;
             }
@@ -61,7 +61,7 @@ function openclawAutoDetect() {
 }
 
 export default defineConfig({
-  plugins: [react(), openclawAutoDetect()],
+  plugins: [react(), gatewayAutoDetect()],
   server: {
     // SPA fallback in dev
     historyApiFallback: true,

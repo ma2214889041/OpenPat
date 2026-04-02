@@ -1,13 +1,13 @@
 /**
  * GIF share card generator.
- * Captures frames from a rendered lobster SVG element and encodes them.
+ * Captures frames from a rendered pet SVG element and encodes them.
  * Uses gifenc for pure-JS encoding (no native deps).
  */
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import { fmt } from './format';
 
 /**
- * Renders the lobster SVG string to a canvas frame.
+ * Renders the pet SVG string to a canvas frame.
  * @param {string} svgStr - serialized SVG string
  * @param {number} w - width
  * @param {number} h - height
@@ -94,7 +94,7 @@ function buildFrameSVG(stats, skinColors, t) {
     <text x="160" y="358" font-family="sans-serif" font-size="20" font-weight="bold" fill="#f1f5f9">${stats.toolCalls}</text>
     <text x="280" y="338" font-family="sans-serif" font-size="13" fill="#64748b">成功率</text>
     <text x="280" y="358" font-family="sans-serif" font-size="20" font-weight="bold" fill="#22c55e">${stats.toolCalls > 0 ? ((stats.toolCallsSuccess / stats.toolCalls) * 100).toFixed(0) + '%' : '—'}</text>
-    <text x="200" y="392" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#334155">🦞 open-pat.com · npx openclaw-pat</text>
+    <text x="200" y="392" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#334155">🐾 open-pat.com · npx open-pat</text>
   </svg>`;
 }
 
@@ -138,7 +138,7 @@ async function imageUrlToPixels(url, w, h) {
   ctx.fillText('成功率', 280, h - 72);
   ctx.font = '11px sans-serif';
   ctx.fillStyle = '#334155';
-  ctx.fillText('🦞 open-pat.com', w / 2 - 40, h - 10);
+  ctx.fillText('🐾 open-pat.com', w / 2 - 40, h - 10);
   return ctx.getImageData(0, 0, w, h).data;
 }
 

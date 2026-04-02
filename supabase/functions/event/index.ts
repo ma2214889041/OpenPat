@@ -1,4 +1,4 @@
-// Supabase Edge Function: receive OpenClaw skill events
+// Supabase Edge Function: receive skill events
 // POST /functions/v1/event
 // Authorization: Bearer <api_token>
 // Body: { type, tool_name? }

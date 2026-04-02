@@ -7,10 +7,10 @@ const PRESETS = [
   { label: 'SSH 隧道',    url: 'ws://127.0.0.1:18789' },
 ];
 
-// Try to auto-detect from the npx openclaw-pat CLI config file
+// Try to auto-detect from the npx open-pat CLI config file
 async function tryAutoDetect() {
   try {
-    const r = await fetch('http://localhost:4242/lobster-config.json', { cache: 'no-store' });
+    const r = await fetch('http://localhost:4242/pet-config.json', { cache: 'no-store' });
     if (!r.ok) return null;
     const cfg = await r.json();
     if (cfg.wsUrl && cfg.token) return { url: cfg.wsUrl, token: cfg.token };
@@ -67,7 +67,7 @@ export default function ConnectModal({ onConnect, onSkip }) {
     setDetectMsg('检测中...');
 
     // 1. Try Vite dev API / CLI bridge
-    const sources = ['/api/gateway-config', 'http://localhost:4242/lobster-config.json'];
+    const sources = ['/api/gateway-config', 'http://localhost:4242/pet-config.json'];
     for (const src of sources) {
       try {
         const cfg = await (await fetch(src)).json();
@@ -111,21 +111,21 @@ export default function ConnectModal({ onConnect, onSkip }) {
     <div className="modal-overlay">
       <div className="modal">
         <div className="modal-header">
-          <span className="modal-logo">🦞</span>
+          <span className="modal-logo">🐾</span>
           <h1>OpenPat</h1>
-          <p>连接你的 OpenClaw Agent，让它变成一只会动的虚拟伙伴</p>
+          <p>连接你的 Agent Agent，让它变成一只会动的虚拟伙伴</p>
         </div>
 
         {/* Primary: one command */}
         <div className="modal-quickstart">
           <p className="quickstart-label">在终端运行一条命令即可连接：</p>
           <div className="quickstart-code" onClick={() => {
-            navigator.clipboard?.writeText('npx openclaw-pat');
+            navigator.clipboard?.writeText('npx open-pat');
           }}>
-            <code>npx openclaw-pat</code>
+            <code>npx open-pat</code>
             <span className="copy-hint">点击复制</span>
           </div>
-          <p className="quickstart-desc">自动检测 OpenClaw 配置，打开浏览器一键连接</p>
+          <p className="quickstart-desc">自动检测 Agent 配置，打开浏览器一键连接</p>
         </div>
 
         {/* Auto-detect button */}
@@ -180,13 +180,13 @@ export default function ConnectModal({ onConnect, onSkip }) {
                 type="password"
                 value={token}
                 onChange={e => setToken(e.target.value)}
-                placeholder="从 openclaw.json 中复制"
+                placeholder="从配置文件中复制"
               />
               <small>Token 仅存本地，不会上传</small>
             </label>
 
             <button type="submit" className="connect-btn">
-              🦞 开始连接
+              🐾 开始连接
             </button>
           </form>
         )}
@@ -198,7 +198,7 @@ export default function ConnectModal({ onConnect, onSkip }) {
         )}
 
         <div className="modal-footer">
-          <p>需要 <a href="https://openclaw.ai" target="_blank" rel="noreferrer">OpenClaw</a> Gateway 运行中</p>
+          <p>需要 <a href="https://open-pat.com" target="_blank" rel="noreferrer">Agent</a> Gateway 运行中</p>
         </div>
       </div>
     </div>

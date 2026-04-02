@@ -1,0 +1,12 @@
+{
+  "name": "open-pet",
+  "version": "1.0.0",
+  "description": "This package has moved to open-pat. Install open-pat instead.",
+  "bin": {
+    "open-pet": "index.js"
+  },
+  "dependencies": {
+    "open-pat": "*"
+  },
+  "license": "MIT"
+}

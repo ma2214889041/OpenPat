@@ -10,7 +10,7 @@ export default function LevelProgress({ totalTasks }) {
     ? ((totalTasks - level.min) / (next.min - level.min)) * 100
     : 100;
 
-  const levelEmojis = ['🌱','🦐','🦞','👹','🔱'];
+  const levelEmojis = ['🌱','🦐','🐾','👹','🔱'];
 
   return (
     <div className="level-progress">

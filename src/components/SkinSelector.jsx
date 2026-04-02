@@ -15,7 +15,7 @@ export default function SkinSelector({ activeSkinId, skins = [], onSelect }) {
         <h3 className="skin-selector-title">
           <span className="sparkle">✨</span> 换衣间
         </h3>
-        <p className="skin-subtitle">选择你的龙虾形态</p>
+        <p className="skin-subtitle">选择你的拍拍形态</p>
       </div>
 
       {skins.length === 0 && (

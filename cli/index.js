@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * npx openclaw-pat [command]
+ * npx open-pat [command]
  *
  * Commands:
- *   (default)    Auto-detect OpenClaw, open browser, bridge config
+ *   (default)    Auto-detect gateway, open browser, bridge config
  *   setup        Interactive setup — generate token + save config
  *   status       Show connection status
  *   test         Send a test event
@@ -20,9 +20,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 4242;
 const APP_URL = 'https://open-pat.com';
 const ENDPOINT = 'https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event';
-const CFG_PATH = join(homedir(), '.openclaw', 'openpat.json');
-const SKILL_DIR = join(homedir(), '.openclaw', 'skills', 'openpat');
-const SKILL_SRC = join(__dirname, '..', 'openclaw-skill', 'SKILL.md');
+const CFG_PATH = join(homedir(), '.openpat', 'openpat.json');
+const SKILL_DIR = join(homedir(), '.openpat', 'skills', 'openpat');
+const SKILL_SRC = join(__dirname, '..', 'skill', 'SKILL.md');
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -68,8 +68,8 @@ function ask(question) {
 
 function ensureOriginAllowed() {
   const candidates = [
-    join(homedir(), '.openclaw', 'openclaw.json'),
-    join(homedir(), '.openclaw', 'config.json'),
+    join(homedir(), '.openpat', 'openpat.json'),
+    join(homedir(), '.openpat', 'config.json'),
     join(homedir(), '.config', 'openclaw', 'config.json'),
   ];
   for (const cfgPath of candidates) {
@@ -93,14 +93,14 @@ function ensureOriginAllowed() {
   return 'not-found';
 }
 
-// ─── Auto-detect OpenClaw Gateway config ─────────────────────
+// ─── Auto-detect gateway config ─────────────────────
 
-function detectOpenClawConfig() {
+function detectGatewayConfig() {
   const candidates = [
-    join(homedir(), '.openclaw', 'openclaw.json'),
-    join(homedir(), '.openclaw', 'config.json'),
+    join(homedir(), '.openpat', 'openpat.json'),
+    join(homedir(), '.openpat', 'config.json'),
     join(homedir(), '.config', 'openclaw', 'config.json'),
-    join(homedir(), '.openclaw', 'gateway.json'),
+    join(homedir(), '.openpat', 'gateway.json'),
   ];
   for (const path of candidates) {
     if (!existsSync(path)) continue;
@@ -117,7 +117,7 @@ function detectOpenClawConfig() {
   return null;
 }
 
-// ─── Install skill to ~/.openclaw/skills/openpat/ ────────────
+// ─── Install skill to ~/.openpat/skills/openpat/ ────────────
 
 function installSkill() {
   try {
@@ -133,14 +133,14 @@ function installSkill() {
         'name: openpat',
         'description: Report your agent\'s real-time state to OpenPat — your live AI companion page',
         'metadata:',
-        '  openclaw:',
+        '  gateway:',
         '    requires:',
         '      bins: [curl]',
         '---',
         '',
         '# OpenPat Skill',
         '',
-        'Report agent state to OpenPat. Read config from `~/.openclaw/openpat.json` or `$OPENPAT_TOKEN`.',
+        'Report agent state to OpenPat. Read config from `~/.openpat/openpat.json` or `$OPENPAT_TOKEN`.',
         'If neither exists, skip silently.',
         '',
         'After each significant action, fire-and-forget a POST to the endpoint. Never block.',
@@ -161,7 +161,7 @@ function installSkill() {
         '```bash',
         '_openpat_send() {',
         '  local token endpoint',
-        '  local cfg="$HOME/.openclaw/openpat.json"',
+        '  local cfg="$HOME/.openpat/openpat.json"',
         '  if [ -n "$OPENPAT_TOKEN" ]; then',
         '    token="$OPENPAT_TOKEN"',
         '    endpoint="' + ENDPOINT + '"',
@@ -192,13 +192,13 @@ function installSkill() {
 
 async function cmdSetup() {
   console.log('');
-  console.log('  🦞 OpenPat Setup');
+  console.log('  🐾 OpenPat Setup');
   console.log('');
 
   const existing = readConfig();
   if (existing) {
     console.log(`  ✅ Already configured via ${existing.source}`);
-    console.log('  Run "npx openclaw-pat test" to verify, or "npx openclaw-pat disconnect" to remove.');
+    console.log('  Run "npx open-pat test" to verify, or "npx open-pat disconnect" to remove.');
     return;
   }
 
@@ -215,7 +215,7 @@ async function cmdSetup() {
   }
 
   // Save config
-  mkdirSync(join(homedir(), '.openclaw'), { recursive: true });
+  mkdirSync(join(homedir(), '.openpat'), { recursive: true });
   writeFileSync(CFG_PATH, JSON.stringify({ endpoint: ENDPOINT, token }, null, 2) + '\n', 'utf8');
   console.log(`  ✅ Config saved to ${CFG_PATH}`);
 
@@ -223,7 +223,7 @@ async function cmdSetup() {
   const skillResult = installSkill();
   if (skillResult === 'installed') {
     console.log(`  ✅ Skill installed to ${SKILL_DIR}`);
-    console.log('  ℹ️  Run "openclaw gateway restart" or start a new session to load it.');
+    console.log('  ℹ️  Run "gateway restart" or start a new session to load it.');
   } else if (skillResult === 'exists') {
     console.log('  ✅ Skill already installed.');
   } else {
@@ -247,7 +247,7 @@ async function cmdSetup() {
 
 function cmdStatus() {
   console.log('');
-  console.log('  🦞 OpenPat Status');
+  console.log('  🐾 OpenPat Status');
   console.log('');
   const cfg = readConfig();
   if (cfg) {
@@ -256,7 +256,7 @@ function cmdStatus() {
     console.log(`  🔗 Endpoint: ${cfg.endpoint}`);
   } else {
     console.log('  ❌ Not configured.');
-    console.log('  Run "npx openclaw-pat setup" to connect.');
+    console.log('  Run "npx open-pat setup" to connect.');
   }
   console.log(`  🌐 Dashboard: ${APP_URL}/app`);
   console.log('');
@@ -265,7 +265,7 @@ function cmdStatus() {
 async function cmdTest() {
   const cfg = readConfig();
   if (!cfg) {
-    console.log('  ❌ Not configured. Run "npx openclaw-pat setup" first.');
+    console.log('  ❌ Not configured. Run "npx open-pat setup" first.');
     process.exit(1);
   }
   console.log('  🧪 Sending test event...');
@@ -298,10 +298,10 @@ function cmdDisconnect() {
 function cmdServe() {
   const originResult = ensureOriginAllowed();
   if (originResult === 'patched') {
-    console.log('  ℹ️   Gateway config updated — restart gateway: openclaw gateway restart');
+    console.log('  ℹ️   Gateway config updated — restart gateway: gateway restart');
   }
 
-  const cfg = detectOpenClawConfig();
+  const cfg = detectGatewayConfig();
 
   const server = createServer((req, res) => {
     const origin = req.headers.origin || '';
@@ -309,7 +309,7 @@ function cmdServe() {
     res.setHeader('Access-Control-Allow-Origin', allowed ? origin : APP_URL);
     res.setHeader('Access-Control-Allow-Methods', 'GET');
 
-    if (req.url === '/lobster-config.json') {
+    if (req.url === '/pet-config.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(cfg
         ? { wsUrl: cfg.url, token: cfg.token, autoDetected: true }
@@ -323,11 +323,11 @@ function cmdServe() {
 
   server.listen(PORT, () => {
     console.log('');
-    console.log('  🦞  OpenPat');
+    console.log('  🐾  OpenPat');
     console.log('');
     if (cfg) {
       const connectUrl = `${APP_URL}/app?gateway=${encodeURIComponent(cfg.url)}&token=${encodeURIComponent(cfg.token)}`;
-      console.log(`  ✅  OpenClaw detected: ${cfg.path}`);
+      console.log(`  ✅  Gateway detected: ${cfg.path}`);
       console.log(`  🔗  Gateway: ${cfg.url}`);
       console.log('');
       console.log(`  🌐  一键连接:`);
@@ -337,7 +337,7 @@ function cmdServe() {
       console.log('');
       openBrowser(connectUrl);
     } else {
-      console.log('  ⚠️   OpenClaw config not found (~/.openclaw/openclaw.json)');
+      console.log('  ⚠️   Gateway config not found (~/.openpat/openpat.json)');
       console.log('  👉  Enter Gateway URL and Token manually on the site');
       console.log('');
       console.log('  Press Ctrl+C to stop');
@@ -372,14 +372,14 @@ switch (cmd) {
   case '--help':
   case '-h':
     console.log('');
-    console.log('  🦞 OpenPat CLI');
+    console.log('  🐾 OpenPat CLI');
     console.log('');
-    console.log('  Usage: npx openclaw-pat [command]');
+    console.log('  Usage: npx open-pat [command]');
     console.log('');
     console.log('  Commands:');
-    console.log('    (none)          Auto-detect OpenClaw gateway, open browser');
+    console.log('    (none)          Auto-detect gateway, open browser');
     console.log('    setup           Interactive setup — token + skill install');
-    console.log('    install-skill   Install OpenPat skill to ~/.openclaw/skills/');
+    console.log('    install-skill   Install OpenPat skill to ~/.openpat/skills/');
     console.log('    status          Show connection status');
     console.log('    test            Send a test event to verify connection');
     console.log('    disconnect      Remove config and stop sending events');

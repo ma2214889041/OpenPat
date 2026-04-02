@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase, hasSupabase } from '../utils/supabase';
 import { LEVELS, getLevel, ACHIEVEMENTS, RARITY_COLORS } from '../utils/storage';
-import LobsterSVG from '../components/LobsterSVG';
+import PetSVG from '../components/PetSVG';
 import AnimatedPet from '../components/AnimatedPet';
 import { loadAllSkins, prepareSkinForDisplay } from '../utils/skinStorage';
 import { STATES } from '../hooks/useGateway';
@@ -281,7 +281,7 @@ export default function PublicProfile() {
               onClick={() => {}}
             />
           ) : (
-            <LobsterSVG status={status} fatness={1} onClick={() => {}} />
+            <PetSVG status={status} fatness={1} onClick={() => {}} />
           )}
         </div>
 
@@ -331,7 +331,7 @@ export default function PublicProfile() {
 
         {/* ── Footer ── */}
         <div className="profile-footer">
-          <code>npx openclaw-pat</code>
+          <code>npx open-pat</code>
           <span className="profile-watermark">open-pat.com</span>
         </div>
       </div>

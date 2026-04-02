@@ -18,7 +18,7 @@ export function emptyFrames() {
 
 export function newSkin() {
   return {
-    id: crypto.randomUUID(), name: '新皮肤', emoji: '🦞', art_style: '',
+    id: crypto.randomUUID(), name: '新皮肤', emoji: '🐾', art_style: '',
     rarity: 'common', description: '', is_active: false, unlock_achievement: null,
     frame_duration_ms: 200, frames: emptyFrames(),
   };
@@ -33,7 +33,7 @@ function SkinListItem({ skin, selected, onClick }) {
       onClick={onClick} role="button" tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
     >
-      <span className="list-item-emoji">{skin.emoji || '🦞'}</span>
+      <span className="list-item-emoji">{skin.emoji || '🐾'}</span>
       <span className="list-item-name">{skin.name}</span>
       <RarityBadge rarity={skin.rarity} />
       <span className={`active-dot ${skin.is_active ? 'active' : 'inactive'}`} title={skin.is_active ? '已启用' : '未启用'} />
@@ -124,7 +124,7 @@ function SkinEditor({ skin, onSave, onDelete }) {
           </div>
           <div className="form-group flex-1">
             <label>Emoji</label>
-            <input type="text" value={form.emoji} onChange={(e) => setField('emoji', e.target.value.slice(0, 2))} placeholder="🦞" maxLength={2} />
+            <input type="text" value={form.emoji} onChange={(e) => setField('emoji', e.target.value.slice(0, 2))} placeholder="🐾" maxLength={2} />
           </div>
         </div>
         <div className="form-row">
@@ -174,7 +174,7 @@ function SkinEditor({ skin, onSave, onDelete }) {
         <h3 className="section-title">预览</h3>
         <div className="preview-area">
           <div className="preview-pet-wrap">
-            {previewSkin ? <AnimatedPet skin={previewSkin} status={previewStatus} isHappy={isHappyPreview} /> : <div className="preview-placeholder">🦞</div>}
+            {previewSkin ? <AnimatedPet skin={previewSkin} status={previewStatus} isHappy={isHappyPreview} /> : <div className="preview-placeholder">🐾</div>}
           </div>
           <div className="preview-state-buttons">
             {FRAME_STATES.map((s) => (

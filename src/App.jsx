@@ -13,7 +13,7 @@ import './App.css';
 
 function AppShell({ children }) {
   const { pathname } = useLocation();
-  const isLanding = pathname === '/';
+  const isLanding = pathname === '/about';
   const isSignIn  = pathname === '/signin';
   const [showSettings, setShowSettings] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -40,8 +40,9 @@ export default function App() {
       <div className="app">
         <AppShell>
           <Routes>
-            <Route path="/"              element={<Landing />} />
+            <Route path="/"              element={<Home />} />
             <Route path="/app"           element={<Home />} />
+            <Route path="/about"         element={<Landing />} />
             <Route path="/u/:username"   element={<PublicProfile />} />
             <Route path="/admin"         element={<AdminSkins />} />
             <Route path="/signin"        element={<SignIn />} />

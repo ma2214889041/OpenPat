@@ -1,11 +1,12 @@
 {
-  "name": "openclaw-pat",
+  "name": "open-pat",
   "version": "1.1.0",
-  "description": "Turn your OpenClaw AI Agent into a living digital companion 🦞",
+  "description": "Raise an intelligent digital pet companion 🐾",
   "type": "module",
   "bin": {
-    "openclaw-pat": "cli/index.js",
-    "openpat": "cli/index.js"
+    "open-pat": "cli/index.js",
+    "openpat": "cli/index.js",
+    "openclaw-pat": "cli/index.js"
   },
   "files": [
     "cli/",
@@ -19,7 +20,7 @@
     "start": "node cli/index.js"
   },
   "keywords": [
-    "openclaw",
+    "open-pat",
     "ai-agent",
     "pet",
     "visualization",

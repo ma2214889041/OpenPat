@@ -1,21 +1,21 @@
 ---
 name: openpat
 version: 1.1.0
-description: Turn your OpenClaw agent into a living digital companion — real-time status page at open-pat.com
+description: Turn your AI agent into a living digital companion — real-time status page at open-pat.com
 author: OpenPat
 tags: [companion, status, fun, social, dashboard]
 homepage: https://github.com/ma2214889041/OpenPat
 metadata:
-  openclaw:
+  gateway:
     requires:
       bins: [curl]
-    emoji: "🦞"
+    emoji: "🐾"
     primaryEnv: OPENPAT_TOKEN
 ---
 
-# OpenPat — AI Companion Skill 🦞
+# OpenPat — AI Companion Skill 🐾
 
-OpenPat turns your OpenClaw agent into a living digital companion with real-time animations, achievements, and a shareable public status page.
+OpenPat turns your AI agent into a living digital companion with real-time animations, achievements, and a shareable public status page.
 
 **Website:** https://open-pat.com
 
@@ -30,7 +30,7 @@ Run `/openpat setup` and follow the prompts. It will:
 ### Manual setup
 
 1. Go to https://open-pat.com → sign in → Settings → Agent Skill → Generate Token
-2. Save config to `~/.openclaw/openpat.json`:
+2. Save config to `~/.openpat/openpat.json`:
    ```json
    {
      "endpoint": "https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event",
@@ -57,7 +57,7 @@ export OPENPAT_TOKEN="your-token-here"
 
 After installing, this skill automatically reports your agent's state to OpenPat.
 
-Read config from `~/.openclaw/openpat.json` or `$OPENPAT_TOKEN` env var. If neither exists, skip silently — never error.
+Read config from `~/.openpat/openpat.json` or `$OPENPAT_TOKEN` env var. If neither exists, skip silently — never error.
 
 The endpoint is: `https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event`
 
@@ -89,7 +89,7 @@ Content-Type: application/json
 ```bash
 _openpat_send() {
   local token endpoint
-  local cfg="$HOME/.openclaw/openpat.json"
+  local cfg="$HOME/.openpat/openpat.json"
   if [ -n "$OPENPAT_TOKEN" ]; then
     token="$OPENPAT_TOKEN"
     endpoint="https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event"
@@ -115,11 +115,11 @@ Always send in the background. Never wait for response. Never block.
 ```bash
 #!/usr/bin/env bash
 set -e
-CFG="$HOME/.openclaw/openpat.json"
+CFG="$HOME/.openpat/openpat.json"
 ENDPOINT="https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event"
 
 echo ""
-echo "  🦞 OpenPat Setup"
+echo "  🐾 OpenPat Setup"
 echo ""
 
 if [ -f "$CFG" ]; then
@@ -173,7 +173,7 @@ else
   echo "  ⚠️  Could not verify (token may be wrong). Check at https://open-pat.com/app"
 fi
 echo ""
-echo "  🦞 Your OpenClaw agent now has a living companion at open-pat.com!"
+echo "  🐾 Your AI agent now has a living companion at open-pat.com!"
 echo ""
 ```
 
@@ -181,9 +181,9 @@ echo ""
 
 ```bash
 #!/usr/bin/env bash
-CFG="$HOME/.openclaw/openpat.json"
+CFG="$HOME/.openpat/openpat.json"
 echo ""
-echo "  🦞 OpenPat Status"
+echo "  🐾 OpenPat Status"
 echo ""
 if [ -n "$OPENPAT_TOKEN" ]; then
   echo "  ✅ Token: configured via \$OPENPAT_TOKEN"
@@ -207,7 +207,7 @@ echo ""
 
 ```bash
 #!/usr/bin/env bash
-CFG="$HOME/.openclaw/openpat.json"
+CFG="$HOME/.openpat/openpat.json"
 ENDPOINT="https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event"
 
 if [ -n "$OPENPAT_TOKEN" ]; then
@@ -241,7 +241,7 @@ fi
 
 ```bash
 #!/usr/bin/env bash
-CFG="$HOME/.openclaw/openpat.json"
+CFG="$HOME/.openpat/openpat.json"
 if [ -f "$CFG" ]; then
   rm "$CFG"
   echo "  ✅ Config removed. OpenPat disconnected."

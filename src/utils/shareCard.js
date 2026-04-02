@@ -25,7 +25,7 @@ function tokenAnalogy(total) {
 
 const TEMPLATES = {
   battle_report: {
-    title: '龙虾战报',
+    title: '拍拍战报',
     headline: (s) => {
       const rate = s.toolCalls > 0 ? ((s.toolCallsSuccess / s.toolCalls) * 100).toFixed(0) : 100;
       if (s.toolCalls === 0) return `安静地思考中，一个工具都没动 🤔`;
@@ -58,7 +58,7 @@ const TEMPLATES = {
     bg: '#8B8BFF', accent: '#000', tag: '#000',
   },
   bill: {
-    title: '账单龙虾',
+    title: '账单拍拍',
     headline: (s) => tokenAnalogy(s.tokensInput + s.tokensOutput) + ' ☕',
     bg: '#FFE780', accent: '#000', tag: '#000',
   },
@@ -259,7 +259,7 @@ export async function generateShareCard(stats, status, format = '4x5', _skinColo
 
   const petImg = petFrameUrl
     ? `<img src="${petFrameUrl}" style="width:${is1x1 ? 220 : 260}px;height:${is1x1 ? 220 : 260}px;object-fit:contain;" />`
-    : `<div style="width:${is1x1 ? 220 : 260}px;height:${is1x1 ? 220 : 260}px;display:flex;align-items:center;justify-content:center;font-size:120px;">🦞</div>`;
+    : `<div style="width:${is1x1 ? 220 : 260}px;height:${is1x1 ? 220 : 260}px;display:flex;align-items:center;justify-content:center;font-size:120px;">🐾</div>`;
 
   const el = document.createElement('div');
   el.style.cssText = `
@@ -337,7 +337,7 @@ export async function generateShareCard(stats, status, format = '4x5', _skinColo
         padding:14px 32px;border-radius:9999px;
         font-size:${is1x1 ? 24 : 28}px;font-weight:900;
         font-family:'Courier New',monospace;letter-spacing:0.01em;">
-        npx openclaw-pat
+        npx open-pat
       </div>
       <div style="font-size:${is1x1 ? 22 : 26}px;font-weight:700;color:rgba(0,0,0,0.45);">
         open-pat.com

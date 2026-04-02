@@ -1,11 +1,12 @@
 import AnimatedPet from './AnimatedPet';
+import PetSVG from './PetSVG';
 
 /**
  * Unified pet renderer.
  * Shows animated skin (PNG frames from IndexedDB) when available,
- * otherwise shows a placeholder waiting for sprite upload.
+ * otherwise shows SVG pet with idle activity animations.
  */
-export default function PetDisplay({ animatedSkin, isHappy, status, onClick }) {
+export default function PetDisplay({ animatedSkin, isHappy, status, onClick, idleActivity }) {
   if (animatedSkin) {
     return (
       <AnimatedPet
@@ -18,11 +19,10 @@ export default function PetDisplay({ animatedSkin, isHappy, status, onClick }) {
   }
 
   return (
-    <div className="pet-placeholder" onClick={onClick}>
-      <div className="pet-placeholder-inner">
-        <span className="pet-placeholder-icon">🦞</span>
-        <span className="pet-placeholder-text">皮肤未加载</span>
-      </div>
-    </div>
+    <PetSVG
+      status={status}
+      onClick={onClick}
+      idleActivity={idleActivity}
+    />
   );
 }

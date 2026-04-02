@@ -20,7 +20,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   // Network first for API calls, cache first for static assets
-  if (e.request.url.includes('/lobster-config.json') ||
+  if (e.request.url.includes('/pet-config.json') ||
       e.request.url.includes('/functions/')) {
     return; // let network handle it
   }

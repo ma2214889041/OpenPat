@@ -31,13 +31,13 @@ export default function SignIn() {
 
           {/* Logo */}
           <a href="/" className="signin-logo">
-            <span className="signin-logo-icon">🦞</span>
+            <span className="signin-logo-icon">🐾</span>
             <span className="signin-logo-name">OpenPat</span>
           </a>
 
           <div className="signin-copy">
             <h1 className="signin-h1">开始你的旅程</h1>
-            <p className="signin-sub">登录后可跨设备查看你的龙虾，并开启专属公开状态页。</p>
+            <p className="signin-sub">登录后可跨设备查看你的拍拍，并开启专属公开状态页。</p>
           </div>
 
           {hasSupabase ? (
@@ -90,7 +90,7 @@ export default function SignIn() {
               </div>
             ))}
           </div>
-          <p className="signin-right-sub">连接你的 OpenClaw，它实时感知你的工作状态。</p>
+          <p className="signin-right-sub">连接你的 Agent，它实时感知你的工作状态。</p>
         </div>
       </div>
 

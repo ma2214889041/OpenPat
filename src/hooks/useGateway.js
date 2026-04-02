@@ -1,8 +1,8 @@
 /**
- * useGateway — OpenClaw Gateway WebSocket client
+ * useGateway — Gateway WebSocket client
  *
- * Implements the official OpenClaw protocol v3:
- *   https://docs.openclaw.ai/gateway/protocol
+ * Implements the official protocol v3:
+ *   protocol docs
  *
  * Handshake:
  *   1. Gateway → {type:"event", event:"connect.challenge", payload:{nonce, ts}}
@@ -30,7 +30,7 @@ export { STATES };
 // ── Protocol constants ─────────────────────────────────────────────────────
 const PROTOCOL_VERSION = 3;
 const CONNECT_TIMEOUT_MS = 8_000;
-const CLIENT_ID      = 'openclaw-control-ui';
+const CLIENT_ID      = 'openpat-control-ui';
 const CLIENT_VERSION = '1.0.0';
 const CLIENT_MODE    = 'webchat';
 const ROLE           = 'operator';
@@ -43,7 +43,7 @@ const SCOPES         = [
 ];
 const CAPS = ['tool-events'];
 
-// ── Reconnect back-off (factor 1.7, max 15s — matches openclaw-studio) ───
+// ── Reconnect back-off (factor 1.7, max 15s — matches studio client) ───
 const INITIAL_BACKOFF_MS = 1_000;
 const MAX_BACKOFF_MS     = 15_000;
 const BACKOFF_FACTOR     = 1.7;

@@ -2,13 +2,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import PetDisplay from '../components/PetDisplay';
 import StatsPanel from '../components/StatsPanel';
-import LobsterReport from '../components/LobsterReport';
+import PetReport from '../components/PetReport';
 import ConnectModal from '../components/ConnectModal';
 import ShareButton from '../components/ShareButton';
 import GifButton from '../components/GifButton';
 import LevelProgress from '../components/LevelProgress';
 import AchievementCeremony from '../components/AchievementCeremony';
-import DemoModeBanner from '../components/DemoModeBanner';
+import PomodoroTimer from '../components/PomodoroTimer';
+import TodoPanel from '../components/TodoPanel';
+import OnboardingModal from '../components/OnboardingModal';
+import TimeGreeting from '../components/TimeGreeting';
 import { triggerConfetti } from '../components/Confetti';
 import { useGateway, STATES } from '../hooks/useGateway';
 import { useAuth } from '../hooks/useAuth';
@@ -16,11 +19,18 @@ import { useAnimatedSkin } from '../hooks/useAnimatedSkin';
 import { useAffinity } from '../hooks/useAffinity';
 import { useNotifications } from '../hooks/useNotifications';
 import { useDynamicFavicon } from '../hooks/useDynamicFavicon';
-import { useDemoMode } from '../hooks/useDemoMode';
 import { useMemeShare } from '../hooks/useMemeShare';
 import { useCloudMemes } from '../hooks/useCloudMemes';
 import { useSessionTracking } from '../hooks/useSessionTracking';
 import { useStatusEffects } from '../hooks/useStatusEffects';
+import { usePomodoro } from '../hooks/usePomodoro';
+import { useTodoList } from '../hooks/useTodoList';
+import { useTimeAwareness } from '../hooks/useTimeAwareness';
+import { useCompanion } from '../hooks/useCompanion';
+import { useActivity } from '../hooks/useActivity';
+import { useProactiveChat } from '../hooks/useProactiveChat';
+import { usePersonality, RELATIONSHIP_STAGES } from '../hooks/usePersonality';
+import ActivitySelector from '../components/ActivitySelector';
 import {
   loadData, saveData, ACHIEVEMENTS, RARITY_COLORS,
   checkAchievements, checkCloudAchievements,
@@ -39,8 +49,6 @@ function loadConn() {
 }
 
 // ─── Achievement ceremony hook ────────────────────────────────────────────────
-// Watches the achievements array for newly unlocked entries.
-// Admin-uploaded achievement defs take priority over built-ins for rich display.
 function useCeremony(achievements, adminDefs) {
   const [ceremony, setCeremony] = useState(null);
   const prevRef = useRef(achievements);
@@ -61,9 +69,7 @@ function useCeremony(achievements, adminDefs) {
   return { ceremony, dismiss };
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
-// Read ?gateway=...&token=... from URL (one-click connect from CLI)
+// ─── URL params for one-click agent connect ─────────────────────────────────
 function getUrlParams() {
   try {
     const p = new URLSearchParams(window.location.search);
@@ -77,39 +83,100 @@ function getUrlParams() {
   return null;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Home — standalone office companion with optional agent enhancement
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function Home() {
   const urlParams = getUrlParams();
   const saved = urlParams || loadConn();
   const [wsUrl, setWsUrl] = useState(saved?.url ?? '');
   const [token, setToken] = useState(saved?.token ?? '');
-  const [showModal, setShowModal] = useState(!saved);
+  const [showGatewayModal, setShowGatewayModal] = useState(false);
   const [localData, setLocalData] = useState(loadData);
   const [adminAchievementDefs, setAdminAchievementDefs] = useState([]);
   const { cloudMemes } = useCloudMemes();
+  const [taskFlash, setTaskFlash] = useState(false);
+  const taskFlashTimer = useRef(null);
 
-  const adminAchDefsRef = useRef([]); // ref so setLocalData callbacks can access latest defs
+  const adminAchDefsRef = useRef([]);
 
-  // ── Hooks ──────────────────────────────────────────────────────────────────
+  // ── Core hooks ──────────────────────────────────────────────────────────────
   const { user, username } = useAuth();
-
-  // ── Always-on Supabase sync when logged in ─────────────────────────────────
   useProfileSync(user, localData);
   const animatedSkin = useAnimatedSkin();
   const { affinity, addAffinity, isHappy } = useAffinity();
   const { notify } = useNotifications();
-  const { status, connected, currentTool, errorLog, authError, stats } = useGateway(wsUrl, token);
-  const { demoStatus, demoTool, demoStats } = useDemoMode(!connected);
 
-  useDynamicFavicon(connected ? status : demoStatus);
+  // ── Personality (behavior tracking + evolving dialogue) ─────────────────────
+  const personality = usePersonality();
 
-  // ── Derived display values ─────────────────────────────────────────────────
-  const displayStatus = connected ? status : demoStatus;
-  const displayTool   = connected ? currentTool : demoTool;
-  const displayStats  = connected ? stats : demoStats;
+  // ── Agent (optional) ──────────────────────────────────────────────────────
+  const { status: gwStatus, connected: gwConnected, currentTool, errorLog, authError, stats: gwStats } = useGateway(wsUrl, token);
+
+  // ── Pomodoro timer ──────────────────────────────────────────────────────────
+  const pomodoro = usePomodoro();
+
+  // ── Todo list ───────────────────────────────────────────────────────────────
+  const todoList = useTodoList();
+
+  // ── Companion orchestrator ──────────────────────────────────────────────────
+  const companion = useCompanion({
+    pomodoroPhase: pomodoro.phase,
+    paused: pomodoro.paused,
+    gatewayConnected: gwConnected,
+    gatewayStatus: gwStatus,
+    timeMood: useTimeAwareness(undefined).mood,  // temp: we set petName below
+    taskFlash,
+  });
+
+  const timeInfo = useTimeAwareness(companion.petName);
+
+  // ── Activity (idle animations) ──────────────────────────────────────────────
+  const idleAnim = useActivity(pomodoro.totalPomodoros);
+
+  // Track idle animation in personality
+  const prevAnimRef = useRef(idleAnim.currentAnim);
+  useEffect(() => {
+    if (idleAnim.currentAnim !== prevAnimRef.current) {
+      personality.recordIdleAnim(idleAnim.currentAnim);
+      prevAnimRef.current = idleAnim.currentAnim;
+    }
+  }, [idleAnim.currentAnim]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-derive display status with correct time mood
+  const { displayStatus, source } = (() => {
+    if (gwConnected && gwStatus && gwStatus !== STATES.IDLE) {
+      return { displayStatus: gwStatus, source: 'agent' };
+    }
+    if (taskFlash) {
+      return { displayStatus: STATES.TOOL_CALL, source: 'pomodoro' };
+    }
+    if (pomodoro.phase !== 'idle') {
+      const map = { working: STATES.THINKING, shortBreak: STATES.DONE, longBreak: STATES.DONE };
+      return { displayStatus: pomodoro.paused ? STATES.IDLE : (map[pomodoro.phase] || STATES.IDLE), source: 'pomodoro' };
+    }
+    if (timeInfo.mood === 'asleep') {
+      return { displayStatus: STATES.OFFLINE, source: 'ambient' };
+    }
+    return { displayStatus: STATES.IDLE, source: 'ambient' };
+  })();
+
+  // ── Proactive chat (personality-driven) ─────────────────────────────────────
+  const proactiveChat = useProactiveChat({
+    petName: companion.petName,
+    pomodoroPhase: pomodoro.phase,
+    completedPomodoros: pomodoro.completedPomodoros,
+    personality: personality.profile,
+    displayStatus,
+  });
+
+  const displayTool   = source === 'agent' ? currentTool : null;
+  const displayStats  = source === 'agent' ? gwStats : { tokensInput: 0, tokensOutput: 0, toolCalls: 0, toolCallsSuccess: 0, uptime: 0, sessionStart: null, modelName: null };
+
+  useDynamicFavicon(displayStatus);
 
   const activeSkinId = animatedSkin.activeId;
-
-  // Current pet frame for share card / GIF (first idle frame of active skin)
   const currentPetFrameUrl = animatedSkin.activeSkin?.frames?.idle?.[0] ?? null;
   const currentPetFrameUrls = animatedSkin.activeSkin?.frames?.idle ?? null;
 
@@ -119,48 +186,40 @@ export default function Home() {
     adminAchievementDefs,
   );
 
-  // ── Load admin achievement defs (cloud first, IndexedDB fallback) ─────────
+  // ── Load admin achievement defs ───────────────────────────────────────────
   useEffect(() => {
     loadAllAchievementsFromCloud()
       .then((data) => {
-        if (data.length) {
-          setAdminAchievementDefs(data);
-          adminAchDefsRef.current = data;
-        }
+        if (data.length) { setAdminAchievementDefs(data); adminAchDefsRef.current = data; }
       })
       .catch(() => {
-        // fallback to local IndexedDB
         loadAllAchievementDefs()
-          .then((data) => {
-            setAdminAchievementDefs(data);
-            adminAchDefsRef.current = data;
-          })
-          .catch((err) => console.error('[Home] failed to load achievement defs:', err));
+          .then((data) => { setAdminAchievementDefs(data); adminAchDefsRef.current = data; })
+          .catch(() => {});
       });
   }, []);
 
-  // ── Reload from localStorage after bidirectional sync pull ────────────────
+  // ── Reload from localStorage after sync ─────────────────────────────────────
   useEffect(() => {
     const onSync = () => setLocalData(loadData());
     window.addEventListener('openpat-sync', onSync);
     return () => window.removeEventListener('openpat-sync', onSync);
   }, []);
 
-  // ── One-click connect from URL params (CLI generates this URL) ──────────────
+  // ── One-click connect from URL params ──────────────────────────────────────
   useEffect(() => {
     if (urlParams) {
       localStorage.setItem(CONN_KEY, JSON.stringify(urlParams));
-      // Clean URL params so token isn't visible in address bar / history
       const clean = window.location.pathname + window.location.hash;
       window.history.replaceState(null, '', clean);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Auto-detect OpenClaw gateway config ────────────────────────────────────
+  // ── Auto-detect gateway ───────────────────────────────────────────
   useEffect(() => {
-    if (urlParams) return; // already connected via URL params
+    if (urlParams) return;
     async function autoDetect() {
-      const urls = ['/api/gateway-config', 'http://localhost:4242/lobster-config.json'];
+      const urls = ['/api/gateway-config', 'http://localhost:4242/pet-config.json'];
       for (const url of urls) {
         try {
           const r = await fetch(url);
@@ -169,7 +228,6 @@ export default function Home() {
             setWsUrl(cfg.wsUrl);
             setToken(cfg.token);
             localStorage.setItem(CONN_KEY, JSON.stringify({ url: cfg.wsUrl, token: cfg.token }));
-            setShowModal(false);
             return;
           }
         } catch { /* try next */ }
@@ -182,22 +240,131 @@ export default function Home() {
     setWsUrl(url);
     setToken(tok);
     localStorage.setItem(CONN_KEY, JSON.stringify({ url, token: tok }));
-    setShowModal(false);
+    setShowGatewayModal(false);
   }, []);
 
-  // ── Session tracking (connect/disconnect, uptime, periodic checkpoint) ────
+  // ── Sync Agent data to personality ──────────────────────────────────────────
+  useEffect(() => {
+    if (gwConnected && gwStats.toolCalls > 0) {
+      personality.syncAgentData({
+        totalTasks: localData.totalTasks,
+        totalTokens: (localData.totalTokensInput || 0) + (localData.totalTokensOutput || 0),
+        totalToolCalls: localData.totalToolCalls,
+        errorCount: localData.weeklyErrors,
+      });
+    }
+  }, [gwConnected, gwStats.toolCalls]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Session tracking (agent sessions) ──────────────────────────────────
   useSessionTracking({
-    connected, stats, errorLog, addAffinity,
+    connected: gwConnected, stats: gwStats, errorLog, addAffinity,
     adminAchDefsRef, setLocalData,
   });
 
-  // ── Status effects (task complete, error, night owl, supabase sync, title) ─
+  // ── Status effects (agent task complete, error, night owl, etc.) ────────
   useStatusEffects({
-    status, displayStatus, connected, stats, user, currentTool,
+    status: gwStatus, displayStatus, connected: gwConnected, stats: gwStats, user, currentTool,
     addAffinity, notify, adminAchDefsRef, setLocalData,
   });
 
-  // ── Share ──────────────────────────────────────────────────────────────────
+  // ── Pomodoro completion → achievements + affinity + personality ──────────
+  useEffect(() => {
+    pomodoro.onCompleteRef.current = () => {
+      triggerConfetti();
+      addAffinity(8);
+      notify('番茄钟完成！', '休息一下吧～');
+      personality.recordWorkEnd(pomodoro.settings.workMinutes || 25);
+
+      // Record active day
+      const today = new Date().toDateString();
+      setLocalData((prev) => {
+        const activeDays = prev.activeDays || [];
+        const updatedDays = activeDays.includes(today) ? activeDays : [...activeDays, today];
+
+        const newStreak = (prev.pomodoroStreak || 0) + 1;
+        const updated = {
+          ...prev,
+          totalTasks: prev.totalTasks + 1,
+          totalPomodoros: (prev.totalPomodoros || 0) + 1,
+          totalFocusMinutes: (prev.totalFocusMinutes || 0) + (pomodoro.settings.workMinutes || 25),
+          pomodoroStreak: newStreak,
+          bestPomodoroStreak: Math.max(prev.bestPomodoroStreak || 0, newStreak),
+          activeDays: updatedDays,
+        };
+        const withBuiltin = checkAchievements(updated, {});
+        const withAch = checkCloudAchievements(withBuiltin, adminAchDefsRef.current);
+        saveData(withAch);
+        return withAch;
+      });
+    };
+  }, [pomodoro.settings.workMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Track work start in personality
+  const prevPhase = useRef(pomodoro.phase);
+  useEffect(() => {
+    if (prevPhase.current === 'idle' && pomodoro.phase === 'working') {
+      personality.recordWorkStart();
+    }
+    if (prevPhase.current === 'working' && pomodoro.phase === 'idle') {
+      // Skipped — reset streak
+      setLocalData((prev) => {
+        const updated = { ...prev, pomodoroStreak: 0 };
+        saveData(updated);
+        return updated;
+      });
+    }
+    prevPhase.current = pomodoro.phase;
+  }, [pomodoro.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Todo completion → brief TOOL_CALL flash + achievements ────────────────
+  const handleTodoToggle = useCallback((id) => {
+    const justCompleted = todoList.toggleTodo(id);
+    if (justCompleted) {
+      addAffinity(3);
+      // Brief TOOL_CALL animation flash
+      setTaskFlash(true);
+      clearTimeout(taskFlashTimer.current);
+      taskFlashTimer.current = setTimeout(() => setTaskFlash(false), 1500);
+      // Proactive chat reaction
+      const taskReactions = ['划掉了！爽不爽！', '又少了一个任务！', '完成！继续保持！', '这个也搞定了！'];
+      proactiveChat.showMessage(taskReactions[Math.floor(Math.random() * taskReactions.length)]);
+
+      setLocalData((prev) => {
+        const today = new Date().toDateString();
+        const activeDays = prev.activeDays || [];
+        const updatedDays = activeDays.includes(today) ? activeDays : [...activeDays, today];
+        const updated = {
+          ...prev,
+          totalTasks: prev.totalTasks + 1,
+          totalTodosCompleted: (prev.totalTodosCompleted || 0) + 1,
+          activeDays: updatedDays,
+        };
+        const withBuiltin = checkAchievements(updated, {});
+        const withAch = checkCloudAchievements(withBuiltin, adminAchDefsRef.current);
+        saveData(withAch);
+        return withAch;
+      });
+    }
+  }, [todoList.toggleTodo, addAffinity]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Onboarding ────────────────────────────────────────────────────────────
+  const handleOnboardingComplete = useCallback((name) => {
+    companion.renamePet(name);
+    companion.setOnboarded();
+    addAffinity(10);
+
+    // Mark active day
+    const today = new Date().toDateString();
+    setLocalData((prev) => {
+      const activeDays = prev.activeDays || [];
+      const updatedDays = activeDays.includes(today) ? activeDays : [...activeDays, today];
+      const updated = { ...prev, activeDays: updatedDays };
+      saveData(updated);
+      return updated;
+    });
+  }, [companion.renamePet, companion.setOnboarded, addAffinity]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Share ─────────────────────────────────────────────────────────────────
   const handleShareGenerated = useCallback(() => {
     setLocalData((prev) => {
       const withBuiltin = checkAchievements(prev, { didShare: true });
@@ -207,7 +374,6 @@ export default function Home() {
     });
   }, []);
 
-  // ── Meme share (shared hook) ───────────────────────────────────────────────
   const { handleMemeShare } = useMemeShare({
     cloudMemes,
     username,
@@ -215,49 +381,68 @@ export default function Home() {
     onGenerated: handleShareGenerated,
   });
 
-  // ── Status bubble (click reaction) ────────────────────────────────────────
+  // ── Speech bubble (click + proactive) ──────────────────────────────────
   const [bubble, setBubble] = useState(null);
   const bubbleTimerRef = useRef(null);
 
+  // Show proactive messages as bubbles
+  useEffect(() => {
+    if (proactiveChat.message) {
+      setBubble(proactiveChat.message);
+      clearTimeout(bubbleTimerRef.current);
+      bubbleTimerRef.current = setTimeout(() => setBubble(null), 4500);
+    }
+  }, [proactiveChat.message]);
+
   const CLICK_BUBBLES = {
-    [STATES.IDLE]:            ['别戳我，摸鱼中', '你再戳我我就开始工作了', '我在冥想，请勿打扰'],
-    [STATES.THINKING]:        ['别催！在想了在想了！', '脑子已经红温了，稍等', '要想出好答案是需要时间的'],
-    [STATES.TOOL_CALL]:       ['别分心！干活呢！', '这么忙还来戳我？', '工具还在跑，你等一下'],
-    [STATES.DONE]:            ['嘿嘿，厉害吧', '下一个任务来吧，我不怕', '给我点个赞谢谢'],
-    [STATES.ERROR]:           ['别踢我…已经够惨了', '我知道翻车了，但还在', '轻点，好痛的'],
-    [STATES.OFFLINE]:         ['嘿，我在睡觉', '有事明天说', 'zzZ…什么事？'],
-    [STATES.TOKEN_EXHAUSTED]: ['饿了…快充值', '不是不想干，是没粮了', '账单来了？'],
+    [STATES.IDLE]:            ['戳我干嘛~', '要不要开个番茄钟？', '我在等你发号施令', '别闲着，开始干活！'],
+    [STATES.THINKING]:        ['嘘！别打扰！在专注呢！', '你也在认真工作对吧？', '加油！还有几分钟！', '别分心！'],
+    [STATES.TOOL_CALL]:       ['又完成一个！', '划掉的感觉真好！', '继续继续！'],
+    [STATES.DONE]:            ['休息一下吧！', '去喝杯水！', '站起来活动活动！', '你真棒！'],
+    [STATES.ERROR]:           ['没事没事，休息下就好', '别太累了...', '要不要休息一会儿？'],
+    [STATES.OFFLINE]:         ['嘿，我在睡觉呢', 'zzZ...什么事？', '太晚了，你也该休息了'],
+    [STATES.TOKEN_EXHAUSTED]: ['饿了…快投喂', '没力气了...', '需要能量补给！'],
   };
 
-  // ── Pet click → affinity + bubble ─────────────────────────────────────────
   const handlePetClick = useCallback(() => {
     addAffinity(2);
+    personality.recordClick();
     const pool = CLICK_BUBBLES[displayStatus] ?? CLICK_BUBBLES[STATES.IDLE];
     const text = pool[Math.floor(Math.random() * pool.length)];
     setBubble(text);
     clearTimeout(bubbleTimerRef.current);
     bubbleTimerRef.current = setTimeout(() => setBubble(null), 2500);
-  }, [addAffinity, displayStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addAffinity, displayStatus, personality.recordClick]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Token exhausted feed ───────────────────────────────────────────────────
+  // ── Feed button ─────────────────────────────────────────────────────────
   const [fedCount, setFedCount] = useState(0);
   const handleFeed = useCallback(() => {
     addAffinity(5);
     triggerConfetti();
     setFedCount((n) => n + 1);
-    notify('喂食成功！', '它感受到了你的关爱，但还是没 Token ☕');
-  }, [addAffinity, notify]);
+    notify('投喂成功！', `${companion.petName} 感受到了你的关爱`);
+  }, [addAffinity, notify, companion.petName]);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="home">
-      {showModal && (
-        <ConnectModal
-          onConnect={handleConnect}
-          onSkip={() => setShowModal(false)}
+      {/* Onboarding (first visit) */}
+      {companion.isFirstVisit && (
+        <OnboardingModal
+          defaultName={companion.petName}
+          onComplete={handleOnboardingComplete}
         />
       )}
 
+      {/* Gateway connect modal (optional) */}
+      {showGatewayModal && (
+        <ConnectModal
+          onConnect={handleConnect}
+          onSkip={() => setShowGatewayModal(false)}
+        />
+      )}
+
+      {/* Achievement ceremony */}
       {ceremony && (
         <AchievementCeremony
           achievement={ceremony}
@@ -265,20 +450,20 @@ export default function Home() {
         />
       )}
 
-      {authError && !showModal && (
-        <AuthErrorBanner error={authError} onReconnect={() => setShowModal(true)} />
-      )}
-
-      {!connected && !authError && !showModal && (
-        <DemoModeBanner onConnect={() => setShowModal(true)} />
-      )}
-
       <main className="home-main">
 
-        {/* ── Companion card: pet + report + affinity ── */}
+        {/* ── Time greeting + relationship stage ── */}
+        <TimeGreeting
+          petName={companion.petName}
+          greeting={timeInfo.greeting}
+          mood={timeInfo.mood}
+          relationshipStage={personality.stage}
+          totalDays={personality.profile.totalDays}
+        />
+
+        {/* ── Companion card: pet + timer + report ── */}
         <div className="home-companion-card">
-          <div className="home-lobster-wrap">
-            {/* Speech bubble on click */}
+          <div className="home-pet-wrap">
             {bubble && (
               <div className="pet-bubble" key={bubble + Date.now()}>
                 {bubble}
@@ -289,43 +474,89 @@ export default function Home() {
               isHappy={isHappy}
               status={displayStatus}
               onClick={handlePetClick}
+              idleActivity={displayStatus === STATES.IDLE ? idleAnim.animDef.svgClass : ''}
             />
-            {/* Token exhausted: feed button */}
             {displayStatus === STATES.TOKEN_EXHAUSTED && (
               <button className="btn-feed" onClick={handleFeed}>
                 🍤 投喂{fedCount > 0 ? ` ×${fedCount}` : ''}
               </button>
             )}
           </div>
+
+          {/* Pomodoro timer */}
+          <PomodoroTimer
+            phase={pomodoro.phase}
+            timeLeft={pomodoro.timeLeft}
+            totalSeconds={pomodoro.totalSeconds}
+            paused={pomodoro.paused}
+            completedPomodoros={pomodoro.completedPomodoros}
+            onStart={pomodoro.start}
+            onPause={pomodoro.pause}
+            onResume={pomodoro.resume}
+            onSkip={pomodoro.skip}
+          />
+
           <div className="home-companion-footer">
-            <LobsterReport status={displayStatus} currentTool={displayTool} />
+            <PetReport
+              status={displayStatus}
+              currentTool={displayTool}
+              source={source}
+              idleActivity={displayStatus === STATES.IDLE ? idleAnim.animDef.svgClass : ''}
+            />
             {affinity > 0 && (
               <AffinityBar affinity={affinity} isHappy={isHappy} />
             )}
           </div>
         </div>
 
+        {/* ── Activity selector (idle animations) ── */}
+        <ActivitySelector
+          selected={idleAnim.selected}
+          currentAnim={idleAnim.currentAnim}
+          totalPomodoros={pomodoro.totalPomodoros}
+          onSelect={idleAnim.setActivity}
+        />
+
+        {/* ── Todo list ── */}
+        <TodoPanel
+          todos={todoList.todos}
+          onAdd={todoList.addTodo}
+          onToggle={handleTodoToggle}
+          onRemove={todoList.removeTodo}
+          onClearCompleted={todoList.clearCompleted}
+          pendingCount={todoList.pendingCount}
+          doneCount={todoList.doneCount}
+        />
+
         {/* ── Stats ── */}
         <StatsPanel
           status={displayStatus}
           stats={displayStats}
           totalTasks={localData.totalTasks}
+          source={source}
+          pomodoroData={{
+            completedPomodoros: pomodoro.completedPomodoros,
+            totalPomodoros: pomodoro.totalPomodoros,
+            todayFocusMinutes: pomodoro.todayFocusMinutes,
+            totalFocusMinutes: pomodoro.totalFocusMinutes,
+            todayTodosCompleted: todoList.todayCompleted,
+          }}
         />
 
         {/* ── Share actions ── */}
         <div className="home-actions">
           <button className="btn-meme-share" onClick={handleMemeShare} title="用状态梗图分享">
-            😂 梗图分享
+            😂 梗图
           </button>
           <ShareButton
-            stats={connected ? stats : demoStats}
+            stats={displayStats}
             status={displayStatus}
             skinId={activeSkinId}
             petFrameUrl={currentPetFrameUrl}
             onGenerated={handleShareGenerated}
           />
           <GifButton
-            stats={connected ? stats : demoStats}
+            stats={displayStats}
             skinColors={null}
             petFrameUrls={currentPetFrameUrls}
           />
@@ -340,44 +571,18 @@ export default function Home() {
           adminDefs={adminAchievementDefs}
         />
 
-        {/* ── Connect ── */}
-        <button className="btn-connect" onClick={() => setShowModal(true)}>
-          {connected ? '切换连接' : '连接 Gateway'}
+        {/* ── Agent (optional, unobtrusive) ── */}
+        <button
+          className={`btn-agent-toggle ${gwConnected ? 'btn-agent-toggle--connected' : ''}`}
+          onClick={() => setShowGatewayModal(true)}
+        >
+          {gwConnected ? (
+            <><span className="agent-dot agent-dot--on" /> Agent 已连接</>
+          ) : (
+            '🔗 连接 Agent（可选）'
+          )}
         </button>
       </main>
-    </div>
-  );
-}
-
-// ─── Auth error banner ────────────────────────────────────────────────────────
-const DEVICE_AUTH_HINTS = {
-  DEVICE_AUTH_NONCE_REQUIRED:       '设备认证失败：未提供 nonce。请更新 OpenPat 或在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true',
-  DEVICE_AUTH_NONCE_MISMATCH:       '设备 nonce 不匹配，请重新连接',
-  DEVICE_AUTH_SIGNATURE_INVALID:    '设备签名无效。请在 gateway 配置中设置 gateway.controlUi.allowInsecureAuth=true 或联系支持',
-  DEVICE_AUTH_SIGNATURE_EXPIRED:    '设备签名已过期，请重新连接',
-  AUTH_TOKEN_MISMATCH:              'Token 不匹配，请检查 ~/.openclaw/openclaw.json 中的 gateway.auth.token',
-  DEVICE_AUTH_DEVICE_ID_MISMATCH:   '设备身份不匹配，已自动清除旧密钥并重试。如仍失败，请清除浏览器 localStorage 后刷新',
-  CONTROL_UI_ORIGIN_NOT_ALLOWED:    'Origin 未被允许。请运行 npx openpat（会自动配置），或手动在 ~/.openclaw/openclaw.json 的 gateway.controlUi.allowedOrigins 中添加本站地址',
-};
-
-function AuthErrorBanner({ error, onReconnect }) {
-  const friendly = DEVICE_AUTH_HINTS[error.code] ?? error.detail ?? '认证失败，请检查 Token';
-  const isOriginError = error.code === 'CONTROL_UI_ORIGIN_NOT_ALLOWED';
-  const isDeviceError = error.code?.startsWith('DEVICE_AUTH');
-  return (
-    <div className="auth-error-banner">
-      <span className="auth-error-icon">🔑</span>
-      <div className="auth-error-body">
-        <strong>连接认证失败</strong>
-        <p>{friendly}</p>
-        {isDeviceError && (
-          <code>openclaw config set gateway.controlUi.allowInsecureAuth true</code>
-        )}
-        {isOriginError && (
-          <code>npx openpat</code>
-        )}
-      </div>
-      <button className="auth-error-btn" onClick={onReconnect}>重新配置</button>
     </div>
   );
 }
@@ -387,7 +592,7 @@ function AffinityBar({ affinity, isHappy }) {
   return (
     <div className="affinity-bar-wrap">
       <span className="affinity-label">
-        {isHappy ? '😊' : '🦞'} 好感度
+        {isHappy ? '😊' : '🐾'} 好感度
       </span>
       <div className="affinity-track">
         <div
@@ -401,7 +606,6 @@ function AffinityBar({ affinity, isHappy }) {
 }
 
 // ─── Achievements wall ────────────────────────────────────────────────────────
-// Admin-uploaded defs take priority for icon + name display.
 function AchievementsWall({ achievements, adminDefs }) {
   const unlocked = achievements.map((id) => {
     const adminDef = adminDefs.find((d) => d.id === id);
@@ -416,7 +620,7 @@ function AchievementsWall({ achievements, adminDefs }) {
         <Link to="/achievements" className="ach-view-all">查看全部 →</Link>
       </div>
       {unlocked.length === 0 ? (
-        <p className="ach-empty">完成任务后解锁成就</p>
+        <p className="ach-empty">完成番茄钟或任务后解锁成就</p>
       ) : (
         <div className="ach-grid">
           {unlocked.map((a) => {

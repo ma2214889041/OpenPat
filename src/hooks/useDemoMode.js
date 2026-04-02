@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { STATES } from './useGateway';
 
-// Auto-cycle through states to show off the lobster when not connected
+// Auto-cycle through states to show off the pet when not connected
 const DEMO_SEQUENCE = [
   { status: STATES.IDLE,           duration: 2000,  tool: null },
   { status: STATES.THINKING,       duration: 2500,  tool: null },
