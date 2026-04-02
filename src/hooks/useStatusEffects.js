@@ -5,11 +5,11 @@ import {
   saveData, recordError, checkNoErrorWeek,
   checkAchievements, checkCloudAchievements,
 } from '../utils/storage';
-import { supabase, hasSupabase } from '../utils/supabase';
+import { apiPut } from '../utils/api';
 
 /**
  * Reacts to status changes: task complete (confetti, achievements), errors,
- * saver achievement, night owl, Supabase sync, and dynamic document title.
+ * saver achievement, night owl, D1 sync, and dynamic document title.
  */
 export function useStatusEffects({
   status, displayStatus, connected, stats, user, currentTool,
@@ -90,17 +90,15 @@ export function useStatusEffects({
     }
   }, [connected]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Sync to Supabase ──────────────────────────────────────────────────
+  // ── Sync agent status to D1 ────────────────────────────────────────────
   useEffect(() => {
-    if (!hasSupabase || !user || !connected) return;
-    supabase.from('agent_status').upsert({
-      user_id: user.id,
+    if (!user || !connected) return;
+    apiPut('/api/status', {
       status,
       current_tool: currentTool?.name ?? null,
       session_tokens: stats.tokensInput + stats.tokensOutput,
       session_tool_calls: stats.toolCalls,
-      updated_at: new Date().toISOString(),
-    });
+    }).catch(() => {});
   }, [status, user, connected, currentTool, stats]);
 
   // ── Dynamic title ─────────────────────────────────────────────────────

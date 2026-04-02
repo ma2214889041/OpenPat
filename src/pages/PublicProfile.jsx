@@ -152,24 +152,25 @@ export default function PublicProfile() {
     let channel;
 
     async function loadAll() {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', username)
-        .single();
+      let profileData = null;
+      try {
+        const res = await fetch(`/api/profile/${username}`);
+        if (res.ok) profileData = await res.json();
+      } catch { /* ignore */ }
 
       setProfile(profileData);
       setLoading(false);
       if (!profileData) return;
 
-      const { data: statusData } = await supabase
-        .from('agent_status')
-        .select('*')
-        .eq('user_id', profileData.id)
-        .single();
+      try {
+        const res = await fetch(`/api/status/${profileData.id}`);
+        if (res.ok) {
+          const statusData = await res.json();
+          setAgentStatus(statusData);
+        }
+      } catch { /* ignore */ }
 
-      setAgentStatus(statusData);
-
+      // Keep Supabase Realtime for live updates
       channel = supabase
         .channel(`status:${profileData.id}`)
         .on('postgres_changes', {

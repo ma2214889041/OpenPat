@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, hasSupabase } from '../utils/supabase';
+import { apiPost } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 import './Feedback.css';
 
@@ -13,12 +13,9 @@ export default function Feedback() {
   const submit = async () => {
     if (!feedback.trim()) return;
     setLoading(true);
-    if (hasSupabase) {
-      await supabase.from('feedback_submissions').insert({
-        user_id: user?.id ?? null,
-        content: feedback.trim(),
-      });
-    }
+    try {
+      await apiPost('/api/feedback', { content: feedback.trim() });
+    } catch { /* ignore */ }
     setSubmitted(true);
     setFeedback('');
     setLoading(false);

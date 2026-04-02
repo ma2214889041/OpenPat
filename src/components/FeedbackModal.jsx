@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase, hasSupabase } from '../utils/supabase';
+import { apiPost } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 import './FeedbackModal.css';
 
@@ -12,12 +12,9 @@ export default function FeedbackModal({ onClose }) {
   const submit = async () => {
     if (!feedback.trim()) return;
     setLoading(true);
-    if (hasSupabase) {
-      await supabase.from('feedback_submissions').insert({
-        user_id: user?.id ?? null,
-        content: feedback.trim(),
-      });
-    }
+    try {
+      await apiPost('/api/feedback', { content: feedback.trim() });
+    } catch { /* ignore */ }
     setSubmitted(true);
     setFeedback('');
     setLoading(false);

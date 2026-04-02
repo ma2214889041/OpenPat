@@ -30,7 +30,7 @@ function fmtTasks(n) {
 
 function buildSvg(username, statusKey, totalTasks) {
   const meta = STATUS_META[statusKey] ?? STATUS_META.offline;
-  const leftText  = `🦞 ${username}`;
+  const leftText  = `🐾 ${username}`;
   const rightText = totalTasks
     ? `${meta.label} · ${fmtTasks(totalTasks)}`
     : meta.label;
@@ -73,47 +73,32 @@ export async function onRequestGet({ params, env }) {
     return new Response('Bad Request', { status: 400 });
   }
 
-  const SUPABASE_URL = env.SUPABASE_URL;
-  const SUPABASE_KEY = env.SUPABASE_SERVICE_KEY;
-
   let statusKey   = 'offline';
   let totalTasks  = 0;
 
-  if (SUPABASE_URL && SUPABASE_KEY) {
+  if (env.DB) {
     try {
-      const headers = {
-        'apikey':        SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-      };
-
-      // 1. Look up profile by username
-      const profileRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(username)}&select=id,total_tasks`,
-        { headers }
-      );
-      const profiles = await profileRes.json();
-      const profile  = profiles?.[0];
+      // 1. Look up profile by username (D1)
+      const profile = await env.DB.prepare(
+        'SELECT id, total_tasks FROM profiles WHERE username = ?'
+      ).bind(username).first();
 
       if (profile) {
         totalTasks = profile.total_tasks ?? 0;
 
-        // 2. Get live agent status
-        const statusRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/agent_status?user_id=eq.${profile.id}&select=status,updated_at&limit=1`,
-          { headers }
-        );
-        const statuses = await statusRes.json();
-        const row      = statuses?.[0];
+        // 2. Get live agent status (D1)
+        const row = await env.DB.prepare(
+          'SELECT status, updated_at FROM agent_status WHERE user_id = ?'
+        ).bind(profile.id).first();
 
         if (row) {
-          // Treat as offline if not updated in the last 10 minutes
-          const updatedAt      = new Date(row.updated_at).getTime();
-          const tenMinutesAgo  = Date.now() - 10 * 60 * 1000;
+          const updatedAt     = new Date(row.updated_at).getTime();
+          const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
           statusKey = updatedAt > tenMinutesAgo ? (row.status ?? 'offline') : 'offline';
         }
       }
     } catch {
-      // Network/parse error → show offline badge
+      // Query error → show offline badge
     }
   }
 

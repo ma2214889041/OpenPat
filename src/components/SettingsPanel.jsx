@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { hasSupabase, supabase } from '../utils/supabase';
+import { apiGet, apiPut, apiPost } from '../utils/api';
 import './SettingsPanel.css';
 
 export default function SettingsPanel({ onClose }) {
@@ -28,73 +29,59 @@ export default function SettingsPanel({ onClose }) {
     supabase.auth.getUser().then(({ data }) => {
       const u = data.user ?? null;
       setUser(u);
-      if (u) loadProfile(u.id);
+      if (u) loadProfile();
     });
   }, []);
 
-  async function loadProfile(uid) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('username, avatar_url')
-      .eq('id', uid)
-      .single();
-    if (data) {
-      setDisplayName(data.username ?? '');
-      setAvatarUrl(data.avatar_url ?? '');
-    }
+  async function loadProfile() {
+    try {
+      const data = await apiGet('/api/profile');
+      if (data && !data.error) {
+        setDisplayName(data.username ?? '');
+        setAvatarUrl(data.avatar_url ?? '');
+      }
+    } catch { /* ignore */ }
   }
 
   async function saveProfile() {
     if (!user) return;
     const name = displayName.trim();
     if (!name) return;
-    // Validate: lowercase letters, numbers, underscores, hyphens only
     if (!/^[a-z0-9_-]{1,30}$/.test(name)) {
       setProfileMsg({ ok: false, text: '用户名只能包含小写字母、数字、_ 或 -，最多 30 位' });
       return;
     }
     setProfileSaving(true);
     setProfileMsg(null);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ username: name, avatar_url: avatarUrl.trim() || null })
-      .eq('id', user.id);
-    setProfileSaving(false);
-    if (error) {
-      const isDup = error.code === '23505';
-      setProfileMsg({ ok: false, text: isDup ? '该用户名已被占用' : '保存失败，请重试' });
-    } else {
+    try {
+      await apiPut('/api/profile', { id: user.id, username: name, avatar_url: avatarUrl.trim() || null });
       setProfileMsg({ ok: true, text: '保存成功 ✓' });
       setTimeout(() => setProfileMsg(null), 2500);
+    } catch {
+      setProfileMsg({ ok: false, text: '保存失败，请重试' });
     }
+    setProfileSaving(false);
   }
 
   async function handleGenerateToken() {
     if (!user) return;
     setTokenLoading(true);
-    const { data: existing } = await supabase
-      .from('api_tokens')
-      .select('token')
-      .eq('user_id', user.id)
-      .limit(1)
-      .maybeSingle();
-    if (existing?.token) {
-      setApiToken(existing.token);
-      setTokenLoading(false);
-      return;
-    }
-    const { data: created, error } = await supabase
-      .from('api_tokens')
-      .insert({ user_id: user.id, label: 'OpenPat' })
-      .select('token')
-      .single();
-    if (!error && created?.token) setApiToken(created.token);
+    try {
+      const tokens = await apiGet('/api/tokens');
+      const existing = tokens.find(t => t.label === 'OpenPat');
+      if (existing?.token) {
+        setApiToken(existing.token);
+        setTokenLoading(false);
+        return;
+      }
+      const created = await apiPost('/api/tokens', { label: 'OpenPat' });
+      if (created?.token) setApiToken(created.token);
+    } catch { /* ignore */ }
     setTokenLoading(false);
   }
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
   const configJson = apiToken
-    ? JSON.stringify({ endpoint: `${supabaseUrl}/functions/v1/event`, token: apiToken }, null, 2)
+    ? JSON.stringify({ endpoint: `${window.location.origin}/api/event`, token: apiToken }, null, 2)
     : null;
 
   function handleCopy() {

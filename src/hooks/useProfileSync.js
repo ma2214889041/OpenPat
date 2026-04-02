@@ -1,26 +1,21 @@
 import { useEffect, useRef } from 'react';
-import { supabase, hasSupabase } from '../utils/supabase';
+import { apiGet, apiPut } from '../utils/api';
 import { loadData, saveData, getLevel } from '../utils/storage';
 
-const DEBOUNCE_MS = 8000; // 8s debounce — no need to hammer Supabase
+const DEBOUNCE_MS = 8000;
 
 /**
- * Bidirectional sync with Supabase profiles table.
- *
- * On login: pulls remote data and merges with local (max values for numbers,
- * union for achievements) so switching devices never overwrites progress.
- *
- * Ongoing: debounced push of localData to Supabase.
+ * Bidirectional sync with D1 profiles table via Pages Functions.
  */
 export function useProfileSync(user, localData) {
   const timerRef      = useRef(null);
-  const lastSyncedRef = useRef(null); // JSON string of last pushed payload
-  const didPullRef    = useRef(false); // pull once per login session
+  const lastSyncedRef = useRef(null);
+  const didPullRef    = useRef(false);
 
   // ── Pull on login ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!hasSupabase || !user?.id) {
-      didPullRef.current = false; // reset when logged out
+    if (!user?.id) {
+      didPullRef.current = false;
       return;
     }
 
@@ -29,19 +24,12 @@ export function useProfileSync(user, localData) {
 
     (async () => {
       try {
-        const { data: remote } = await supabase
-          .from('profiles')
-          .select('total_tasks, total_tool_calls, total_tokens_input, total_tokens_output, achievements')
-          .eq('id', user.id)
-          .single();
-
-        if (!remote) return; // new account, nothing to pull
+        const remote = await apiGet('/api/profile');
+        if (!remote || remote.error) return;
 
         const local      = loadData();
         const localTotal = (local.totalTokensInput ?? 0) + (local.totalTokensOutput ?? 0);
-        // Support both old schema (total_tokens) and new schema (split columns)
-        const remoteTotal = (remote.total_tokens_input ?? 0) + (remote.total_tokens_output ?? 0)
-          || (remote.total_tokens ?? 0);
+        const remoteTotal = (remote.total_tokens_input ?? 0) + (remote.total_tokens_output ?? 0);
         const remoteAch   = Array.isArray(remote.achievements) ? remote.achievements : [];
         const tokenDiff   = remoteTotal - localTotal;
 
@@ -49,7 +37,6 @@ export function useProfileSync(user, localData) {
           ...local,
           totalTasks:       Math.max(local.totalTasks      ?? 0, remote.total_tasks      ?? 0),
           totalToolCalls:   Math.max(local.totalToolCalls  ?? 0, remote.total_tool_calls ?? 0),
-          // Take the higher of local vs remote for each token bucket
           totalTokensInput: Math.max(
             local.totalTokensInput ?? 0,
             tokenDiff > 0 ? (local.totalTokensInput ?? 0) + tokenDiff : (local.totalTokensInput ?? 0)
@@ -58,7 +45,6 @@ export function useProfileSync(user, localData) {
         };
 
         saveData(merged);
-        // Signal Home.jsx (and any other consumer) to reload from localStorage
         window.dispatchEvent(new Event('openpat-sync'));
       } catch (err) {
         console.warn('[useProfileSync] pull failed:', err);
@@ -68,9 +54,8 @@ export function useProfileSync(user, localData) {
 
   // ── Push (debounced) ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!hasSupabase || !user?.id) return;
+    if (!user?.id) return;
 
-    // Derive a username — use metadata or fallback to a stable default
     const username = user.user_metadata?.user_name
       || user.user_metadata?.preferred_username
       || user.user_metadata?.name
@@ -102,13 +87,10 @@ export function useProfileSync(user, localData) {
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       try {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(payload, { onConflict: 'id' });
-        if (!error) lastSyncedRef.current = key;
-        else console.warn('[useProfileSync] upsert failed:', error.message);
+        await apiPut('/api/profile', payload);
+        lastSyncedRef.current = key;
       } catch (err) {
-        console.warn('[useProfileSync] network error:', err);
+        console.warn('[useProfileSync] push failed:', err);
       }
     }, DEBOUNCE_MS);
 

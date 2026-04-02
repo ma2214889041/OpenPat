@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, hasSupabase } from '../utils/supabase';
+import { apiGet } from '../utils/api';
 
 export const SKINS = [
   {
@@ -91,15 +91,10 @@ export function useSkins() {
   const [allSkins, setAllSkins] = useState(SKINS);
 
   useEffect(() => {
-    if (!hasSupabase) return;
-
     async function fetchCloudSkins() {
-      const { data, error } = await supabase
-        .from('skins')
-        .select('*')
-        .eq('is_active', true);
-
-      if (!error && data) {
+      try {
+        const data = await apiGet('/api/skins');
+        if (data && Array.isArray(data)) {
         // Merge cloud skins with default ones, clouds override defaults if IDs match
         const merged = [...SKINS];
         data.forEach(cloudRecord => {
@@ -117,7 +112,8 @@ export function useSkins() {
           }
         });
         setAllSkins(merged);
-      }
+        }
+      } catch { /* ignore */ }
     }
 
     fetchCloudSkins();

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../utils/supabase';
+import { apiGet, apiPost, apiDelete } from '../utils/api';
 import './Connect.css';
 
 export default function Connect() {
@@ -13,25 +13,18 @@ export default function Connect() {
 
   useEffect(() => {
     if (!user) return;
-    // Load existing token if any
-    supabase
-      .from('api_tokens')
-      .select('token')
-      .eq('user_id', user.id)
-      .eq('label', 'OpenPat')
-      .maybeSingle()
-      .then(({ data }) => { if (data) setToken(data.token); });
+    apiGet('/api/tokens')
+      .then((tokens) => {
+        const t = tokens.find(t => t.label === 'OpenPat');
+        if (t) setToken(t.token);
+      })
+      .catch(() => {});
   }, [user]);
 
   async function generateToken() {
     setLoading(true);
-    // Delete old token first, then insert new one
-    await supabase.from('api_tokens').delete().eq('user_id', user.id).eq('label', 'OpenPat');
-    const { data } = await supabase
-      .from('api_tokens')
-      .insert({ user_id: user.id, label: 'OpenPat' })
-      .select('token')
-      .single();
+    await apiDelete('/api/tokens?label=OpenPat');
+    const data = await apiPost('/api/tokens', { label: 'OpenPat' });
     setToken(data.token);
     setLoading(false);
   }
@@ -55,7 +48,7 @@ export default function Connect() {
 
   const configJson = token
     ? JSON.stringify({
-        endpoint: `${import.meta.env.VITE_SUPABASE_URL ?? ''}/functions/v1/event`,
+        endpoint: `${window.location.origin}/api/event`,
         token,
       }, null, 2)
     : '';
