@@ -97,44 +97,38 @@ function AgentPetsEra() {
   return (
     <>
       <p className="bp-lead">
-        2026 年 4 月，Claude Code 悄悄上线了一个功能：每位用户获得一只专属宠物伙伴，安静地坐在终端旁，
-        观察你的对话并发出旁白。它叫 <strong>Buddy</strong>。
+        今天打开 Claude Code，发现终端角落多了个小东西——一只用 ASCII 画的小动物，安安静静蹲在那儿，偶尔冒一句旁白。
+        它叫 <strong>Buddy</strong>。
       </p>
 
       <p>
-        这不是愚人节玩笑。越来越多的 AI 工具开始意识到：<strong>纯粹的效率不够，用户需要情感连接。</strong>
+        第一反应是愚人节整活（确实是 4 月 1 号上线的）。但用了一会儿发现，写代码的时候旁边有个小生物在，
+        感觉还真不一样。报错的时候它一脸紧张，跑通测试它比你还高兴。没什么实际用处，但就是会让你嘴角翘一下。
       </p>
 
-      <h2>为什么 Agent 需要宠物？</h2>
+      <h2>为什么写代码需要一只宠物？</h2>
 
       <p>
-        当你凌晨三点还在 debug，AI Agent 在帮你跑测试——这个过程是孤独的。
-        一个会对你的代码报错露出担忧表情的小生物，一个在你完成任务时开心蹦跳的伙伴，
-        改变的不是效率，而是<strong>体验</strong>。
+        说实话，大部分时间写代码是孤独的。尤其是深夜 debug，对着一堆 stack trace 发呆的时候。
+        AI 可以帮你写代码、跑测试、查文档，但它终究是个工具——用完就关，没有任何情感上的回应。
       </p>
 
       <p>
-        心理学研究称之为<strong>"电子鸡效应"（Tamagotchi Effect）</strong>——
-        人类天然会对表现出社交行为的虚拟角色产生情感依附。
-        "它需要我"这个念头，激活了与其他数字互动完全不同的情感回路。
+        Buddy 做的事情很小：它只是在旁边待着，用一两句话回应你正在做的事。
+        但这种"被陪伴"的感觉，比你想象的更有意义。就像桌上放一盆植物，不会帮你干活，但你就是会看它一眼然后心情好一点。
       </p>
 
-      <div className="bp-callout">
-        <span className="bp-callout-icon">💡</span>
-        <p>游戏化市场 2025 年价值超过 <strong>154 亿美元</strong>，预计 2029 年达 487 亿。AI 伴侣应用 2025 年下载量同比增长 <strong>88%</strong>。</p>
-      </div>
+      <h2>Buddy 长什么样？</h2>
 
-      <h2>Claude Code 的 Buddy 长什么样？</h2>
-
-      <p>Buddy 拥有 <strong>18 个物种</strong>，每个都是手绘的 ASCII 字符画。点击查看它们：</p>
+      <p>一共 <strong>18 个物种</strong>，全是 ASCII 字符画风格，像素感拉满。点击看看它们：</p>
 
       <SpeciesGallery />
 
-      <h2>确定性生成：你的 Buddy 只属于你</h2>
+      <h2>每个人的 Buddy 都不一样</h2>
 
       <p>
-        Buddy 不是随机的。它用 <code>FNV-1a</code> 哈希算法，根据你的用户 ID 确定性地生成——
-        同一个账号永远得到同一个物种、同样的眼睛、帽子和属性值。
+        有意思的是，Buddy 不是随机生成的。它根据你的用户 ID 用哈希算法算出来——
+        也就是说，你的 Buddy 永远是同一只，同样的物种、眼睛、帽子。换台电脑登录，它还在那儿等你。
       </p>
 
       <div className="bp-feature-grid">
@@ -170,13 +164,18 @@ function AgentPetsEra() {
         <p className="bp-rarity-note">另外还有 <strong>1%</strong> 概率获得闪光（Shiny）个体 ✨</p>
       </div>
 
-      <h2>Buddy vs OpenPat：轻量旁观 vs 深度陪伴</h2>
+      <h2>Buddy 和拍拍，走的是不同的路</h2>
+
+      <p>
+        Buddy 很克制——ASCII 画风、终端里待着、不主动打扰。它更像一个安静的旁观者。
+        这种设计很聪明：对于每天泡在终端里的开发者来说，恰到好处。
+      </p>
 
       <div className="bp-compare-table">
         <div className="bp-compare-header">
           <span />
           <span>Buddy</span>
-          <span>OpenPat</span>
+          <span>拍拍</span>
         </div>
         {[
           ['形态', 'ASCII 字符画', 'SVG 矢量动画'],
@@ -195,23 +194,18 @@ function AgentPetsEra() {
         ))}
       </div>
 
-      <h2>这意味着什么？</h2>
-
       <p>
-        当 Anthropic 这样的公司开始在命令行工具里加宠物，说明一件事：
-        <strong>AI 工具的下一个战场不是性能，而是陪伴。</strong>
+        我们做拍拍的时候想的是另一件事：如果这个伙伴不只是"在旁边待着"，而是真的能记住你的工作习惯、
+        理解你今天是高产还是摆烂、甚至在你连续加班的时候提醒你休息一下——那会是什么样的体验？
       </p>
 
       <p>
-        Buddy 是一个优雅的起点——轻量、确定性、不打扰。
-        而 OpenPat 想做的是下一步：一个<strong>有深度的工作伴侣</strong>，
-        不只观察你的对话，而是真正理解你的工作节奏，记住你的习惯，陪你成长。
+        不是说哪个更好。Buddy 证明了一件事：开发者确实需要一点陪伴感。
+        而我们想看看，这份陪伴能走多远。
       </p>
-
-      <p>Agent 宠物的时代刚刚开始。</p>
 
       <div className="bp-cta">
-        <Link to="/app" className="bp-cta-btn">唤醒你的拍拍 →</Link>
+        <Link to="/app" className="bp-cta-btn">来认识你的拍拍 →</Link>
         <a href="https://github.com/ma2214889041/OpenPat" target="_blank" rel="noreferrer" className="bp-cta-ghost">⭐ Star on GitHub</a>
       </div>
     </>
@@ -221,8 +215,8 @@ function AgentPetsEra() {
 // ── Post Registry ───────────────────────────────────────────────────────────
 const POSTS = {
   'agent-pets-era': {
-    title: 'AI Agent 的宠物时代来了',
-    subtitle: '当 Claude Code 开始给你养宠物，说明 AI 的下一个战场不是性能——而是陪伴。',
+    title: 'Claude Code 给你养了一只宠物',
+    subtitle: '终端角落突然多了个小东西。没什么用，但你会忍不住看它一眼。',
     date: '2026-04-02',
     tag: '行业趋势',
     Component: AgentPetsEra,

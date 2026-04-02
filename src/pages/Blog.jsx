@@ -4,8 +4,8 @@ import './Blog.css';
 const POSTS = [
   {
     slug: 'agent-pets-era',
-    title: 'AI Agent 的宠物时代来了',
-    subtitle: '为什么 Claude Code、Cursor 等工具开始给用户养宠物？',
+    title: 'Claude Code 给你养了一只宠物',
+    subtitle: '终端角落突然多了个小东西。没什么用，但你会忍不住看它一眼。',
     date: '2026-04-02',
     tag: '行业趋势',
     cover: '🐾',
