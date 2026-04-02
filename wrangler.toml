@@ -1,10 +1,11 @@
 name = "openpat"
 compatibility_date = "2024-12-01"
+pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "openpat-db"
-database_id = "" # fill after: wrangler d1 create openpat-db
+database_id = "80d46874-272f-4977-9b85-f0a1c099db88"
 
 [[r2_buckets]]
 binding = "R2_BUCKET"
@@ -12,4 +13,4 @@ bucket_name = "openpat-assets"
 
 [[kv_namespaces]]
 binding = "SITE_CONFIG"
-id = "" # fill after: wrangler kv namespace create SITE_CONFIG
+id = "f000ffb61a1b4882a4939f59f213b399"
