@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AuthButton from './AuthButton';
 import { useAuth } from '../hooks/useAuth';
@@ -12,7 +13,9 @@ const LINKS = [
 export default function Navbar({ onSettings, onFeedback }) {
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const [mobileMenu, setMobileMenu] = useState(false);
   return (
+    <>
     <nav className="navbar">
       <div className="navbar-brand">
         <Link to="/app" className="navbar-brand-link">
@@ -43,6 +46,24 @@ export default function Navbar({ onSettings, onFeedback }) {
         )}
         <AuthButton onSettings={onSettings} />
       </div>
+      <button className="navbar-burger" onClick={() => setMobileMenu(v => !v)} aria-label="Menu">
+        <span /><span /><span />
+      </button>
     </nav>
+    {mobileMenu && (
+      <div className="navbar-mobile-menu">
+        {LINKS.map(l => (
+          <Link
+            key={l.to}
+            to={l.to}
+            className={`navbar-mobile-link ${pathname === l.to ? 'active' : ''}`}
+            onClick={() => setMobileMenu(false)}
+          >
+            {l.label}
+          </Link>
+        ))}
+      </div>
+    )}
+    </>
   );
 }

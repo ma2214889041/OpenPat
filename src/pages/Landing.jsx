@@ -267,6 +267,7 @@ export default function Landing() {
   const [authError, setAuthError] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem('lp-lang') || 'zh');
   const [siteConfig, setSiteConfigState] = useState({});
+  const [mobileMenu, setMobileMenu] = useState(false);
 
   useEffect(() => {
     loadSiteConfig().then(setSiteConfigState).catch(() => {});
@@ -348,7 +349,20 @@ export default function Landing() {
             </button>
           </div>
           <NavAuth t={t} />
+          <button className="lp-nav-burger" onClick={() => setMobileMenu(v => !v)} aria-label="Menu">
+            <span /><span /><span />
+          </button>
         </div>
+        {mobileMenu && (
+          <div className="lp-mobile-menu">
+            <button className="lp-mobile-link" onClick={() => { scrollTo('about'); setMobileMenu(false); }}>{t.nav.about}</button>
+            <button className="lp-mobile-link" onClick={() => { scrollTo('share'); setMobileMenu(false); }}>{t.nav.share}</button>
+            <Link to="/blog" className="lp-mobile-link" onClick={() => setMobileMenu(false)}>Blog</Link>
+            <button className="lp-mobile-link" onClick={() => { toggleLang(); setMobileMenu(false); }}>
+              {lang === 'zh' ? 'EN' : '中'}
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
