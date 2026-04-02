@@ -9,11 +9,13 @@ import PublicProfile from './pages/PublicProfile';
 import AdminSkins from './pages/AdminSkins';
 import SignIn from './pages/SignIn';
 import Achievements from './pages/Achievements';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 import './App.css';
 
 function AppShell({ children }) {
   const { pathname } = useLocation();
-  const isFullPage = pathname === '/' || pathname === '/signin';
+  const isFullPage = pathname === '/' || pathname === '/signin' || pathname.startsWith('/blog');
   const [showSettings, setShowSettings] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -46,6 +48,8 @@ export default function App() {
             <Route path="/admin"         element={<AdminSkins />} />
             <Route path="/signin"        element={<SignIn />} />
             <Route path="/achievements"  element={<Achievements />} />
+            <Route path="/blog"          element={<Blog />} />
+            <Route path="/blog/:slug"    element={<BlogPost />} />
           </Routes>
         </AppShell>
       </div>
