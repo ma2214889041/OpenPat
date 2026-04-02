@@ -34,7 +34,7 @@ export default function Navbar({ onSettings, onFeedback }) {
           </Link>
         ))}
       </div>
-      <div className="navbar-auth">
+      <div className="navbar-auth navbar-auth-desktop">
         {onFeedback && (
           <button className="nav-icon-btn" onClick={onFeedback} title="反馈">💡</button>
         )}
@@ -62,6 +62,18 @@ export default function Navbar({ onSettings, onFeedback }) {
             {l.label}
           </Link>
         ))}
+        <div className="navbar-mobile-auth">
+          {onFeedback && (
+            <button className="navbar-mobile-link" onClick={() => { onFeedback(); setMobileMenu(false); }}>💡 反馈</button>
+          )}
+          {!user && (
+            <button className="navbar-mobile-link" onClick={() => { onSettings?.(); setMobileMenu(false); }}>⚙️ 设置</button>
+          )}
+          {hasSupabase && !user && (
+            <Link to="/signin" className="navbar-mobile-signin" onClick={() => setMobileMenu(false)}>登录 / 注册</Link>
+          )}
+          {user && <AuthButton onSettings={onSettings} />}
+        </div>
       </div>
     )}
     </>

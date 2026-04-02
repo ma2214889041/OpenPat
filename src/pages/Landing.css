@@ -368,6 +368,36 @@
   .lp-mobile-link:last-child {
     border-bottom: none;
   }
+
+  .lp-mobile-auth {
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 4px;
+  }
+
+  .lp-mobile-auth .lp-nav-signin {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .lp-mobile-auth .lp-nav-auth-avatar-btn {
+    width: 100%;
+    justify-content: flex-start;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .lp-mobile-auth .lp-nav-auth-dropdown {
+    position: static;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+  }
 }
 
 .lp-nav-cta {
@@ -1636,6 +1666,10 @@
   }
 
   .lp-nav-links {
+    display: none;
+  }
+
+  .lp-nav-auth-desktop {
     display: none;
   }
 

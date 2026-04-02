@@ -348,7 +348,7 @@ export default function Landing() {
               {lang === 'zh' ? 'EN' : '中'}
             </button>
           </div>
-          <NavAuth t={t} />
+          <div className="lp-nav-auth-desktop"><NavAuth t={t} /></div>
           <button className="lp-nav-burger" onClick={() => setMobileMenu(v => !v)} aria-label="Menu">
             <span /><span /><span />
           </button>
@@ -361,6 +361,9 @@ export default function Landing() {
             <button className="lp-mobile-link" onClick={() => { toggleLang(); setMobileMenu(false); }}>
               {lang === 'zh' ? 'EN' : '中'}
             </button>
+            <div className="lp-mobile-auth">
+              <NavAuth t={t} />
+            </div>
           </div>
         )}
       </nav>
