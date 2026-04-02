@@ -170,27 +170,6 @@ function AgentPetsEra() {
         <p className="bp-rarity-note">另外还有 <strong>1%</strong> 概率获得闪光（Shiny）个体 ✨</p>
       </div>
 
-      <h2>上下文感知：它在看你写代码</h2>
-
-      <p>Buddy 不只是坐在那里。它的 Observer 系统会分析你的对话内容，选择合适的反应：</p>
-
-      <div className="bp-reaction-grid">
-        {[
-          { trigger: '报错', reaction: '"oh no..." *nervous wiggle*', emoji: '😰' },
-          { trigger: '成功', reaction: '"yay!!" *wiggles excitedly*', emoji: '🎉' },
-          { trigger: '提问', reaction: '"hmm..." *thinks*', emoji: '🤔' },
-          { trigger: '使用工具', reaction: '"noted" *takes notes*', emoji: '📝' },
-          { trigger: '长文本', reaction: '"deep thoughts incoming" *focused*', emoji: '🧠' },
-          { trigger: '抚摸它', reaction: '♥ *happy wiggle*', emoji: '💕' },
-        ].map(r => (
-          <div key={r.trigger} className="bp-reaction-card">
-            <span className="bp-reaction-emoji">{r.emoji}</span>
-            <strong>{r.trigger}</strong>
-            <span className="bp-reaction-text">{r.reaction}</span>
-          </div>
-        ))}
-      </div>
-
       <h2>Buddy vs OpenPat：轻量旁观 vs 深度陪伴</h2>
 
       <div className="bp-compare-table">
