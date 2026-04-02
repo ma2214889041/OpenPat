@@ -1457,6 +1457,15 @@
   justify-content: center;
 }
 
+.lp-cta-actions .lp-btn--ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.lp-cta-actions .lp-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 /* ══════════════════════════════════════════════════════════
    页脚
    ══════════════════════════════════════════════════════════ */
