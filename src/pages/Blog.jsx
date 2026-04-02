@@ -4,8 +4,8 @@ import './Blog.css';
 const POSTS = [
   {
     slug: 'agent-pets-era',
-    title: '终端里来了一只小动物',
-    subtitle: 'Claude Code 上线了 Buddy——一只不会帮你写代码，但会陪你写代码的宠物。',
+    title: 'Claude Code 给你养了一只宠物',
+    subtitle: '终端角落突然多了个小东西。没什么用，但你会忍不住看它一眼。',
     date: '2026-04-02',
     tag: '行业趋势',
     cover: '🐾',

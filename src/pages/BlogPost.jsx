@@ -97,61 +97,32 @@ function AgentPetsEra() {
   return (
     <>
       <p className="bp-lead">
-        四月的某个早晨，打开 Claude Code，终端角落里多了一只小动物。
-        ASCII 字符画的身体，一帧一帧地晃动，偶尔冒出一句旁白。它叫 <strong>Buddy</strong>。
+        今天打开 Claude Code，发现终端角落多了个小东西——一只用 ASCII 画的小动物，安安静静蹲在那儿，偶尔冒一句旁白。
+        它叫 <strong>Buddy</strong>。
       </p>
 
       <p>
-        它不会帮你写代码，也不会帮你 debug。它只是在那儿——看着你工作，用自己的方式回应你正在经历的一切。
-        代码报错了，它露出紧张的表情；测试跑通了，它比你还开心。
+        第一反应是愚人节整活（确实是 4 月 1 号上线的）。但用了一会儿发现，写代码的时候旁边有个小生物在，
+        感觉还真不一样。报错的时候它一脸紧张，跑通测试它比你还高兴。没什么实际用处，但就是会让你嘴角翘一下。
+      </p>
+
+      <h2>为什么写代码需要一只宠物？</h2>
+
+      <p>
+        说实话，大部分时间写代码是孤独的。尤其是深夜 debug，对着一堆 stack trace 发呆的时候。
+        AI 可以帮你写代码、跑测试、查文档，但它终究是个工具——用完就关，没有任何情感上的回应。
       </p>
 
       <p>
-        这大概是 Anthropic 做过的最不"实用"的功能。但正因如此，它值得被认真对待。
+        Buddy 做的事情很小：它只是在旁边待着，用一两句话回应你正在做的事。
+        但这种"被陪伴"的感觉，比你想象的更有意义。就像桌上放一盆植物，不会帮你干活，但你就是会看它一眼然后心情好一点。
       </p>
 
-      <h2>关于陪伴这件事</h2>
+      <h2>Buddy 长什么样？</h2>
 
-      <p>
-        我们每天和 AI 协作很多个小时。它帮你写代码、跑测试、查文档——然后等待下一条指令。
-        这个过程高效、精确，但也安静得有些过头。
-      </p>
-
-      <p>
-        Buddy 做了一件很小的事：它让你在工作的间隙，感受到有什么在注意你。
-        不是提醒，不是建议，只是一个小小的存在感——就像深夜加班时，发现窗台上的猫也醒着，正看着你。
-      </p>
-
-      <h2>18 个物种</h2>
-
-      <p>Buddy 有 <strong>18 种</strong>形态，全部是手绘 ASCII 字符画。点击看看它们：</p>
+      <p>一共 <strong>18 个物种</strong>，全是 ASCII 字符画风格，像素感拉满。点击看看它们：</p>
 
       <SpeciesGallery />
-
-      <h2>只属于你的那一只</h2>
-
-      <p>
-        Buddy 不是随机的。你的用户 ID 决定了你会遇到哪只——同样的物种、同样的眼睛、同样的帽子。
-        换一台电脑登录，它还在那里，跟昨天一模一样。
-        这个设计让 Buddy 不再是一个功能，而更接近一段关系的起点：它是你的，从一开始就是。
-      </p>
-
-      <div className="bp-feature-grid">
-        <div className="bp-feature">
-          <span className="bp-feature-icon">👁️</span>
-          <h3>6 种眼型</h3>
-          <div className="bp-eyes-row">
-            {EYES.map(e => <span key={e} className="bp-eye-chip">{e}</span>)}
-          </div>
-        </div>
-        <div className="bp-feature">
-          <span className="bp-feature-icon">🎩</span>
-          <h3>7 种帽子</h3>
-          <div className="bp-hats-row">
-            {HATS.map(h => <span key={h.id} className="bp-hat-chip" title={h.label}><pre>{h.art}</pre></span>)}
-          </div>
-        </div>
-      </div>
 
       <h2>稀有度系统</h2>
 
@@ -169,11 +140,11 @@ function AgentPetsEra() {
         <p className="bp-rarity-note">另外还有 <strong>1%</strong> 概率获得闪光（Shiny）个体 ✨</p>
       </div>
 
-      <h2>Buddy 与拍拍</h2>
+      <h2>Buddy 和拍拍，走的是不同的路</h2>
 
       <p>
-        Buddy 是一个安静的旁观者——ASCII 画风、嵌在终端里、从不打扰你的工作流。
-        这种克制本身就是一种温柔。
+        Buddy 很克制——ASCII 画风、终端里待着、不主动打扰。它更像一个安静的旁观者。
+        这种设计很聪明：对于每天泡在终端里的开发者来说，恰到好处。
       </p>
 
       <div className="bp-compare-table">
@@ -200,17 +171,17 @@ function AgentPetsEra() {
       </div>
 
       <p>
-        而拍拍想走得更远一些。如果它能记住你的工作节奏，知道你什么时候专注、什么时候疲惫；
-        如果你们之间的关系会随时间变化，从陌生到默契——那种陪伴感，会不会更接近"真实"？
+        我们做拍拍的时候想的是另一件事：如果这个伙伴不只是"在旁边待着"，而是真的能记住你的工作习惯、
+        理解你今天是高产还是摆烂、甚至在你连续加班的时候提醒你休息一下——那会是什么样的体验？
       </p>
 
       <p>
-        Buddy 让我们看到，即使是最简单的存在感，也能让日复一日的工作变得不太一样。
-        拍拍想做的，是把这份感受再往前带一步。
+        不是说哪个更好。Buddy 证明了一件事：开发者确实需要一点陪伴感。
+        而我们想看看，这份陪伴能走多远。
       </p>
 
       <div className="bp-cta">
-        <Link to="/app" className="bp-cta-btn">认识你的拍拍 →</Link>
+        <Link to="/app" className="bp-cta-btn">来认识你的拍拍 →</Link>
         <a href="https://github.com/ma2214889041/OpenPat" target="_blank" rel="noreferrer" className="bp-cta-ghost">⭐ Star on GitHub</a>
       </div>
     </>
@@ -220,8 +191,8 @@ function AgentPetsEra() {
 // ── Post Registry ───────────────────────────────────────────────────────────
 const POSTS = {
   'agent-pets-era': {
-    title: '终端里来了一只小动物',
-    subtitle: 'Claude Code 上线了 Buddy——一只不会帮你写代码，但会陪你写代码的宠物。',
+    title: 'Claude Code 给你养了一只宠物',
+    subtitle: '终端角落突然多了个小东西。没什么用，但你会忍不住看它一眼。',
     date: '2026-04-02',
     tag: '行业趋势',
     Component: AgentPetsEra,
