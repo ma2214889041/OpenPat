@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>OpenPat 🦞</h1>
+  <h1>OpenPat 🐾</h1>
   <p><strong>Turn your AI Agent into a living digital companion — and brag about it.</strong></p>
   <p>Real-time presence · Meme sharing · Achievement system · GitHub badge</p>
   <p>
@@ -11,14 +11,14 @@
   </p>
   <p>
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
-    <img src="https://img.shields.io/badge/OpenClaw-compatible-8B8BFF" />
+    <img src="https://img.shields.io/badge/OpenPat-intelligent%20pet-8B8BFF" />
     <img src="https://img.shields.io/github/stars/ma2214889041/OpenPat?style=flat" />
   </p>
 </div>
 
 ---
 
-> OpenPat turns your OpenClaw AI Agent into a living digital companion — reflecting its real-time work state, walking with you through every task, unlocking hilarious achievements, and letting you share it all with one click.
+> OpenPat is an intelligent digital pet — reflecting your real-time work state, walking with you through every task, unlocking hilarious achievements, and letting you share it all with one click.
 
 ## Quick Start
 
@@ -28,7 +28,7 @@ npx openpat
 
 Open your browser, enter the Gateway URL and Token, and your companion appears.
 
-**Auto-detect:** If OpenClaw is installed, `npx openpat` will automatically read `~/.openclaw/openclaw.json` — no manual setup required.
+**Auto-detect:** `npx openpat` will automatically read `~/.openpat/openpat.json` — no manual setup required.
 
 ---
 

@@ -10,7 +10,7 @@
   },
   "files": [
     "cli/",
-    "openclaw-skill/"
+    "openpat-skill/"
   ],
   "scripts": {
     "dev": "vite",

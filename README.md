@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>OpenPat 🦞</h1>
+  <h1>OpenPat 🐾</h1>
   <p><strong>把你的 AI Agent 变成一个可以炫耀给别人看的「活的数字伙伴」</strong></p>
   <p>实时陪伴 · 梗图分享 · 成就系统 · GitHub 徽章</p>
   <p>
@@ -11,14 +11,14 @@
   </p>
   <p>
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
-    <img src="https://img.shields.io/badge/OpenClaw-compatible-8B8BFF" />
+    <img src="https://img.shields.io/badge/OpenPat-intelligent%20pet-8B8BFF" />
     <img src="https://img.shields.io/github/stars/ma2214889041/OpenPat?style=flat" />
   </p>
 </div>
 
 ---
 
-> OpenPat 把你的 OpenClaw AI Agent 变成一只有生命的虚拟伙伴 — 实时反映工作状态、陪你走过每一个任务、解锁搞笑成就，并让你用梗图一键炫耀给所有人看。
+> OpenPat 是一只有智力的数字宠物 — 实时反映你的工作状态、陪你走过每一个任务、解锁搞笑成就，并让你用梗图一键炫耀给所有人看。
 
 ## 快速开始
 
@@ -28,7 +28,7 @@ npx openpat
 
 打开浏览器，填入 Gateway 地址和 Token，你的伙伴就出现了。
 
-**自动检测：** 如果已安装 OpenClaw，`npx openpat` 会自动读取 `~/.openclaw/openclaw.json`，无需手动填写。
+**自动检测：** `npx openpat` 会自动读取 `~/.openpat/openpat.json`，无需手动填写。
 
 ---
 
@@ -119,7 +119,7 @@ npx openpat
 | 稀有 | 夜猫子 | "凌晨三点，它还在工作。你在睡觉，它在干活。差距就这么不动声色地拉开了。" |
 | 稀有 | 连续作战 | "24小时。它没有喝过一杯水，因为它不喝水。劳动法对它完全无效。" |
 | 史诗 | 零翻车周 | "整整一周，零错误。这在软件世界里相当于连续一周不堵车，几乎是神话。" |
-| 传说 | 龙虾神 | "二十万个任务完成的那一刻，什么都没发生。它只是开始了第二十万零一个。这就是传说。" |
+| 传说 | 拍拍神 | "二十万个任务完成的那一刻，什么都没发生。它只是开始了第二十万零一个。这就是传说。" |
 
 #### Admin 新增成就
 
@@ -137,7 +137,7 @@ npx openpat
 除梗图外，还支持生成数据战报卡：
 
 - **PNG**（4:5 / 1:1）+ **动态 GIF**
-- 5 种模板：战报 / 高光 / 翻车现场 / 深夜加班 / 账单龙虾
+- 5 种模板：战报 / 高光 / 翻车现场 / 深夜加班 / 账单拍拍
 - 文案会根据数据自动生成带类比的句子：
   - `500K tokens → "相当于把《三体》读了两遍"`
   - `1M tokens → "够写一部长篇小说了"`

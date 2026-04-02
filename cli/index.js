@@ -22,7 +22,7 @@ const APP_URL = 'https://open-pat.com';
 const ENDPOINT = 'https://wajtjbjdbenlrsnzpeng.supabase.co/functions/v1/event';
 const CFG_PATH = join(homedir(), '.openpat', 'openpat.json');
 const SKILL_DIR = join(homedir(), '.openpat', 'skills', 'openpat');
-const SKILL_SRC = join(__dirname, '..', 'skill', 'SKILL.md');
+const SKILL_SRC = join(__dirname, '..', 'openpat-skill', 'SKILL.md');
 
 // ─── Helpers ────────────────────────────────────────────────
 

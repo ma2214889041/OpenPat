@@ -113,7 +113,7 @@ export default function ConnectModal({ onConnect, onSkip }) {
         <div className="modal-header">
           <span className="modal-logo">🐾</span>
           <h1>OpenPat</h1>
-          <p>连接你的 Agent Agent，让它变成一只会动的虚拟伙伴</p>
+          <p>连接你的 AI Agent，让它变成一只有智力的数字宠物</p>
         </div>
 
         {/* Primary: one command */}

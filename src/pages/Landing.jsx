@@ -430,7 +430,7 @@ export default function Landing() {
             <Link to="/app" className="lp-btn lp-btn--green">{t.about.cta}</Link>
           </div>
           <div className="lp-about-image">
-            <img src={siteConfig.about_image_url || '/about-us-image.svg'} alt="OpenPat companions" className="lp-about-img" />
+            {siteConfig.about_image_url && <img src={siteConfig.about_image_url} alt="OpenPat companions" className="lp-about-img" />}
           </div>
         </div>
       </section>

@@ -6,7 +6,7 @@ export default function ImagePet({ status, assets, name, onClick }) {
     const containerRef = useRef(null);
 
     // Default fallback if assets are missing
-    const activeAsset = assets?.[status] || assets?.idle || '/placeholder-pet.png';
+    const activeAsset = assets?.[status] || assets?.idle || '';
 
     const getStatusLabel = () => {
         switch (status) {
