@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SettingsPanel from './components/SettingsPanel';
 import FeedbackModal from './components/FeedbackModal';
@@ -13,12 +13,11 @@ import './App.css';
 
 function AppShell({ children }) {
   const { pathname } = useLocation();
-  const isLanding = pathname === '/about';
-  const isSignIn  = pathname === '/signin';
+  const isFullPage = pathname === '/' || pathname === '/signin';
   const [showSettings, setShowSettings] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
-  if (isLanding || isSignIn) return children;
+  if (isFullPage) return children;
 
   return (
     <>
@@ -40,9 +39,9 @@ export default function App() {
       <div className="app">
         <AppShell>
           <Routes>
-            <Route path="/"              element={<Home />} />
+            <Route path="/"              element={<Landing />} />
             <Route path="/app"           element={<Home />} />
-            <Route path="/about"         element={<Landing />} />
+            <Route path="/about"         element={<Navigate to="/" replace />} />
             <Route path="/u/:username"   element={<PublicProfile />} />
             <Route path="/admin"         element={<AdminSkins />} />
             <Route path="/signin"        element={<SignIn />} />
