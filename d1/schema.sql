@@ -83,14 +83,53 @@ CREATE TABLE IF NOT EXISTS memories (
   id          TEXT PRIMARY KEY,
   user_id     TEXT NOT NULL,
   type        TEXT NOT NULL CHECK(type IN ('user','feedback','life','reference')),
+  layer       TEXT NOT NULL DEFAULT 'archival' CHECK(layer IN ('core','archival')),
   name        TEXT NOT NULL,
   description TEXT NOT NULL,
   content     TEXT NOT NULL,
+  importance  INTEGER DEFAULT 5 CHECK(importance BETWEEN 1 AND 10),
+  recall_count INTEGER DEFAULT 0,
+  last_recalled_at TEXT,
   created_at  TEXT DEFAULT (datetime('now')),
   updated_at  TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(user_id);
 CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(user_id, type);
+CREATE INDEX IF NOT EXISTS idx_memories_layer ON memories(user_id, layer);
+
+-- Core user profile: single structured document per user (MemGPT-style)
+CREATE TABLE IF NOT EXISTS user_profiles (
+  user_id       TEXT PRIMARY KEY,
+  core_summary  TEXT DEFAULT '',
+  personality   TEXT DEFAULT '',
+  preferences   TEXT DEFAULT '',
+  emotional_baseline TEXT DEFAULT '',
+  updated_at    TEXT DEFAULT (datetime('now'))
+);
+
+-- Emotional state tracking per conversation
+CREATE TABLE IF NOT EXISTS emotional_logs (
+  id              TEXT PRIMARY KEY,
+  user_id         TEXT NOT NULL,
+  conversation_id TEXT NOT NULL,
+  emotion         TEXT NOT NULL,
+  intensity       INTEGER DEFAULT 5 CHECK(intensity BETWEEN 1 AND 10),
+  context         TEXT,
+  created_at      TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_emotional_user ON emotional_logs(user_id, created_at DESC);
+
+-- Relationship tracking
+CREATE TABLE IF NOT EXISTS relationship_state (
+  user_id          TEXT PRIMARY KEY,
+  stage            TEXT DEFAULT 'stranger' CHECK(stage IN ('stranger','acquaintance','friend','close_friend','confidant')),
+  trust_score      INTEGER DEFAULT 10 CHECK(trust_score BETWEEN 0 AND 100),
+  total_messages   INTEGER DEFAULT 0,
+  total_sessions   INTEGER DEFAULT 0,
+  first_met_at     TEXT DEFAULT (datetime('now')),
+  last_seen_at     TEXT DEFAULT (datetime('now')),
+  updated_at       TEXT DEFAULT (datetime('now'))
+);
 
 CREATE TABLE IF NOT EXISTS conversations (
   id         TEXT PRIMARY KEY,
