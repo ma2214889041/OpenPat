@@ -76,3 +76,38 @@ CREATE TABLE IF NOT EXISTS skins (
   is_active    INTEGER DEFAULT 1,
   created_at   TEXT DEFAULT (datetime('now'))
 );
+
+-- ── Companion Chat & Memory ─────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS memories (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL,
+  type        TEXT NOT NULL CHECK(type IN ('user','feedback','life','reference')),
+  name        TEXT NOT NULL,
+  description TEXT NOT NULL,
+  content     TEXT NOT NULL,
+  created_at  TEXT DEFAULT (datetime('now')),
+  updated_at  TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(user_id);
+CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(user_id, type);
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL,
+  title      TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id              TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  user_id         TEXT NOT NULL,
+  role            TEXT NOT NULL CHECK(role IN ('user','assistant')),
+  content         TEXT NOT NULL,
+  created_at      TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+);
+CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id, created_at ASC);
