@@ -111,3 +111,13 @@ CREATE TABLE IF NOT EXISTS messages (
   FOREIGN KEY (conversation_id) REFERENCES conversations(id)
 );
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS reminders (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL,
+  content    TEXT NOT NULL,
+  remind_at  TEXT NOT NULL,
+  done       INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_reminders_user ON reminders(user_id, remind_at);

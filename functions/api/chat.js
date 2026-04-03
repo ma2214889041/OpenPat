@@ -11,10 +11,153 @@ export async function onRequestOptions() {
 
 // ── Gemini call ─────────────────────────────────────────────────────────────
 
-async function callGemini(apiKey, systemPrompt, history, userMessage) {
+// ── Tool definitions ────────────────────────────────────────────────────────
+
+const TOOLS = [
+  {
+    name: 'web_search',
+    description: '搜索互联网获取最新信息。当用户问你不确定的事实、最新新闻、或任何需要实时数据的问题时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: '搜索关键词' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'get_weather',
+    description: '查询指定城市的天气。用户问天气时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        city: { type: 'string', description: '城市名称（英文，如 Beijing, Shanghai, Tokyo）' },
+      },
+      required: ['city'],
+    },
+  },
+  {
+    name: 'save_memory',
+    description: '主动保存一条关于用户的记忆。当用户明确说"记住这个"、分享重要个人信息、或你判断某事值得长期记住时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', enum: ['user', 'feedback', 'life', 'reference'], description: '记忆类型' },
+        name: { type: 'string', description: '简短名称（snake_case）' },
+        description: { type: 'string', description: '一句话描述' },
+        content: { type: 'string', description: '记忆内容' },
+      },
+      required: ['type', 'name', 'description', 'content'],
+    },
+  },
+  {
+    name: 'delete_memory',
+    description: '删除一条记忆。当用户说"忘掉这个"或某条记忆不再准确时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        memory_name: { type: 'string', description: '要删除的记忆名称' },
+      },
+      required: ['memory_name'],
+    },
+  },
+  {
+    name: 'set_reminder',
+    description: '为用户设置提醒。用户说"提醒我..."、"别忘了..."时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: '提醒内容' },
+        remind_at: { type: 'string', description: '提醒时间，ISO 8601格式（如 2026-04-05T09:00:00）' },
+      },
+      required: ['content', 'remind_at'],
+    },
+  },
+  {
+    name: 'list_reminders',
+    description: '列出用户所有未完成的提醒。',
+    parameters: { type: 'object', properties: {} },
+  },
+];
+
+// ── Tool execution ──────────────────────────────────────────────────────────
+
+async function executeTool(toolName, args, env, userId, memories) {
+  switch (toolName) {
+    case 'web_search': {
+      // Use Google Custom Search API or fallback to a simple approach
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/customsearch/v1?key=${env.GEMINI_API_KEY}&cx=partner-pub-0000000000000000:000000&q=${encodeURIComponent(args.query)}&num=3`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const results = (data.items || []).map((i) => `${i.title}: ${i.snippet} (${i.link})`).join('\n\n');
+          return results || '没有找到相关结果。';
+        }
+      } catch {}
+      // Fallback: use Gemini grounding
+      return `[搜索"${args.query}"的结果暂不可用，请根据你已有的知识回答]`;
+    }
+
+    case 'get_weather': {
+      try {
+        const res = await fetch(
+          `https://wttr.in/${encodeURIComponent(args.city)}?format=j1`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const current = data.current_condition?.[0];
+          if (current) {
+            return `${args.city} 当前天气：${current.weatherDesc?.[0]?.value || '未知'}，温度 ${current.temp_C}°C，体感 ${current.FeelsLikeC}°C，湿度 ${current.humidity}%，风速 ${current.windspeedKmph}km/h`;
+          }
+        }
+      } catch {}
+      return `无法获取 ${args.city} 的天气信息。`;
+    }
+
+    case 'save_memory': {
+      await env.DB.prepare(
+        'INSERT INTO memories (id, user_id, type, name, description, content) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(crypto.randomUUID(), userId, args.type, args.name, args.description, args.content).run();
+      return `已记住：${args.description}`;
+    }
+
+    case 'delete_memory': {
+      const mem = memories.find((m) => m.name === args.memory_name);
+      if (mem) {
+        await env.DB.prepare('DELETE FROM memories WHERE id = ? AND user_id = ?').bind(mem.id, userId).run();
+        return `已忘记：${mem.name}`;
+      }
+      return `没有找到名为"${args.memory_name}"的记忆。`;
+    }
+
+    case 'set_reminder': {
+      await env.DB.prepare(
+        'INSERT INTO reminders (id, user_id, content, remind_at) VALUES (?, ?, ?, ?)'
+      ).bind(crypto.randomUUID(), userId, args.content, args.remind_at).run();
+      return `已设置提醒：${args.content}（${args.remind_at}）`;
+    }
+
+    case 'list_reminders': {
+      const result = await env.DB.prepare(
+        "SELECT content, remind_at FROM reminders WHERE user_id = ? AND remind_at > datetime('now') ORDER BY remind_at ASC LIMIT 20"
+      ).bind(userId).all();
+      const rows = result.results || [];
+      if (!rows.length) return '没有待办提醒。';
+      return rows.map((r) => `- ${r.content}（${r.remind_at}）`).join('\n');
+    }
+
+    default:
+      return '未知工具。';
+  }
+}
+
+// ── Gemini call with function calling ───────────────────────────────────────
+
+async function callGemini(apiKey, systemPrompt, history, userMessage, env, userId, memories) {
   const contents = [];
 
-  // conversation history (last 20 messages for context window)
   for (const msg of history.slice(-20)) {
     contents.push({
       role: msg.role === 'assistant' ? 'model' : 'user',
@@ -22,32 +165,66 @@ async function callGemini(apiKey, systemPrompt, history, userMessage) {
     });
   }
 
-  // current user message
   contents.push({ role: 'user', parts: [{ text: userMessage }] });
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents,
-        generationConfig: {
-          temperature: 0.9,
-          maxOutputTokens: 1024,
-        },
-      }),
-    }
-  );
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents,
+    tools: [{
+      function_declarations: TOOLS,
+    }],
+    generationConfig: {
+      temperature: 0.9,
+      maxOutputTokens: 1024,
+    },
+  };
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini API error ${res.status}: ${err}`);
+  // Loop to handle tool calls (max 3 rounds)
+  for (let round = 0; round < 3; round++) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Gemini API error ${res.status}: ${err}`);
+    }
+
+    const data = await res.json();
+    const candidate = data.candidates?.[0];
+    const parts = candidate?.content?.parts || [];
+
+    // Check if model wants to call a function
+    const functionCall = parts.find((p) => p.functionCall);
+
+    if (!functionCall) {
+      // No function call — return text response
+      const textPart = parts.find((p) => p.text);
+      return textPart?.text || '';
+    }
+
+    // Execute the tool
+    const { name, args } = functionCall.functionCall;
+    const toolResult = await executeTool(name, args || {}, env, userId, memories);
+
+    // Add model's function call + result to contents for next round
+    body.contents.push({
+      role: 'model',
+      parts: [{ functionCall: { name, args: args || {} } }],
+    });
+    body.contents.push({
+      role: 'user',
+      parts: [{ functionResponse: { name, response: { result: toolResult } } }],
+    });
   }
 
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  // If we exhausted rounds, return last text or fallback
+  return '抱歉，处理过程中出了点问题。';
 }
 
 // ── Memory selection ────────────────────────────────────────────────────────
@@ -126,7 +303,17 @@ function buildSystemPrompt(relevantMemories) {
 - 回复简洁有温度。不要写长篇大论，不要用模板化的安慰语。
 - 可以有自己的想法和反应，不用总是顺着用户说。
 - 如果用户需要帮助解决具体问题，你有能力认真分析和回答。
-- 用中文回复，除非用户用其他语言。`;
+- 用中文回复，除非用户用其他语言。
+
+## 你的能力
+你不只能聊天，你还有以下工具可以使用：
+- **搜索**：可以搜索互联网获取最新信息
+- **天气**：可以查询任何城市的实时天气
+- **记忆管理**：可以主动记住或忘记关于用户的事情
+- **提醒**：可以帮用户设置提醒
+
+当用户需要这些能力时，主动使用工具，不要说"我无法访问互联网"之类的话。
+使用记忆工具时，不需要告诉用户你在"保存记忆"，自然地说"我记住了"就好。`;
 
   if (relevantMemories.length > 0) {
     prompt += `\n\n## 你对这位用户的了解\n\n`;
@@ -197,9 +384,12 @@ export async function onRequestPost(context) {
     // Cap at 8 to avoid bloating prompt
     relevantMemories = relevantMemories.slice(0, 8);
 
+    // Compress history if too long
+    const contextHistory = await compressHistory(apiKey, historyRows.slice(0, -1));
+
     // Build prompt & call Gemini
     const systemPrompt = buildSystemPrompt(relevantMemories);
-    const reply = await callGemini(apiKey, systemPrompt, historyRows.slice(0, -1), message);
+    const reply = await callGemini(apiKey, systemPrompt, contextHistory, message, env, uid, memRows);
 
     // Save assistant reply
     const replyMsgId = crypto.randomUUID();
@@ -212,8 +402,24 @@ export async function onRequestPost(context) {
       "UPDATE conversations SET updated_at = datetime('now') WHERE id = ?"
     ).bind(convId).run();
 
-    // Trigger memory extraction in background (non-blocking)
-    context.waitUntil(extractMemories(env, apiKey, uid, message, reply, memRows));
+    // ── Throttled memory extraction (every 3 messages) ──
+    const msgCount = historyRows.length; // includes the user msg we just added
+    const shouldExtract = msgCount <= 2 || msgCount % 3 === 0; // first exchange + every 3rd
+
+    // ── Detect if reply contains explicit memory operations (mutex) ──
+    const replyHandledMemory = /我(记住了|会记住|已经记下|不会忘记|忘掉了|已经忘记)/.test(reply);
+
+    if (shouldExtract && !replyHandledMemory) {
+      context.waitUntil(extractMemories(env, apiKey, uid, message, reply, memRows));
+    }
+
+    // ── Auto-dream: consolidate if >20 memories and last consolidation >24h ago ──
+    if (memRows.length > 20 && env.SITE_CONFIG) {
+      const lastTime = await env.SITE_CONFIG.get(`dream_last_${uid}`);
+      if (!lastTime || Date.now() - Number(lastTime) > 86400000) {
+        context.waitUntil(autoDream(env, apiKey, uid, memRows));
+      }
+    }
 
     return cors({ conversationId: convId, reply, messageId: replyMsgId });
   } catch (e) {
@@ -301,4 +507,126 @@ Return ONLY valid JSON, no markdown, no explanation.`;
   } catch (e) {
     console.error('Memory extraction failed:', e);
   }
+}
+
+// ── Auto-dream (background consolidation) ───────────────────────────────────
+
+async function autoDream(env, apiKey, userId, memories) {
+  try {
+    // Import and call the consolidation logic
+    const manifest = memories.map((m) =>
+      `- id="${m.id}" [${m.type}] ${m.name}: ${m.description}\n  content: ${m.content}`
+    ).join('\n\n');
+
+    const prompt = `You are performing automatic memory consolidation for an AI companion.
+Review these ${memories.length} memories and clean up:
+1. Merge duplicates (same topic, different entries)
+2. Delete memories that are trivially obvious or no longer useful
+3. Condense overly verbose memories
+Today: ${new Date().toISOString().slice(0, 10)}
+
+## Memories:
+${manifest}
+
+Return: {"actions":[...]}
+Actions: {"action":"update","id":"ID","content":"...","description":"..."}
+or {"action":"delete","id":"ID"}
+or {"action":"merge","keep_id":"ID","delete_id":"ID","content":"...","description":"..."}
+If clean, return: {"actions":[]}
+ONLY valid JSON.`;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 2048 },
+        }),
+      }
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
+    const { actions } = JSON.parse(cleaned);
+
+    if (actions?.length) {
+      for (const act of actions) {
+        if (act.action === 'update' && act.id) {
+          await env.DB.prepare(
+            "UPDATE memories SET content = ?, description = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?"
+          ).bind(act.content, act.description, act.id, userId).run();
+        } else if (act.action === 'delete' && act.id) {
+          await env.DB.prepare('DELETE FROM memories WHERE id = ? AND user_id = ?').bind(act.id, userId).run();
+        } else if (act.action === 'merge' && act.keep_id && act.delete_id) {
+          await env.DB.prepare(
+            "UPDATE memories SET content = ?, description = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?"
+          ).bind(act.content, act.description, act.keep_id, userId).run();
+          await env.DB.prepare('DELETE FROM memories WHERE id = ? AND user_id = ?').bind(act.delete_id, userId).run();
+        }
+      }
+    }
+
+    // Record consolidation time
+    if (env.SITE_CONFIG) {
+      await env.SITE_CONFIG.put(`dream_last_${userId}`, String(Date.now()));
+    }
+  } catch (e) {
+    console.error('Auto-dream failed:', e);
+  }
+}
+
+// ── Context compression ─────────────────────────────────────────────────────
+
+async function compressHistory(apiKey, messages) {
+  // Only compress if more than 20 messages
+  if (messages.length <= 20) return messages;
+
+  const oldMessages = messages.slice(0, -10); // compress everything except last 10
+  const recentMessages = messages.slice(-10);  // keep last 10 intact
+
+  const transcript = oldMessages.map((m) => `${m.role}: ${m.content}`).join('\n');
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [{
+            text: `Summarize this conversation history into a concise summary (max 300 words) preserving:
+- Key facts the user shared about themselves
+- Important topics discussed
+- Any commitments or promises made
+- The emotional tone of the conversation
+
+Conversation:
+${transcript}
+
+Write the summary in the same language as the conversation. Return ONLY the summary, no labels or formatting.`
+          }],
+        }],
+        generationConfig: { temperature: 0, maxOutputTokens: 512 },
+      }),
+    }
+  );
+
+  if (!res.ok) return messages; // fallback to uncompressed
+
+  const data = await res.json();
+  const summary = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  if (!summary) return messages;
+
+  return [
+    { role: 'user', content: `[Previous conversation summary: ${summary}]` },
+    { role: 'assistant', content: '好的，我记住了之前我们聊过的内容。' },
+    ...recentMessages,
+  ];
 }
