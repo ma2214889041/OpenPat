@@ -122,7 +122,8 @@ function buildSystemPrompt(relevantMemories) {
 
 // ── Main handler ────────────────────────────────────────────────────────────
 
-export async function onRequestPost({ request, env, ctx }) {
+export async function onRequestPost(context) {
+  const { request, env } = context;
   try {
     const user = await verifyJwt(request, env);
     if (!user) return cors({ error: 'Unauthorized' }, 401);
@@ -184,7 +185,7 @@ export async function onRequestPost({ request, env, ctx }) {
     ).bind(convId).run();
 
     // Trigger memory extraction in background (non-blocking)
-    ctx.waitUntil(extractMemories(env, apiKey, uid, message, reply, memRows));
+    context.waitUntil(extractMemories(env, apiKey, uid, message, reply, memRows));
 
     return cors({ conversationId: convId, reply, messageId: replyMsgId });
   } catch (e) {
