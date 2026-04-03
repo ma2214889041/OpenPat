@@ -52,10 +52,17 @@ async function callGemini(apiKey, systemPrompt, history, userMessage) {
 
 // ── Memory selection ────────────────────────────────────────────────────────
 
-async function selectRelevantMemories(apiKey, memories, userMessage) {
+async function selectRelevantMemories(apiKey, memories, userMessage, alreadySurfacedIds = []) {
   if (!memories.length) return [];
 
-  const manifest = memories.map(
+  // Filter out memories already shown in this conversation
+  const candidates = alreadySurfacedIds.length > 0
+    ? memories.filter((m) => !alreadySurfacedIds.includes(m.id))
+    : memories;
+
+  if (!candidates.length) return [];
+
+  const manifest = candidates.map(
     (m) => `- [${m.type}] ${m.name}: ${m.description}`
   ).join('\n');
 
@@ -67,10 +74,12 @@ async function selectRelevantMemories(apiKey, memories, userMessage) {
       body: JSON.stringify({
         system_instruction: {
           parts: [{
-            text: `You select memories relevant to a user's message.
-Given the user's message and a list of memories, return a JSON array of memory names that are clearly relevant (up to 5).
-Be selective — only include memories you are certain will help understand or respond to the user.
-Return ONLY a JSON array of name strings, nothing else. Example: ["mem1","mem2"]`
+            text: `You select memories relevant to a user's message for an AI companion.
+Given the user's message and a list of memories about them, return a JSON array of memory names that are clearly relevant (up to 5).
+Be selective — only include memories you are certain will help the companion understand or respond better.
+Prioritize: user preferences > current life situation > reference info.
+Return ONLY a JSON array of name strings, nothing else. Example: ["mem1","mem2"]
+If no memories are relevant, return: []`
           }],
         },
         contents: [{
@@ -90,13 +99,23 @@ Return ONLY a JSON array of name strings, nothing else. Example: ["mem1","mem2"]
   try {
     const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
     const names = JSON.parse(cleaned);
-    return memories.filter((m) => names.includes(m.name));
+    return candidates.filter((m) => names.includes(m.name));
   } catch {
     return [];
   }
 }
 
 // ── Build system prompt ─────────────────────────────────────────────────────
+
+function getMemoryAge(updatedAt) {
+  const now = Date.now();
+  const updated = new Date(updatedAt + 'Z').getTime();
+  const days = Math.floor((now - updated) / 86400000);
+  if (days < 1) return null;
+  if (days < 7) return `${days}天前更新`;
+  if (days < 30) return `${Math.floor(days / 7)}周前更新，可能已过时`;
+  return `${Math.floor(days / 30)}个月前更新，较旧，请验证后再使用`;
+}
 
 function buildSystemPrompt(relevantMemories) {
   let prompt = `你是用户的 AI 伴侣"拍拍"。你有自己的性格：温暖、真诚、偶尔俏皮，但从不敷衍。
@@ -112,9 +131,11 @@ function buildSystemPrompt(relevantMemories) {
   if (relevantMemories.length > 0) {
     prompt += `\n\n## 你对这位用户的了解\n\n`;
     for (const mem of relevantMemories) {
-      prompt += `### ${mem.name} (${mem.type})\n${mem.content}\n\n`;
+      const age = getMemoryAge(mem.updated_at);
+      const ageNote = age ? ` ⚠️ ${age}` : '';
+      prompt += `### ${mem.name} (${mem.type})${ageNote}\n${mem.content}\n\n`;
     }
-    prompt += `自然地运用这些了解，不要直接说"根据我的记忆"。`;
+    prompt += `自然地运用这些了解，不要直接说"根据我的记忆"。如果某条了解标注了"可能已过时"或"较旧"，在使用前通过对话自然地确认是否仍然准确。`;
   }
 
   return prompt;
@@ -164,10 +185,17 @@ export async function onRequestPost(context) {
     ).bind(uid).all();
     const memRows = allMemories.results || [];
 
-    let relevantMemories = [];
-    if (memRows.length > 0) {
-      relevantMemories = await selectRelevantMemories(apiKey, memRows, message);
+    // Always include user-type memories (core identity), select others dynamically
+    const alwaysInclude = memRows.filter((m) => m.type === 'user');
+    const selectFrom = memRows.filter((m) => m.type !== 'user');
+
+    let relevantMemories = [...alwaysInclude];
+    if (selectFrom.length > 0) {
+      const selected = await selectRelevantMemories(apiKey, selectFrom, message);
+      relevantMemories = [...relevantMemories, ...selected];
     }
+    // Cap at 8 to avoid bloating prompt
+    relevantMemories = relevantMemories.slice(0, 8);
 
     // Build prompt & call Gemini
     const systemPrompt = buildSystemPrompt(relevantMemories);
@@ -199,38 +227,40 @@ export async function onRequestPost(context) {
 async function extractMemories(env, apiKey, userId, userMessage, assistantReply, existingMemories) {
   try {
     const manifest = existingMemories.length > 0
-      ? existingMemories.map((m) => `- [${m.type}] ${m.name}: ${m.description}`).join('\n')
+      ? existingMemories.map((m) => `- id="${m.id}" [${m.type}] ${m.name}: ${m.description} (content: ${m.content.slice(0, 100)}${m.content.length > 100 ? '...' : ''})`).join('\n')
       : '(no existing memories)';
 
-    const extractionPrompt = `You are a memory extraction agent. Analyze this conversation exchange and decide if anything should be saved to long-term memory about the user.
+    const extractionPrompt = `You are a memory extraction agent for an AI companion called "拍拍". Analyze this conversation and decide what to remember about the user.
 
 ## Memory types:
-- **user**: Who they are — role, preferences, personality, knowledge, habits
-- **feedback**: How they want to be treated — communication style preferences, things they like/dislike
-- **life**: What's happening in their life — events, goals, emotions, relationships, ongoing situations
-- **reference**: External info they mentioned — places, tools, people, resources
+- **user**: Who they are — role, preferences, personality, knowledge, habits, name, age, occupation
+- **feedback**: How they want to be treated — communication style, things they like/dislike about the companion's responses
+- **life**: What's happening — events, goals, emotions, relationships, ongoing situations. ALWAYS use absolute dates (today is ${new Date().toISOString().slice(0, 10)})
+- **reference**: External info — places, tools, people, links, resources they mentioned
 
-## Rules:
-- Only extract information that will be useful in FUTURE conversations
-- Do NOT save: greetings, small talk, trivial exchanges, task-specific details
-- If the exchange reveals nothing worth remembering long-term, return empty actions
-- Check existing memories before creating new ones — UPDATE if related memory exists
-- Keep each memory focused on ONE topic
+## Critical rules:
+1. ONLY extract info useful in FUTURE conversations. Skip: greetings, small talk, trivial exchanges
+2. DEDUPLICATION IS CRITICAL: Before creating, check if an existing memory covers the same topic. If yes, USE UPDATE with the existing id instead of creating a duplicate
+3. If new info CONTRADICTS an existing memory, UPDATE that memory with corrected info
+4. If a memory is no longer true (user says "I quit my job" but memory says "works at X"), UPDATE it
+5. One memory = one topic. Don't combine unrelated facts
+6. If nothing worth saving, return empty actions — most casual exchanges should result in NO actions
+7. Write memory content in the same language the user uses
 
-## Existing memories:
+## Existing memories (check these BEFORE creating new ones):
 ${manifest}
 
-## Conversation:
+## This conversation turn:
 User: ${userMessage}
 Assistant: ${assistantReply}
 
-Return a JSON object with an "actions" array. Each action is one of:
-- {"action":"create","type":"user|feedback|life|reference","name":"short_name","description":"one line description","content":"memory content"}
-- {"action":"update","id":"existing_memory_id","content":"updated content","description":"updated description"}
-- {"action":"delete","id":"existing_memory_id"}
+Return a JSON object: {"actions":[...]}
+Each action is ONE of:
+- {"action":"create","type":"user|feedback|life|reference","name":"short_snake_name","description":"one line","content":"the memory"}
+- {"action":"update","id":"EXISTING_MEMORY_ID","content":"updated content","description":"updated description"}
+- {"action":"delete","id":"EXISTING_MEMORY_ID"}
 
-If nothing worth saving, return: {"actions":[]}
-Return ONLY valid JSON, nothing else.`;
+Return ONLY valid JSON, no markdown, no explanation.`;
 
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`,

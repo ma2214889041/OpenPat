@@ -12,6 +12,9 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [memoryPanel, setMemoryPanel] = useState(false);
+  const [memories, setMemories] = useState([]);
+  const [consolidating, setConsolidating] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -86,6 +89,27 @@ export default function Chat() {
     setSidebarOpen(false);
   }
 
+  async function loadMemories() {
+    try {
+      const data = await apiGet('/api/memories');
+      setMemories(data);
+    } catch {}
+  }
+
+  async function deleteMemory(id) {
+    await apiDelete(`/api/memories?id=${id}`);
+    setMemories((prev) => prev.filter((m) => m.id !== id));
+  }
+
+  async function consolidateMemories() {
+    setConsolidating(true);
+    try {
+      await apiPost('/api/memories/consolidate', {});
+      await loadMemories();
+    } catch {}
+    setConsolidating(false);
+  }
+
   async function deleteConv(e, id) {
     e.stopPropagation();
     await apiDelete(`/api/conversations?id=${id}`);
@@ -129,6 +153,11 @@ export default function Chat() {
         <div className="chat-header">
           <button className="chat-menu-btn" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
           <span className="chat-header-title">拍拍</span>
+          <button
+            className="chat-memory-btn"
+            onClick={() => { setMemoryPanel((v) => !v); if (!memoryPanel) loadMemories(); }}
+            title="拍拍的记忆"
+          >🧠</button>
         </div>
 
         {/* Messages */}
@@ -176,6 +205,40 @@ export default function Chat() {
           </button>
         </div>
       </div>
+
+      {/* Memory panel */}
+      {memoryPanel && (
+        <div className="chat-memory-panel">
+          <div className="chat-memory-header">
+            <span>拍拍的记忆 ({memories.length})</span>
+            <div className="chat-memory-actions">
+              <button
+                className="chat-memory-consolidate"
+                onClick={consolidateMemories}
+                disabled={consolidating || memories.length < 3}
+              >
+                {consolidating ? '整理中...' : '整理记忆'}
+              </button>
+              <button className="chat-memory-close" onClick={() => setMemoryPanel(false)}>×</button>
+            </div>
+          </div>
+          <div className="chat-memory-list">
+            {memories.length === 0 && (
+              <p className="chat-memory-empty">还没有记忆。多聊几句，拍拍会慢慢记住你。</p>
+            )}
+            {memories.map((m) => (
+              <div key={m.id} className="chat-memory-item">
+                <div className="chat-memory-item-header">
+                  <span className={`chat-memory-type chat-memory-type--${m.type}`}>{m.type}</span>
+                  <span className="chat-memory-name">{m.name}</span>
+                  <button className="chat-memory-del" onClick={() => deleteMemory(m.id)}>×</button>
+                </div>
+                <p className="chat-memory-content">{m.content}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
