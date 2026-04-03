@@ -123,66 +123,74 @@ function buildSystemPrompt(relevantMemories) {
 // ── Main handler ────────────────────────────────────────────────────────────
 
 export async function onRequestPost({ request, env, ctx }) {
-  const user = await verifyJwt(request, env);
-  if (!user) return cors({ error: 'Unauthorized' }, 401);
+  try {
+    const user = await verifyJwt(request, env);
+    if (!user) return cors({ error: 'Unauthorized' }, 401);
 
-  const { conversationId, message } = await request.json();
-  if (!message?.trim()) return cors({ error: 'Message required' }, 400);
+    const { conversationId, message } = await request.json();
+    if (!message?.trim()) return cors({ error: 'Message required' }, 400);
 
-  const apiKey = env.GEMINI_API_KEY;
-  if (!apiKey) return cors({ error: 'Gemini API key not configured' }, 500);
+    const apiKey = env.GEMINI_API_KEY;
+    if (!apiKey) return cors({ error: 'Gemini API key not configured' }, 500);
 
-  const uid = user.id;
-  let convId = conversationId;
+    const uid = user.id;
+    let convId = conversationId;
 
-  // Create new conversation if needed
-  if (!convId) {
-    convId = crypto.randomUUID();
-    const title = message.slice(0, 50) + (message.length > 50 ? '...' : '');
+    // Create new conversation if needed
+    if (!convId) {
+      convId = crypto.randomUUID();
+      const title = message.slice(0, 50) + (message.length > 50 ? '...' : '');
+      await env.DB.prepare(
+        'INSERT INTO conversations (id, user_id, title) VALUES (?, ?, ?)'
+      ).bind(convId, uid, title).run();
+    }
+
+    // Save user message
+    const userMsgId = crypto.randomUUID();
     await env.DB.prepare(
-      'INSERT INTO conversations (id, user_id, title) VALUES (?, ?, ?)'
-    ).bind(convId, uid, title).run();
+      'INSERT INTO messages (id, conversation_id, user_id, role, content) VALUES (?, ?, ?, ?, ?)'
+    ).bind(userMsgId, convId, uid, 'user', message).run();
+
+    // Load conversation history
+    const history = await env.DB.prepare(
+      'SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 40'
+    ).bind(convId).all();
+    const historyRows = history.results || [];
+
+    // Load & select relevant memories (skip selection if no memories yet)
+    const allMemories = await env.DB.prepare(
+      'SELECT * FROM memories WHERE user_id = ? ORDER BY updated_at DESC LIMIT 200'
+    ).bind(uid).all();
+    const memRows = allMemories.results || [];
+
+    let relevantMemories = [];
+    if (memRows.length > 0) {
+      relevantMemories = await selectRelevantMemories(apiKey, memRows, message);
+    }
+
+    // Build prompt & call Gemini
+    const systemPrompt = buildSystemPrompt(relevantMemories);
+    const reply = await callGemini(apiKey, systemPrompt, historyRows.slice(0, -1), message);
+
+    // Save assistant reply
+    const replyMsgId = crypto.randomUUID();
+    await env.DB.prepare(
+      'INSERT INTO messages (id, conversation_id, user_id, role, content) VALUES (?, ?, ?, ?, ?)'
+    ).bind(replyMsgId, convId, uid, 'assistant', reply).run();
+
+    // Update conversation timestamp
+    await env.DB.prepare(
+      "UPDATE conversations SET updated_at = datetime('now') WHERE id = ?"
+    ).bind(convId).run();
+
+    // Trigger memory extraction in background (non-blocking)
+    ctx.waitUntil(extractMemories(env, apiKey, uid, message, reply, memRows));
+
+    return cors({ conversationId: convId, reply, messageId: replyMsgId });
+  } catch (e) {
+    console.error('Chat error:', e);
+    return cors({ error: e.message || 'Internal error' }, 500);
   }
-
-  // Save user message
-  const userMsgId = crypto.randomUUID();
-  await env.DB.prepare(
-    'INSERT INTO messages (id, conversation_id, user_id, role, content) VALUES (?, ?, ?, ?, ?)'
-  ).bind(userMsgId, convId, uid, 'user', message).run();
-
-  // Load conversation history
-  const history = await env.DB.prepare(
-    'SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 40'
-  ).bind(convId).all();
-  const historyRows = history.results || [];
-
-  // Load & select relevant memories
-  const allMemories = await env.DB.prepare(
-    'SELECT * FROM memories WHERE user_id = ? ORDER BY updated_at DESC LIMIT 200'
-  ).bind(uid).all();
-  const memRows = allMemories.results || [];
-
-  const relevantMemories = await selectRelevantMemories(apiKey, memRows, message);
-
-  // Build prompt & call Gemini
-  const systemPrompt = buildSystemPrompt(relevantMemories);
-  const reply = await callGemini(apiKey, systemPrompt, historyRows.slice(0, -1), message);
-
-  // Save assistant reply
-  const replyMsgId = crypto.randomUUID();
-  await env.DB.prepare(
-    'INSERT INTO messages (id, conversation_id, user_id, role, content) VALUES (?, ?, ?, ?, ?)'
-  ).bind(replyMsgId, convId, uid, 'assistant', reply).run();
-
-  // Update conversation timestamp
-  await env.DB.prepare(
-    "UPDATE conversations SET updated_at = datetime('now') WHERE id = ?"
-  ).bind(convId).run();
-
-  // Trigger memory extraction in background (non-blocking)
-  ctx.waitUntil(extractMemories(env, apiKey, uid, message, reply, memRows));
-
-  return cors({ conversationId: convId, reply, messageId: replyMsgId });
 }
 
 // ── Background memory extraction ────────────────────────────────────────────
