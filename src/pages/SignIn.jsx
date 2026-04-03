@@ -19,7 +19,7 @@ export default function SignIn() {
 
   // If already logged in, redirect to app
   useEffect(() => {
-    if (user) navigate('/app');
+    if (user) navigate('/chat');
   }, [user, navigate]);
 
   return (
