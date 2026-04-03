@@ -200,22 +200,23 @@ async function callGemini(apiKey, systemPrompt, history, userMessage, env, userI
     const parts = candidate?.content?.parts || [];
 
     // Check if model wants to call a function
-    const functionCall = parts.find((p) => p.functionCall);
+    const functionCallPart = parts.find((p) => p.functionCall);
 
-    if (!functionCall) {
+    if (!functionCallPart) {
       // No function call — return text response
       const textPart = parts.find((p) => p.text);
       return textPart?.text || '';
     }
 
     // Execute the tool
-    const { name, args } = functionCall.functionCall;
+    const { name, args } = functionCallPart.functionCall;
     const toolResult = await executeTool(name, args || {}, env, userId, memories);
 
-    // Add model's function call + result to contents for next round
+    // IMPORTANT: preserve the FULL model response parts (including thoughtSignature)
+    // Gemini 3.1 requires thoughtSignature for function call continuations
     body.contents.push({
       role: 'model',
-      parts: [{ functionCall: { name, args: args || {} } }],
+      parts: parts,
     });
     body.contents.push({
       role: 'user',
