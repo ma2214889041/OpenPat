@@ -73,7 +73,7 @@ function SpeciesGallery() {
             onClick={() => setSelected(selected === i ? null : i)}
           >
             <AsciiSprite frames={sp.frames} size="small" />
-            <span className="bp-species-name">{sp.emoji} {sp.name}</span>
+            <span className="bp-species-name">{sp.name}</span>
           </button>
         ))}
       </div>
@@ -81,7 +81,7 @@ function SpeciesGallery() {
         <div className="bp-species-detail">
           <AsciiSprite frames={s.frames} />
           <div className="bp-species-info">
-            <h3>{s.emoji} {s.name} <span className="bp-species-id">({s.id})</span></h3>
+            <h3>{s.name} <span className="bp-species-id">({s.id})</span></h3>
             <p>点击上方任意物种查看动画。每个物种有 2-3 帧 idle 动画，会呼吸、摇摆、眨眼。</p>
           </div>
         </div>
