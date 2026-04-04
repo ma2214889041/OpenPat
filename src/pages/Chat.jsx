@@ -19,6 +19,8 @@ export default function Chat() {
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
+  useEffect(() => { document.title = 'Chat — OpenPat'; return () => { document.title = 'OpenPat — AI Companion with Memory'; }; }, []);
+
   // Load conversations list
   useEffect(() => {
     if (!user) return;

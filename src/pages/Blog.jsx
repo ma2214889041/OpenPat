@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Blog.css';
 
@@ -12,6 +13,7 @@ const POSTS = [
 ];
 
 export default function Blog() {
+  useEffect(() => { document.title = '博客 — OpenPat'; return () => { document.title = 'OpenPat — AI Companion with Memory'; }; }, []);
   return (
     <div className="blog-page">
       <nav className="blog-nav">

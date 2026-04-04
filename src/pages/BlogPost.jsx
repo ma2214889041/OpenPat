@@ -1,5 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
+
+function usePageTitle(title) {
+  useEffect(() => {
+    if (title) document.title = `${title} — OpenPat`;
+    return () => { document.title = 'OpenPat — AI Companion with Memory'; };
+  }, [title]);
+}
 import './BlogPost.css';
 
 // ── ASCII Sprite Data (from Buddy source) ───────────────────────────────────
@@ -215,6 +222,7 @@ export default function BlogPost() {
   }
 
   const { title, subtitle, date, tag, Component } = post;
+  usePageTitle(title);
 
   return (
     <div className="bp-page">
