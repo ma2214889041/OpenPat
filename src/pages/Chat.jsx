@@ -15,6 +15,7 @@ export default function Chat() {
   const [memoryPanel, setMemoryPanel] = useState(false);
   const [memories, setMemories] = useState([]);
   const [consolidating, setConsolidating] = useState(false);
+  const [dark, setDark] = useState(() => localStorage.getItem('chat-theme') === 'dark');
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -129,7 +130,7 @@ export default function Chat() {
 
   if (!user) {
     return (
-      <div className="chat-page">
+      <div className={`chat-page ${dark ? 'dark' : ''}`}>
         <div className="chat-login">
           <p>登录后开始与拍拍聊天</p>
           <Link to="/signin" className="chat-login-btn">登录 / 注册</Link>
@@ -139,7 +140,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="chat-page">
+    <div className={`chat-page ${dark ? 'dark' : ''}`}>
       {/* Sidebar */}
       <div className={`chat-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <button className="chat-new-btn" onClick={startNewChat}>+ 新对话</button>
@@ -162,7 +163,12 @@ export default function Chat() {
         {/* Header */}
         <div className="chat-header">
           <button className="chat-menu-btn" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
-          <span className="chat-header-title">拍拍</span>
+          <span className="chat-header-title">Pat</span>
+          <button
+            className="chat-theme-btn"
+            onClick={() => { setDark((v) => { const next = !v; localStorage.setItem('chat-theme', next ? 'dark' : 'light'); return next; }); }}
+            title={dark ? 'Light mode' : 'Dark mode'}
+          >{dark ? '☀️' : '🌙'}</button>
           <button
             className="chat-memory-btn"
             onClick={() => { setMemoryPanel((v) => !v); if (!memoryPanel) loadMemories(); }}

@@ -5,11 +5,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
 }
 .pp-inner { text-align: center; }
 .pp-back { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 14px; }
-.pp-title { font-family: 'Syne', system-ui, sans-serif; font-size: 32px; margin: 24px 0 8px; }
+.pp-title { font-family: var(--font-heading), system-ui, sans-serif; font-size: 32px; margin: 24px 0 8px; }
 .pp-coming-soon { color: rgba(255,255,255,0.4); margin-bottom: 24px; }
 .pp-cta {
   display: inline-block;

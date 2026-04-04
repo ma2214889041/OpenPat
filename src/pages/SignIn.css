@@ -5,7 +5,7 @@
   grid-template-columns: 1fr 1fr;
   min-height: 100vh;
   background: #080808;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
 }
 
 /* ══ Left: Form ══ */
@@ -51,7 +51,7 @@
 .signin-logo-icon { font-size: 24px; }
 
 .signin-logo-name {
-  font-family: 'Syne', system-ui, sans-serif;
+  font-family: var(--font-heading), system-ui, sans-serif;
   font-size: 20px;
   font-weight: 800;
   color: #fff;
@@ -62,7 +62,7 @@
 .signin-copy { display: flex; flex-direction: column; gap: 8px; }
 
 .signin-h1 {
-  font-family: 'Syne', system-ui, sans-serif;
+  font-family: var(--font-heading), system-ui, sans-serif;
   font-size: 32px;
   font-weight: 700;
   color: #fff;
@@ -99,7 +99,7 @@
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s, filter 0.15s, box-shadow 0.15s;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
   letter-spacing: 0.01em;
   border: none;
   box-sizing: border-box;
@@ -216,7 +216,7 @@
 }
 
 .signin-right-label {
-  font-family: 'Syne', system-ui, sans-serif;
+  font-family: var(--font-heading), system-ui, sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: rgba(255,255,255,0.2);
@@ -285,7 +285,7 @@
   font-size: 13px;
   font-weight: 700;
   color: #e2e8f0;
-  font-family: 'Syne', system-ui, sans-serif;
+  font-family: var(--font-heading), system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
 

@@ -1,12 +1,18 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  font-family: 'Inter', -apple-system, 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
+  --font-heading: 'Fredoka', system-ui, sans-serif;
+  --font-body: 'Quicksand', system-ui, sans-serif;
+  --accent: #8B8BFF;
+  --accent-green: #83FFC1;
+  --accent-pink: #FF94DB;
+  --accent-yellow: #FFE780;
+
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.5;
-  color-scheme: dark;
-  color: #e2e8f0;
-  background: #080d1a;
+  color: #1a1a1a;
+  background: #fff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -20,21 +26,11 @@ body { margin: 0; }
 
 h1, h2, h3 {
   margin: 0;
+  font-family: var(--font-heading);
   font-weight: 700;
-  color: #f1f5f9;
+  color: #111;
 }
 
 p { margin: 0; }
 
-code {
-  font-family: 'SF Mono', 'Fira Code', ui-monospace, Consolas, monospace;
-  font-size: 0.875em;
-  background: rgba(255,255,255,0.06);
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #94a3b8;
-}
-
-button {
-  font-family: inherit;
-}
+button { font-family: inherit; }

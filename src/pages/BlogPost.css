@@ -1,6 +1,6 @@
 .bp-page {
   min-height: 100vh;
-  background: #fff;
+  background: #fffbf5;
 }
 
 .bp-inner {
@@ -37,7 +37,7 @@
 .bp-date { font-size: 13px; color: #999; }
 
 .bp-title {
-  font-family: 'Syne', system-ui, sans-serif;
+  font-family: var(--font-heading), system-ui, sans-serif;
   font-size: clamp(28px, 5vw, 42px);
   font-weight: 800;
   line-height: 1.15;
@@ -61,7 +61,7 @@
 }
 
 .bp-content h2 {
-  font-family: 'Syne', system-ui, sans-serif;
+  font-family: var(--font-heading), system-ui, sans-serif;
   font-size: 24px;
   font-weight: 700;
   margin: 56px 0 16px;
