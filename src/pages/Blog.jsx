@@ -16,13 +16,16 @@ export default function Blog() {
     <div className="blog-page">
       <nav className="blog-nav">
         <Link to="/" className="blog-nav-logo">OpenPat</Link>
-        <Link to="/chat" className="blog-nav-cta">Start Chatting</Link>
+        <div className="blog-nav-right">
+          <Link to="/" className="blog-nav-link">首页</Link>
+          <Link to="/chat" className="blog-nav-cta">开始聊天</Link>
+        </div>
       </nav>
 
       <header className="blog-hero">
-        <p className="blog-eyebrow">Blog</p>
-        <h1 className="blog-h1">Ideas & Updates</h1>
-        <p className="blog-intro">About AI companions, memory systems, and what comes next.</p>
+        <p className="blog-eyebrow">博客</p>
+        <h1 className="blog-h1">想法与动态</h1>
+        <p className="blog-intro">关于 AI 伴侣、记忆系统，以及接下来会发生什么。</p>
       </header>
 
       <div className="blog-list">
@@ -34,7 +37,7 @@ export default function Blog() {
               <p className="blog-card-sub">{post.subtitle}</p>
               <div className="blog-card-footer">
                 <span className="blog-card-date">{post.date}</span>
-                <span className="blog-card-arrow">Read →</span>
+                <span className="blog-card-arrow">阅读 →</span>
               </div>
             </div>
           </Link>

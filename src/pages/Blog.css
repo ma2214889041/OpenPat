@@ -21,6 +21,21 @@
   text-decoration: none;
 }
 
+.blog-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.blog-nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: #888;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.blog-nav-link:hover { color: #333; }
+
 .blog-nav-cta {
   font-size: 13px;
   font-weight: 600;
