@@ -89,16 +89,24 @@ export default function Chat() {
     setSidebarOpen(false);
   }
 
+  function autoResize(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
   async function loadMemories() {
     try {
       const data = await apiGet('/api/memories');
-      setMemories(data);
-    } catch {}
+      setMemories(Array.isArray(data) ? data : []);
+    } catch { setMemories([]); }
   }
 
   async function deleteMemory(id) {
-    await apiDelete(`/api/memories?id=${id}`);
-    setMemories((prev) => prev.filter((m) => m.id !== id));
+    try {
+      await apiDelete(`/api/memories?id=${id}`);
+      setMemories((prev) => prev.filter((m) => m.id !== id));
+    } catch {}
   }
 
   async function consolidateMemories() {
@@ -112,9 +120,11 @@ export default function Chat() {
 
   async function deleteConv(e, id) {
     e.stopPropagation();
-    await apiDelete(`/api/conversations?id=${id}`);
-    setConversations((prev) => prev.filter((c) => c.id !== id));
-    if (activeConvId === id) startNewChat();
+    try {
+      await apiDelete(`/api/conversations?id=${id}`);
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (activeConvId === id) startNewChat();
+    } catch {}
   }
 
   if (!user) {
@@ -192,11 +202,11 @@ export default function Chat() {
             ref={inputRef}
             className="chat-input"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => { setInput(e.target.value); autoResize(e.target); }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
             }}
-            placeholder="说点什么..."
+            placeholder="Say something..."
             rows={1}
             disabled={loading}
           />
