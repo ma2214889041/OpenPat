@@ -1,6 +1,0 @@
-/* Applied via inline style on pet wrapper — skin colors as CSS vars */
-.skin-cyber   { --pet-filter: hue-rotate(220deg) saturate(1.3) brightness(1.1); }
-.skin-pixel   { --pet-filter: contrast(1.4) saturate(1.2); image-rendering: pixelated; }
-.skin-golden  { --pet-filter: hue-rotate(30deg) saturate(1.5) brightness(1.15); }
-.skin-space   { --pet-filter: hue-rotate(180deg) saturate(1.2); }
-.skin-guochao { --pet-filter: saturate(1.6) brightness(0.95); }

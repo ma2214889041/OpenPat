@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { hasSupabase } from '../utils/supabase';
-import { loadSiteConfig } from '../utils/supabaseStorage';
+// Site config loaded from KV via API
+async function loadSiteConfig() {
+  try {
+    const res = await fetch('/api/site-config');
+    return res.ok ? await res.json() : {};
+  } catch { return {}; }
+}
 import './Landing.css';
 
 // ── Bilingual copy ────────────────────────────────────────────────────────────
@@ -244,7 +250,7 @@ function NavAuth({ t }) {
         {open && (
           <div className="lp-nav-auth-dropdown">
             <a href={`/u/${username}`} className="lp-nav-auth-menu-item">{t.nav.publicProfile}</a>
-            <a href="/app" className="lp-nav-auth-menu-item">{t.nav.openApp}</a>
+            <a href="/chat" className="lp-nav-auth-menu-item">{t.nav.openApp}</a>
             <button className="lp-nav-auth-menu-item lp-nav-auth-menu-item--danger" onClick={signOut}>{t.nav.signOut}</button>
           </div>
         )}
@@ -389,7 +395,7 @@ export default function Landing() {
           <p className="lp-hero-sub">{t.hero.sub1}</p>
           <p className="lp-hero-sub lp-hero-sub--2">{t.hero.sub2}</p>
           <div className="lp-hero-actions">
-            <Link to="/app" className="lp-btn lp-btn--primary">{t.hero.cta}</Link>
+            <Link to="/chat" className="lp-btn lp-btn--primary">{t.hero.cta}</Link>
             <button className="lp-btn lp-btn--ghost" onClick={() => scrollTo('about')}>{t.hero.more}</button>
           </div>
         </div>
@@ -416,7 +422,7 @@ export default function Landing() {
               {t.how.steps[0].desc} <code>{t.how.steps[0].code}</code>
               {t.how.steps[0].desc2} <code>{t.how.steps[0].code2}</code>
               {t.how.steps[0].desc3}
-              <br /><a href="/app" style={{ color: 'inherit', fontWeight: 800 }}>{t.how.steps[0].link}</a>
+              <br /><a href="/chat" style={{ color: 'inherit', fontWeight: 800 }}>{t.how.steps[0].link}</a>
             </p>
           </div>
           <div className="lp-how-connector" aria-hidden="true">→</div>
@@ -444,7 +450,7 @@ export default function Landing() {
             <p className="lp-about-desc">
               {t.about.desc.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
             </p>
-            <Link to="/app" className="lp-btn lp-btn--green">{t.about.cta}</Link>
+            <Link to="/chat" className="lp-btn lp-btn--green">{t.about.cta}</Link>
           </div>
           <div className="lp-about-image">
             {siteConfig.about_image_url && <img src={siteConfig.about_image_url} alt="OpenPat companions" className="lp-about-img" />}
@@ -501,7 +507,7 @@ export default function Landing() {
             </p>
             <p className="lp-body-text" style={{ marginTop: '12px' }}>{t.share.body2}</p>
             <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <Link to="/app" className="lp-btn lp-btn--primary">{t.share.cta}</Link>
+              <Link to="/chat" className="lp-btn lp-btn--primary">{t.share.cta}</Link>
               <Link to="/u/demo" className="lp-btn lp-btn--ghost">{t.share.demo}</Link>
             </div>
           </div>
@@ -643,7 +649,7 @@ export default function Landing() {
             {t.cta.body.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
           </p>
           <div className="lp-cta-actions">
-            <Link to="/app" className="lp-btn lp-btn--primary lp-btn--lg">{t.cta.start}</Link>
+            <Link to="/chat" className="lp-btn lp-btn--primary lp-btn--lg">{t.cta.start}</Link>
             <a href="https://github.com/ma2214889041/OpenPat" className="lp-btn lp-btn--ghost">GitHub</a>
           </div>
         </div>

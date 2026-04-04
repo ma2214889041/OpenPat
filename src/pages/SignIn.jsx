@@ -59,7 +59,7 @@ export default function SignIn() {
 
           <p className="signin-hint">
             不需要登录也能用 —&nbsp;
-            <a href="/app" className="signin-skip">直接进入 →</a>
+            <a href="/chat" className="signin-skip">直接进入 →</a>
           </p>
 
           <p className="signin-tos">

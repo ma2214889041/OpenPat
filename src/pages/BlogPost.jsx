@@ -181,7 +181,7 @@ function AgentPetsEra() {
       </p>
 
       <div className="bp-cta">
-        <Link to="/app" className="bp-cta-btn">来认识你的拍拍 →</Link>
+        <Link to="/chat" className="bp-cta-btn">来认识你的拍拍 →</Link>
         <a href="https://github.com/ma2214889041/OpenPat" target="_blank" rel="noreferrer" className="bp-cta-ghost">⭐ Star on GitHub</a>
       </div>
     </>
