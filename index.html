@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenPat — AI Companion with Memory | 有记忆的 AI 伴侣</title>
     <meta name="description" content="OpenPat is an AI companion that remembers you. Chat with Pat — it learns your preferences, tracks your emotions, and grows with you over time. 拍拍是一个有记忆的 AI 伴侣，会记住你说过的每一件重要的事。" />
-    <meta name="keywords" content="AI companion, AI pet, virtual pet, AI friend, chat AI, AI with memory, 拍拍, OpenPat, AI 伴侣, AI 宠物, 虚拟宠物, 电子宠物, tamagotchi AI, digital pet, AI chatbot with memory, emotional AI, AI that remembers you" />
+    <meta name="keywords" content="AI companion, AI pet, virtual pet, AI friend, chat AI, AI with memory, AI companion app, AI companion that learns, AI pet with memory, Replika alternative, Character AI alternative, AI tamagotchi, modern tamagotchi, digital pet, AI chatbot with memory, emotional AI, AI that remembers you, AI emotional support, personalized AI chatbot, 拍拍, OpenPat, AI伴侣, AI宠物, AI陪伴, 虚拟宠物, 电子宠物, 有记忆的AI, AI聊天伴侣, AI情感陪伴, 治愈系AI, 云养宠, AI萌宠, 情绪价值" />
 
     <!-- Open Graph -->
     <meta property="og:title" content="OpenPat — AI Companion with Memory" />
@@ -30,13 +30,29 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "OpenPat",
-      "alternateName": "拍拍",
-      "description": "AI companion with persistent memory. Chat with Pat — it remembers you, understands your emotions, and helps with search, reminders, and more.",
+      "alternateName": ["拍拍", "Open Pat"],
+      "description": "AI companion with persistent memory. Chat with Pat — it remembers you, understands your emotions, and grows with you over time.",
       "url": "https://open-pat.com",
       "applicationCategory": "LifestyleApplication",
+      "applicationSubCategory": "AI Companion",
       "operatingSystem": "Web",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "keywords": "AI companion, AI pet, virtual pet, AI friend, chat AI, AI with memory, tamagotchi, digital pet"
+      "inLanguage": ["en", "zh-CN"],
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" },
+      "featureList": ["Persistent memory across conversations", "Emotional understanding", "Web search and weather tools", "Reminders and task management", "Bilingual English/Chinese support", "Relationship growth system"],
+      "author": { "@type": "Organization", "name": "OpenPat", "url": "https://open-pat.com" },
+      "keywords": "AI companion, AI pet, virtual pet, AI friend, tamagotchi, digital pet, AI with memory, Replika alternative, AI陪伴, AI伴侣, 电子宠物"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "What is OpenPat?", "acceptedAnswer": { "@type": "Answer", "text": "OpenPat (拍拍) is a free AI companion that remembers you across conversations. It learns your preferences, tracks your emotions, and helps with search, weather, and reminders." }},
+        { "@type": "Question", "name": "How is OpenPat different from ChatGPT or Replika?", "acceptedAnswer": { "@type": "Answer", "text": "Unlike ChatGPT, OpenPat has persistent memory — it remembers what you told it last week. Unlike Replika, it has real tools (web search, weather, reminders) and a relationship system that evolves from stranger to confidant." }},
+        { "@type": "Question", "name": "Is OpenPat free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, OpenPat is completely free and open source. You can sign in with GitHub or Google and start chatting immediately." }},
+        { "@type": "Question", "name": "OpenPat 是什么？", "acceptedAnswer": { "@type": "Answer", "text": "拍拍是一个有记忆的 AI 伴侣。它会记住你说过的每一件重要的事，理解你的偏好和情绪，还能帮你搜索、查天气、设提醒。免费开源。" }}
+      ]
     }
     </script>
     <!-- Pet paw emoji as favicon via SVG -->
@@ -44,7 +60,7 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Lato:wght@300;400;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

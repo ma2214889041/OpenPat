@@ -1,8 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  --font-heading: 'Poppins', system-ui, sans-serif;
-  --font-body: 'Lato', system-ui, sans-serif;
+  --font-heading: 'Poppins', 'Noto Sans SC', system-ui, sans-serif;
+  --font-body: 'Lato', 'Noto Sans SC', system-ui, sans-serif;
   --accent: #8B8BFF;
   --accent-green: #83FFC1;
   --accent-pink: #FF94DB;
