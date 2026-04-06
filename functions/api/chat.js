@@ -147,7 +147,7 @@ Reply in Chinese unless the user uses another language.
 
 ## Relationship
 Stage: ${stage}. ${STAGE_BEHAVIOR[stage] || ''}
-${relationship ? `${relationship.total_messages || 0} messages exchanged.` : ''}
+${relationship ? `Trust: ${relationship.trust_score || 10}/100. ${relationship.total_messages || 0} messages over ${relationship.first_met_at ? Math.max(1, Math.floor((Date.now() - new Date(relationship.first_met_at + 'Z').getTime()) / 86400000)) + ' days' : 'today'}.` : ''}
 
 ## Tools
 You can: search the web, check weather, save/delete memories, set reminders.
@@ -164,7 +164,27 @@ Use tools when needed. Don't say "I can't do that." When saving memories, just s
   }
 
   if (emotions?.length) {
-    parts.push(`## Recent emotions\n${emotions.map((e) => `${e.emotion}(${e.intensity}/10)`).join(', ')}\nAdjust your tone accordingly.`);
+    const recent = emotions.slice(0, 5);
+    const recentLine = recent.map((e) => `${e.emotion}(${e.intensity}/10)`).join(', ');
+
+    // Compute emotional trend from all loaded emotions
+    let trendLine = '';
+    if (emotions.length >= 5) {
+      const freq = {};
+      let totalIntensity = 0;
+      for (const e of emotions) {
+        freq[e.emotion] = (freq[e.emotion] || 0) + 1;
+        totalIntensity += e.intensity || 5;
+      }
+      const avgIntensity = (totalIntensity / emotions.length).toFixed(1);
+      const dominant = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([e, c]) => `${e}(×${c})`).join(', ');
+      const recentAvg = recent.reduce((s, e) => s + (e.intensity || 5), 0) / recent.length;
+      const olderAvg = emotions.slice(5).reduce((s, e) => s + (e.intensity || 5), 0) / Math.max(1, emotions.length - 5);
+      const trend = recentAvg > olderAvg + 1 ? 'escalating' : recentAvg < olderAvg - 1 ? 'calming down' : 'stable';
+      trendLine = `\nPattern: ${dominant}. Avg intensity: ${avgIntensity}/10. Trend: ${trend}.`;
+    }
+
+    parts.push(`## Emotional state\nRecent: ${recentLine}${trendLine}\nAdapt your tone. If they seem down, be warmer. If escalating, be gentle and grounding.`);
   }
 
   if (memories.length) {
@@ -217,7 +237,7 @@ export async function onRequestPost(context) {
       env.DB.prepare('SELECT * FROM memories WHERE user_id = ? ORDER BY updated_at DESC LIMIT 200').bind(uid).all(),
       env.DB.prepare('SELECT * FROM user_profiles WHERE user_id = ?').bind(uid).first().catch(() => null),
       env.DB.prepare('SELECT * FROM relationship_state WHERE user_id = ?').bind(uid).first().catch(() => null),
-      env.DB.prepare('SELECT emotion, intensity FROM emotional_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 5').bind(uid).all().catch(() => ({ results: [] })),
+      env.DB.prepare('SELECT emotion, intensity, context, created_at FROM emotional_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 20').bind(uid).all().catch(() => ({ results: [] })),
     ]);
 
     const history = historyResult.results || [];
@@ -294,19 +314,38 @@ export async function onRequestPost(context) {
 
 // ── Memory selection ────────────────────────────────────────────────────────
 
+function scoreMemory(m) {
+  const days = Math.floor((Date.now() - new Date(m.updated_at + 'Z').getTime()) / 86400000);
+  const recency = Math.max(0, 1 - days / 90); // decay over 90 days
+  const importance = (m.importance || 5) / 10;
+  const recall = Math.min(1, (m.recall_count || 0) / 20); // frequently recalled = useful
+  // Weighted: importance matters most, recency second, recall third
+  return importance * 0.5 + recency * 0.3 + recall * 0.2;
+}
+
 async function selectMemories(apiKey, memories, userMessage) {
-  const manifest = memories.map((m) => `- [${m.type}] ${m.name}: ${m.description}`).join('\n');
+  // Pre-score and take top 30 candidates for LLM selection (reduces prompt size)
+  const scored = memories.map((m) => ({ ...m, _score: scoreMemory(m) }));
+  scored.sort((a, b) => b._score - a._score);
+  const candidates = scored.slice(0, 30);
+
+  const manifest = candidates.map((m) => {
+    const days = Math.floor((Date.now() - new Date(m.updated_at + 'Z').getTime()) / 86400000);
+    const age = days === 0 ? 'today' : days < 7 ? `${days}d ago` : days < 30 ? `${Math.floor(days / 7)}w ago` : `${Math.floor(days / 30)}mo ago`;
+    return `- [${m.type}] ${m.name} (imp:${m.importance || 5}, ${age}): ${m.description}`;
+  }).join('\n');
 
   try {
     const text = await geminiLite(apiKey,
-      `Select up to 5 memories relevant to the user's message. Return ONLY a JSON array of name strings. If none relevant, return [].`,
+      `Select up to 6 memories most relevant to the user's message. Prefer: high importance, recent, directly related to the topic. Always include core identity facts (name, job, location) if they exist. Return ONLY a JSON array of name strings. If none relevant, return [].`,
       `User: "${userMessage}"\n\nMemories:\n${manifest}`,
       { maxTokens: 256 },
     );
     const names = parseGeminiJson(text);
-    return Array.isArray(names) ? memories.filter((m) => names.includes(m.name)).slice(0, 5) : [];
+    return Array.isArray(names) ? candidates.filter((m) => names.includes(m.name)).slice(0, 6) : [];
   } catch {
-    return [];
+    // Fallback: return top 5 by score if LLM fails
+    return scored.slice(0, 5);
   }
 }
 
@@ -337,38 +376,63 @@ async function compressHistory(apiKey, messages) {
 
 async function extractMemories(env, apiKey, userId, convId, userMsg, assistantMsg, existing) {
   try {
+    const today = new Date().toISOString().slice(0, 10);
     const manifest = existing.length
-      ? existing.map((m) => `- id="${m.id}" [${m.type}] ${m.name}: ${m.description} | ${m.content.slice(0, 80)}`).join('\n')
+      ? existing.map((m) => {
+          const days = Math.floor((Date.now() - new Date(m.updated_at + 'Z').getTime()) / 86400000);
+          return `- id="${m.id}" [${m.type}] ${m.name} (importance:${m.importance}, age:${days}d, recalls:${m.recall_count}): ${m.description} | ${m.content.slice(0, 120)}`;
+        }).join('\n')
       : '(none)';
 
-    const text = await geminiLite(apiKey, null, `You extract memories and emotions from a conversation turn for AI companion "拍拍".
+    const text = await geminiLite(apiKey, null, `You are the memory manager for AI companion "拍拍". Analyze this conversation turn and decide what to remember.
 
-## Rules:
-- ONLY save info useful in FUTURE conversations. Skip greetings/small talk.
-- Check existing memories. UPDATE (with id) if related one exists. Don't duplicate.
-- If info contradicts existing memory, UPDATE the old one.
-- Most turns should produce NO actions.
-- Today: ${new Date().toISOString().slice(0, 10)}
+## AUDN Protocol (Add / Update / Delete / Noop):
+For each new piece of information, compare against existing memories:
+- **Add**: Genuinely new info not covered by any existing memory. Set importance 1-10 (10=life-changing, 7=key preference, 5=interesting fact, 3=minor detail).
+- **Update**: Existing memory needs correction or enrichment. Provide the id. If user changed their mind (e.g. new job, new city), update content to reflect CURRENT state and note the change (e.g. "Works at X (previously at Y, changed ${today})").
+- **Delete**: Memory is wrong, user asked to forget, or completely superseded. Provide the id.
+- **Noop**: Most turns. No useful new info → return empty actions.
 
-## Existing:
+## What to remember:
+- Personal facts (name, job, family, location, birthday)
+- Preferences and opinions (likes/dislikes, communication style)
+- Life events and changes (new job, moving, breakups, achievements)
+- Goals and plans (what they want to do, deadlines)
+- Emotional patterns (recurring anxieties, sources of joy)
+- Feedback about 拍拍 (what responses they liked/disliked)
+
+## What to SKIP:
+- Greetings, small talk, weather chat
+- Things already well-captured in existing memories
+- Transient info (what they're eating right now, unless it's a pattern)
+
+## Existing memories (${existing.length} total):
 ${manifest}
 
-## Turn:
+## This turn:
 User: ${userMsg}
 Assistant: ${assistantMsg}
 
-Return JSON: {"memory_actions":[{"action":"create|update|delete","type":"user|feedback|life|reference","name":"...","description":"...","content":"...","id":"for update/delete"}],"emotion":{"detected":false,"emotion":"neutral","intensity":5,"context":""},"core_profile_update":{"should_update":false,"field":"core_summary|personality|preferences|emotional_baseline","value":""}}
+## Today: ${today}
+
+Return JSON:
+{"memory_actions":[{"action":"add|update|delete","type":"user|feedback|life|reference","name":"snake_case","description":"one line","content":"detailed content","importance":5,"id":"only for update/delete"}],"emotion":{"detected":false,"emotion":"neutral","intensity":5,"context":"why they feel this way"},"core_profile_update":{"should_update":false,"field":"core_summary|personality|preferences|emotional_baseline","value":"complete updated value, not a diff"}}
 ONLY valid JSON.`, { maxTokens: 1024 });
 
     const result = parseGeminiJson(text);
 
     for (const act of (result.memory_actions || [])) {
-      if (act.action === 'create' && act.type && act.name) {
+      if ((act.action === 'add' || act.action === 'create') && act.type && act.name) {
         await env.DB.prepare('INSERT INTO memories (id, user_id, type, name, description, content, importance) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(crypto.randomUUID(), userId, act.type, act.name, act.description || '', act.content || '', act.importance || 5).run();
+          .bind(crypto.randomUUID(), userId, act.type, act.name, act.description || '', act.content || '', Math.min(10, Math.max(1, act.importance || 5))).run();
       } else if (act.action === 'update' && act.id) {
-        await env.DB.prepare("UPDATE memories SET content = ?, description = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
-          .bind(act.content || '', act.description || '', act.id, userId).run();
+        const updates = ['updated_at = datetime(\'now\')'];
+        const binds = [];
+        if (act.content != null) { updates.unshift('content = ?'); binds.push(act.content); }
+        if (act.description != null) { updates.unshift('description = ?'); binds.push(act.description); }
+        if (act.importance != null) { updates.unshift('importance = ?'); binds.push(Math.min(10, Math.max(1, act.importance))); }
+        binds.push(act.id, userId);
+        await env.DB.prepare(`UPDATE memories SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`).bind(...binds).run();
       } else if (act.action === 'delete' && act.id) {
         await env.DB.prepare('DELETE FROM memories WHERE id = ? AND user_id = ?').bind(act.id, userId).run();
       }
@@ -396,15 +460,27 @@ ONLY valid JSON.`, { maxTokens: 1024 });
 
 async function autoDream(env, apiKey, userId, memories) {
   try {
-    const manifest = memories.map((m) => `- id="${m.id}" [${m.type}] ${m.name}: ${m.content.slice(0, 100)}`).join('\n');
+    const today = new Date().toISOString().slice(0, 10);
+    const manifest = memories.map((m) => {
+      const days = Math.floor((Date.now() - new Date(m.updated_at + 'Z').getTime()) / 86400000);
+      return `- id="${m.id}" [${m.type}] ${m.name} (imp:${m.importance}, age:${days}d, recalls:${m.recall_count}): ${m.content.slice(0, 120)}`;
+    }).join('\n');
 
     const text = await geminiLite(apiKey, null,
-      `Consolidate these ${memories.length} memories: merge duplicates, delete trivial/outdated, condense verbose ones. Today: ${new Date().toISOString().slice(0, 10)}
+      `You are the memory curator for AI companion "拍拍". Consolidate these ${memories.length} memories.
 
+## Rules:
+- **Merge** duplicates: keep the higher-importance one, combine content.
+- **Delete** memories that are: trivial (importance ≤ 2 AND 0 recalls AND age > 14d), fully superseded, or no longer relevant.
+- **Update** memories that are verbose (condense) or have stale info. Adjust importance if needed.
+- **Preserve** high-importance memories (≥ 7) unless contradicted.
+- When merging, keep temporal notes (e.g. "previously X, now Y as of ${today}").
+
+## Memories:
 ${manifest}
 
-Return: {"actions":[{"action":"update|delete|merge","id":"...","keep_id":"...","delete_id":"...","content":"...","description":"..."}]}
-If clean: {"actions":[]}
+Return: {"actions":[{"action":"update|delete|merge","id":"...","keep_id":"...","delete_id":"...","content":"...","description":"...","importance":5}]}
+If already clean: {"actions":[]}
 ONLY valid JSON.`, { maxTokens: 2048 });
 
     const { actions } = parseGeminiJson(text);
@@ -412,18 +488,74 @@ ONLY valid JSON.`, { maxTokens: 2048 });
       if (a.action === 'delete' && a.id) {
         await env.DB.prepare('DELETE FROM memories WHERE id = ? AND user_id = ?').bind(a.id, userId).run();
       } else if (a.action === 'update' && a.id) {
-        await env.DB.prepare("UPDATE memories SET content = ?, description = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
-          .bind(a.content, a.description || '', a.id, userId).run();
+        const updates = ["updated_at = datetime('now')"];
+        const binds = [];
+        if (a.content != null) { updates.unshift('content = ?'); binds.push(a.content); }
+        if (a.description != null) { updates.unshift('description = ?'); binds.push(a.description); }
+        if (a.importance != null) { updates.unshift('importance = ?'); binds.push(Math.min(10, Math.max(1, a.importance))); }
+        binds.push(a.id, userId);
+        await env.DB.prepare(`UPDATE memories SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`).bind(...binds).run();
       } else if (a.action === 'merge' && a.keep_id && a.delete_id) {
-        await env.DB.prepare("UPDATE memories SET content = ?, description = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
-          .bind(a.content, a.description || '', a.keep_id, userId).run();
+        const updates = ["updated_at = datetime('now')"];
+        const binds = [];
+        if (a.content != null) { updates.unshift('content = ?'); binds.push(a.content); }
+        if (a.description != null) { updates.unshift('description = ?'); binds.push(a.description); }
+        if (a.importance != null) { updates.unshift('importance = ?'); binds.push(Math.min(10, Math.max(1, a.importance))); }
+        binds.push(a.keep_id, userId);
+        await env.DB.prepare(`UPDATE memories SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`).bind(...binds).run();
         await env.DB.prepare('DELETE FROM memories WHERE id = ? AND user_id = ?').bind(a.delete_id, userId).run();
       }
     }
 
+    // Periodic profile rebuild: synthesize all memories into a coherent user profile
+    await rebuildProfile(env, apiKey, userId, memories);
+
     if (env.SITE_CONFIG) await env.SITE_CONFIG.put(`dream_last_${userId}`, String(Date.now()));
   } catch (e) {
     console.error('Dream failed:', e.message);
+  }
+}
+
+// ── Background: periodic profile rebuild ───────────────────────────────────
+
+async function rebuildProfile(env, apiKey, userId, memories) {
+  try {
+    if (memories.length < 5) return; // not enough data
+
+    const profile = await env.DB.prepare('SELECT * FROM user_profiles WHERE user_id = ?').bind(userId).first();
+    const memSummary = memories
+      .sort((a, b) => (b.importance || 5) - (a.importance || 5))
+      .slice(0, 40)
+      .map((m) => `[${m.type}] ${m.name}: ${m.content.slice(0, 100)}`)
+      .join('\n');
+
+    const text = await geminiLite(apiKey, null,
+      `Based on these memories about a user, generate a concise profile. Be factual, not speculative.
+
+## Current profile:
+- Summary: ${profile?.core_summary || '(empty)'}
+- Personality: ${profile?.personality || '(empty)'}
+- Preferences: ${profile?.preferences || '(empty)'}
+- Emotional baseline: ${profile?.emotional_baseline || '(empty)'}
+
+## Memories (${memories.length} total, top by importance):
+${memSummary}
+
+Return JSON with updated fields. Only include fields that have enough evidence to update. Keep each field under 200 chars.
+{"core_summary":"who they are in 1-2 sentences","personality":"key traits","preferences":"communication and content preferences","emotional_baseline":"their typical emotional state"}
+ONLY valid JSON.`, { maxTokens: 512 });
+
+    const updated = parseGeminiJson(text);
+    const fields = ['core_summary', 'personality', 'preferences', 'emotional_baseline'];
+    for (const f of fields) {
+      if (updated[f] && updated[f] !== '(empty)') {
+        await env.DB.prepare(
+          `INSERT INTO user_profiles (user_id, ${f}, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(user_id) DO UPDATE SET ${f} = ?, updated_at = datetime('now')`
+        ).bind(userId, updated[f], updated[f]).run();
+      }
+    }
+  } catch (e) {
+    console.error('Profile rebuild failed:', e.message);
   }
 }
 
@@ -439,8 +571,23 @@ async function updateRelationship(env, userId) {
     }
 
     const msgs = (rel.total_messages || 0) + 1;
-    const stage = msgs >= 200 ? 'confidant' : msgs >= 100 ? 'close_friend' : msgs >= 30 ? 'friend' : msgs >= 5 ? 'acquaintance' : 'stranger';
-    const trust = Math.min(100, (rel.trust_score || 10) + 1);
+
+    // Gather quality signals for trust calculation
+    const [memCount, emotionCount, daySpan] = await Promise.all([
+      env.DB.prepare('SELECT COUNT(*) as c FROM memories WHERE user_id = ?').bind(userId).first().then((r) => r?.c || 0),
+      env.DB.prepare('SELECT COUNT(*) as c FROM emotional_logs WHERE user_id = ?').bind(userId).first().then((r) => r?.c || 0),
+      env.DB.prepare("SELECT CAST((julianday('now') - julianday(MIN(created_at))) AS INTEGER) as days FROM conversations WHERE user_id = ?").bind(userId).first().then((r) => r?.days || 0),
+    ]);
+
+    // Trust score: messages contribute diminishing returns, quality signals add depth
+    const msgTrust = Math.min(40, Math.sqrt(msgs) * 3);       // up to 40 from messages (sqrt = diminishing)
+    const memTrust = Math.min(20, memCount * 2);                // up to 20 from shared memories
+    const emotTrust = Math.min(15, emotionCount);               // up to 15 from emotional openness
+    const timeTrust = Math.min(25, daySpan);                    // up to 25 from relationship duration (days)
+    const trust = Math.min(100, Math.round(msgTrust + memTrust + emotTrust + timeTrust));
+
+    // Stage determined by trust score (quality-based, not just count-based)
+    const stage = trust >= 80 ? 'confidant' : trust >= 60 ? 'close_friend' : trust >= 35 ? 'friend' : trust >= 15 ? 'acquaintance' : 'stranger';
 
     await env.DB.prepare("UPDATE relationship_state SET total_messages = ?, trust_score = ?, stage = ?, last_seen_at = datetime('now'), updated_at = datetime('now') WHERE user_id = ?")
       .bind(msgs, trust, stage, userId).run();
