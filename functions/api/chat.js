@@ -111,7 +111,7 @@ async function executeTool(name, args, env, userId, memories) {
 
       case 'list_reminders': {
         const result = await env.DB.prepare(
-          "SELECT content, remind_at FROM reminders WHERE user_id = ? AND remind_at > datetime('now') ORDER BY remind_at ASC LIMIT 20"
+          "SELECT content, remind_at FROM reminders WHERE user_id = ? AND done = 0 AND remind_at > datetime('now') ORDER BY remind_at ASC LIMIT 20"
         ).bind(userId).all();
         const rows = result.results || [];
         return rows.length ? rows.map((r) => `- ${r.content} (${r.remind_at})`).join('\n') : 'No pending reminders.';
@@ -197,11 +197,14 @@ export async function onRequestPost(context) {
     const uid = user.id;
     let convId = body.conversationId;
 
-    // Create conversation if new
+    // Create conversation if new, verify ownership if existing
     if (!convId) {
       convId = crypto.randomUUID();
       await env.DB.prepare('INSERT INTO conversations (id, user_id, title) VALUES (?, ?, ?)')
         .bind(convId, uid, message.slice(0, 50)).run();
+    } else {
+      const conv = await env.DB.prepare('SELECT id FROM conversations WHERE id = ? AND user_id = ?').bind(convId, uid).first();
+      if (!conv) return cors({ error: 'Conversation not found' }, 404);
     }
 
     // Save user message
@@ -225,11 +228,6 @@ export async function onRequestPost(context) {
     let relevant = [];
     if (allMemories.length > 0) {
       relevant = await selectMemories(apiKey, allMemories, message);
-    }
-
-    // Update recall counts (fire-and-forget is ok here)
-    for (const m of relevant) {
-      env.DB.prepare("UPDATE memories SET recall_count = recall_count + 1, last_recalled_at = datetime('now') WHERE id = ?").bind(m.id).run();
     }
 
     // Compress long histories
@@ -261,18 +259,28 @@ export async function onRequestPost(context) {
     // Background tasks (non-blocking)
     const bgTasks = [updateRelationship(env, uid)];
 
+    // Update recall counts in background
+    for (const m of relevant) {
+      bgTasks.push(
+        env.DB.prepare("UPDATE memories SET recall_count = recall_count + 1, last_recalled_at = datetime('now') WHERE id = ?").bind(m.id).run()
+      );
+    }
+
     // Throttled extraction: first exchange + every 3rd message
     const shouldExtract = history.length <= 2 || history.length % 3 === 0;
     if (shouldExtract) {
       bgTasks.push(extractMemories(env, apiKey, uid, convId, message, reply, allMemories));
     }
 
-    // Auto-dream: >20 memories and >24h since last
+    // Auto-dream: >20 memories and >24h since last (check + run in background)
     if (allMemories.length > 20 && env.SITE_CONFIG) {
-      const last = await env.SITE_CONFIG.get(`dream_last_${uid}`);
-      if (!last || Date.now() - Number(last) > 86400000) {
-        bgTasks.push(autoDream(env, apiKey, uid, allMemories));
-      }
+      bgTasks.push(
+        env.SITE_CONFIG.get(`dream_last_${uid}`).then((last) => {
+          if (!last || Date.now() - Number(last) > 86400000) {
+            return autoDream(env, apiKey, uid, allMemories);
+          }
+        })
+      );
     }
 
     context.waitUntil(Promise.allSettled(bgTasks));
@@ -296,7 +304,7 @@ async function selectMemories(apiKey, memories, userMessage) {
       { maxTokens: 256 },
     );
     const names = parseGeminiJson(text);
-    return Array.isArray(names) ? memories.filter((m) => names.includes(m.name)).slice(0, 6) : [];
+    return Array.isArray(names) ? memories.filter((m) => names.includes(m.name)).slice(0, 5) : [];
   } catch {
     return [];
   }

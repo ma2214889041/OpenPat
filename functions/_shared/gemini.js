@@ -9,9 +9,9 @@ const MODEL_LITE = 'gemini-3.1-flash-lite-preview';
 
 /** Call Gemini and return the raw response JSON. */
 async function callRaw(model, apiKey, body) {
-  const res = await fetch(`${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`, {
+  const res = await fetch(`${GEMINI_BASE}/${model}:generateContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
