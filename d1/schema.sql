@@ -160,3 +160,17 @@ CREATE TABLE IF NOT EXISTS reminders (
   created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_reminders_user ON reminders(user_id, remind_at);
+
+-- Proactive follow-ups: things Pat should ask about later
+CREATE TABLE IF NOT EXISTS follow_ups (
+  id              TEXT PRIMARY KEY,
+  user_id         TEXT NOT NULL,
+  conversation_id TEXT,
+  topic           TEXT NOT NULL,
+  context         TEXT NOT NULL,
+  follow_up_after TEXT NOT NULL,
+  done            INTEGER DEFAULT 0,
+  created_at      TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_follow_ups_pending ON follow_ups(done, follow_up_after);
+CREATE INDEX IF NOT EXISTS idx_follow_ups_user ON follow_ups(user_id, done);

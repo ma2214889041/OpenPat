@@ -271,6 +271,57 @@
   font-family: var(--font-heading);
 }
 
+/* ── Relationship indicator ── */
+.chat-relationship {
+  margin: 0 16px 12px; padding: 12px;
+  background: #faf8f5; border-radius: 12px; border: 1px solid #eee;
+}
+.dark .chat-relationship { background: #222; border-color: #333; }
+.chat-relationship-stage { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.chat-relationship-emoji { font-size: 16px; }
+.chat-relationship-label { color: #333; }
+.dark .chat-relationship-label { color: #ddd; }
+.chat-relationship-trust { font-size: 11px; color: #999; font-weight: 400; }
+.chat-relationship-bar {
+  height: 4px; border-radius: 2px; background: #e5e7eb; margin-top: 8px; overflow: hidden;
+}
+.dark .chat-relationship-bar { background: #333; }
+.chat-relationship-fill {
+  height: 100%; border-radius: 2px; transition: width 0.5s ease;
+  background: linear-gradient(90deg, #8b8bff, #a855f7, #f59e0b);
+}
+.chat-relationship-hint {
+  font-size: 11px; color: #999; margin: 6px 0 0; line-height: 1.4;
+}
+
+/* ── Onboarding suggestions ── */
+.chat-onboarding { margin-top: 24px; }
+.chat-onboarding-title { font-size: 13px; color: #999; margin-bottom: 12px; font-weight: 400; }
+.chat-onboarding-suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chat-suggestion {
+  padding: 8px 16px; border-radius: 99px; font-size: 13px;
+  border: 1.5px solid #e5e7eb; background: none; color: #666;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.chat-suggestion:hover { background: #f5f0ea; border-color: #d5d0ca; color: #333; }
+.dark .chat-suggestion { border-color: #333; color: #999; }
+.dark .chat-suggestion:hover { background: #222; color: #eee; border-color: #555; }
+
+/* ── Proactive check-in ── */
+.chat-checkin {
+  display: flex; gap: 10px; align-items: flex-start; padding: 16px;
+  margin: auto 0; max-width: 80%;
+}
+.chat-checkin-content {
+  background: linear-gradient(135deg, #f5f0ea, #efe8ff);
+  border-radius: 18px; padding: 14px 18px;
+  border-bottom-left-radius: 4px;
+}
+.dark .chat-checkin-content {
+  background: linear-gradient(135deg, #222, #2a2040);
+}
+.chat-checkin-content p { margin: 0; font-size: 15px; line-height: 1.6; }
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .chat-sidebar {

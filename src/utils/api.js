@@ -39,6 +39,21 @@ export async function apiDelete(path) {
   return res.json();
 }
 
+/**
+ * Streaming POST: sends request with Accept: text/event-stream
+ * Returns an async iterator of parsed SSE data objects.
+ */
+export async function apiStream(path, body) {
+  const headers = {
+    ...(await getAuthHeaders()),
+    'Content-Type': 'application/json',
+    'Accept': 'text/event-stream',
+  };
+  const res = await fetch(path, { method: 'POST', headers, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.body;
+}
+
 export async function apiUpload(storagePath, file) {
   const headers = await getAuthHeaders();
   const formData = new FormData();

@@ -1,8 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { apiGet, apiPost, apiDelete } from '../utils/api';
+import { apiGet, apiPost, apiDelete, apiStream } from '../utils/api';
 import './Chat.css';
+
+const STAGE_LABELS = {
+  stranger: { label: '初识', emoji: '👋', next: '多聊几句，拍拍正在认识你' },
+  acquaintance: { label: '熟悉中', emoji: '🌱', next: '继续分享，拍拍在记住你的喜好' },
+  friend: { label: '朋友', emoji: '🤝', next: '拍拍已经很了解你了' },
+  close_friend: { label: '好友', emoji: '💛', next: '拍拍是你的知心好友' },
+  confidant: { label: '知己', emoji: '✨', next: '拍拍完全懂你' },
+};
 
 export default function Chat() {
   const { user } = useAuth();
@@ -16,15 +24,35 @@ export default function Chat() {
   const [memories, setMemories] = useState([]);
   const [consolidating, setConsolidating] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem('chat-theme') === 'dark');
+  const [relationship, setRelationship] = useState(null);
+  const [checkInMsg, setCheckInMsg] = useState(null);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => { document.title = 'Chat — OpenPat'; return () => { document.title = 'OpenPat — AI Companion with Memory'; }; }, []);
 
-  // Load conversations list
+  // Load conversations list + relationship info + check-ins
   useEffect(() => {
     if (!user) return;
     apiGet('/api/conversations').then(setConversations).catch(() => {});
+    // Load relationship and check-in data
+    apiGet('/api/check-in').then((data) => {
+      if (data.relationship) setRelationship(data.relationship);
+      // Show proactive check-in if user hasn't chatted in 2+ days
+      if (data.days_since_last_message >= 2 || (data.follow_ups && data.follow_ups.length > 0)) {
+        const followUp = data.follow_ups?.[0];
+        if (followUp) {
+          // Generate proactive message for the follow-up
+          apiPost('/api/check-in', { followUpId: followUp.id })
+            .then((res) => setCheckInMsg(res.message))
+            .catch(() => {});
+        } else if (data.days_since_last_message >= 3) {
+          apiPost('/api/check-in', {})
+            .then((res) => setCheckInMsg(res.message))
+            .catch(() => {});
+        }
+      }
+    }).catch(() => {});
   }, [user]);
 
   // Load messages when conversation changes
@@ -40,41 +68,119 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Parse SSE stream from response body
+  const readStream = useCallback(async (body, onText, onMeta, onDone) => {
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === 'text') onText(data.text);
+            else if (data.type === 'meta') onMeta(data);
+            else if (data.type === 'done') onDone();
+          } catch { /* skip */ }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }, []);
+
   async function send() {
     const text = input.trim();
     if (!text || loading) return;
 
     setInput('');
     setLoading(true);
+    setCheckInMsg(null); // dismiss check-in on first message
 
     // Optimistic user message
     const tempId = 'temp-' + Date.now();
+    const streamId = 'stream-' + Date.now();
     setMessages((prev) => [...prev, { id: tempId, role: 'user', content: text }]);
 
     try {
-      const data = await apiPost('/api/chat', { conversationId: activeConvId, message: text });
+      // Try streaming first
+      const body = await apiStream('/api/chat', { conversationId: activeConvId, message: text });
 
-      // Set conversation ID if new
-      if (!activeConvId) {
-        setActiveConvId(data.conversationId);
+      let convIdFromServer = activeConvId;
+      let msgIdFromServer = null;
+
+      // Add empty assistant bubble for streaming
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== tempId),
+        { id: tempId, role: 'user', content: text },
+        { id: streamId, role: 'assistant', content: '' },
+      ]);
+
+      await readStream(
+        body,
+        // onText: append text chunks
+        (chunk) => {
+          setMessages((prev) => prev.map((m) =>
+            m.id === streamId ? { ...m, content: m.content + chunk } : m
+          ));
+        },
+        // onMeta: capture conversation ID
+        (meta) => {
+          convIdFromServer = meta.conversationId;
+          msgIdFromServer = meta.messageId;
+        },
+        // onDone
+        () => {},
+      );
+
+      // Update conversation ID if new
+      if (!activeConvId && convIdFromServer) {
+        setActiveConvId(convIdFromServer);
         setConversations((prev) => [
-          { id: data.conversationId, title: text.slice(0, 50), updated_at: new Date().toISOString() },
+          { id: convIdFromServer, title: text.slice(0, 50), updated_at: new Date().toISOString() },
           ...prev,
         ]);
       }
 
-      // Replace temp message + add reply
-      setMessages((prev) => [
-        ...prev.filter((m) => m.id !== tempId),
-        { id: data.messageId + '-u', role: 'user', content: text },
-        { id: data.messageId, role: 'assistant', content: data.reply },
-      ]);
+      // Replace stream ID with final message ID
+      if (msgIdFromServer) {
+        setMessages((prev) => prev.map((m) => {
+          if (m.id === tempId) return { ...m, id: msgIdFromServer + '-u' };
+          if (m.id === streamId) return { ...m, id: msgIdFromServer };
+          return m;
+        }));
+      }
     } catch (e) {
-      setMessages((prev) => [
-        ...prev.filter((m) => m.id !== tempId),
-        { id: tempId, role: 'user', content: text },
-        { id: 'err-' + Date.now(), role: 'assistant', content: '抱歉，出了点问题，请稍后再试。' },
-      ]);
+      // Fallback to non-streaming
+      try {
+        const data = await apiPost('/api/chat', { conversationId: activeConvId, message: text });
+        if (!activeConvId) {
+          setActiveConvId(data.conversationId);
+          setConversations((prev) => [
+            { id: data.conversationId, title: text.slice(0, 50), updated_at: new Date().toISOString() },
+            ...prev,
+          ]);
+        }
+        setMessages((prev) => [
+          ...prev.filter((m) => m.id !== tempId && m.id !== 'stream-' + Date.now()),
+          { id: data.messageId + '-u', role: 'user', content: text },
+          { id: data.messageId, role: 'assistant', content: data.reply },
+        ]);
+      } catch {
+        setMessages((prev) => [
+          ...prev.filter((m) => m.id !== tempId),
+          { id: tempId, role: 'user', content: text },
+          { id: 'err-' + Date.now(), role: 'assistant', content: '抱歉，出了点问题，请稍后再试。' },
+        ]);
+      }
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -141,11 +247,29 @@ export default function Chat() {
     );
   }
 
+  const stageInfo = STAGE_LABELS[relationship?.stage] || STAGE_LABELS.stranger;
+
   return (
     <div className={`chat-page ${dark ? 'dark' : ''}`}>
       {/* Sidebar */}
       <div className={`chat-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <button className="chat-new-btn" onClick={startNewChat}>+ 新对话</button>
+
+        {/* Relationship stage indicator */}
+        {relationship && (
+          <div className="chat-relationship">
+            <div className="chat-relationship-stage">
+              <span className="chat-relationship-emoji">{stageInfo.emoji}</span>
+              <span className="chat-relationship-label">{stageInfo.label}</span>
+              <span className="chat-relationship-trust">({relationship.trust_score}/100)</span>
+            </div>
+            <div className="chat-relationship-bar">
+              <div className="chat-relationship-fill" style={{ width: `${relationship.trust_score}%` }} />
+            </div>
+            <p className="chat-relationship-hint">{stageInfo.next}</p>
+          </div>
+        )}
+
         <div className="chat-conv-list">
           {conversations.map((c) => (
             <div
@@ -165,7 +289,7 @@ export default function Chat() {
         {/* Header */}
         <div className="chat-header">
           <button className="chat-menu-btn" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
-          <span className="chat-header-title">Pat</span>
+          <span className="chat-header-title">Pat {stageInfo.emoji}</span>
           <button
             className="chat-theme-btn"
             onClick={() => { setDark((v) => { const next = !v; localStorage.setItem('chat-theme', next ? 'dark' : 'light'); return next; }); }}
@@ -180,11 +304,30 @@ export default function Chat() {
 
         {/* Messages */}
         <div className="chat-messages">
-          {messages.length === 0 && (
+          {messages.length === 0 && !checkInMsg && (
             <div className="chat-empty">
               <div className="chat-empty-emoji">🐾</div>
               <p>你好呀，我是拍拍。</p>
               <p className="chat-empty-sub">跟我聊聊吧，我会记住你说的每一件重要的事。</p>
+              {!conversations.length && (
+                <div className="chat-onboarding">
+                  <p className="chat-onboarding-title">试试跟我说：</p>
+                  <div className="chat-onboarding-suggestions">
+                    {['介绍一下你自己吧', '我最近有点焦虑', '帮我记住一件事'].map((s) => (
+                      <button key={s} className="chat-suggestion" onClick={() => { setInput(s); inputRef.current?.focus(); }}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Proactive check-in banner */}
+          {messages.length === 0 && checkInMsg && (
+            <div className="chat-checkin">
+              <span className="chat-avatar">🐾</span>
+              <div className="chat-checkin-content">
+                <p>{checkInMsg}</p>
+              </div>
             </div>
           )}
           {messages.map((msg) => (
@@ -193,7 +336,7 @@ export default function Chat() {
               <div className="chat-bubble-content">{msg.content}</div>
             </div>
           ))}
-          {loading && (
+          {loading && !messages.some((m) => m.id?.startsWith('stream-') && m.content) && (
             <div className="chat-bubble assistant">
               <span className="chat-avatar">🐾</span>
               <div className="chat-bubble-content chat-typing">
