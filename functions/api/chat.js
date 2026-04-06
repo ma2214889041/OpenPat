@@ -4,7 +4,7 @@
  * Returns: { conversationId, reply, messageId }
  */
 import { verifyJwt, cors, corsOptions } from '../_shared/auth.js';
-import { geminiChat, geminiLite, parseGeminiJson } from '../_shared/gemini.js';
+import { geminiChat, geminiChatStream, geminiLite, parseGeminiJson } from '../_shared/gemini.js';
 
 export function onRequestOptions() { return corsOptions(); }
 
@@ -325,6 +325,100 @@ export async function onRequestPost(context) {
 
     // Call Gemini with tools
     const systemPrompt = buildSystemPrompt(profile, relevant, relationship, emotions);
+    const wantsStream = request.headers.get('Accept') === 'text/event-stream';
+
+    if (wantsStream) {
+      // Streaming mode: return SSE stream
+      const geminiStream = await geminiChatStream(
+        apiKey, systemPrompt, contents, TOOLS,
+        (name, args) => executeTool(name, args, env, uid, allMemories),
+      );
+
+      const replyMsgId = crypto.randomUUID();
+      let fullReply = '';
+
+      // Transform Gemini SSE stream into our SSE format
+      const { readable, writable } = new TransformStream();
+      const writer = writable.getWriter();
+      const encoder = new TextEncoder();
+
+      // Send initial metadata
+      writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'meta', conversationId: convId, messageId: replyMsgId })}\n\n`));
+
+      // Process stream in background
+      const streamTask = (async () => {
+        try {
+          const reader = geminiStream.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const jsonStr = line.slice(6).trim();
+              if (!jsonStr || jsonStr === '[DONE]') continue;
+              try {
+                const chunk = JSON.parse(jsonStr);
+                const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  fullReply += text;
+                  await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'text', text })}\n\n`));
+                }
+              } catch { /* skip malformed chunks */ }
+            }
+          }
+        } catch (e) {
+          fullReply = fullReply || '抱歉，出了点问题。';
+        }
+
+        // Send done event
+        await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+        await writer.close();
+
+        // Save reply to DB
+        const finalReply = fullReply || '抱歉，处理过程中出了点问题。';
+        await env.DB.prepare('INSERT INTO messages (id, conversation_id, user_id, role, content) VALUES (?, ?, ?, ?, ?)')
+          .bind(replyMsgId, convId, uid, 'assistant', finalReply).run();
+        await env.DB.prepare("UPDATE conversations SET updated_at = datetime('now') WHERE id = ?").bind(convId).run();
+
+        // Background tasks
+        const bgTasks = [updateRelationship(env, uid)];
+        for (const m of relevant) {
+          bgTasks.push(env.DB.prepare("UPDATE memories SET recall_count = recall_count + 1, last_recalled_at = datetime('now') WHERE id = ?").bind(m.id).run());
+        }
+        const shouldExtract = history.length <= 2 || history.length % 3 === 0;
+        if (shouldExtract) {
+          bgTasks.push(extractMemories(env, apiKey, uid, convId, message, finalReply, allMemories));
+        }
+        if (allMemories.length > 20 && env.SITE_CONFIG) {
+          bgTasks.push(env.SITE_CONFIG.get(`dream_last_${uid}`).then((last) => {
+            if (!last || Date.now() - Number(last) > 86400000) return autoDream(env, apiKey, uid, allMemories);
+          }));
+        }
+        await Promise.allSettled(bgTasks);
+      })();
+
+      context.waitUntil(streamTask);
+
+      return new Response(readable, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'authorization, content-type',
+        },
+      });
+    }
+
+    // Non-streaming mode (original)
     const reply = await geminiChat(
       apiKey, systemPrompt, contents, TOOLS,
       (name, args) => executeTool(name, args, env, uid, allMemories),
@@ -476,8 +570,11 @@ Assistant: ${assistantMsg}
 
 ## Today: ${today}
 
+## Follow-ups:
+If the user mentions a future event, plan, or situation worth checking back on (e.g. "I have an interview tomorrow", "moving next week", "starting a diet"), create a follow-up. Set follow_up_after to the appropriate ISO date. Most turns need NO follow-up.
+
 Return JSON:
-{"memory_actions":[{"action":"add|update|delete","type":"user|feedback|life|reference","name":"snake_case","description":"one line","content":"detailed content","importance":5,"id":"only for update/delete"}],"emotion":{"detected":false,"emotion":"neutral","intensity":5,"context":"why they feel this way"},"core_profile_update":{"should_update":false,"field":"core_summary|personality|preferences|emotional_baseline","value":"complete updated value, not a diff"}}
+{"memory_actions":[{"action":"add|update|delete","type":"user|feedback|life|reference","name":"snake_case","description":"one line","content":"detailed content","importance":5,"id":"only for update/delete"}],"emotion":{"detected":false,"emotion":"neutral","intensity":5,"context":"why they feel this way"},"core_profile_update":{"should_update":false,"field":"core_summary|personality|preferences|emotional_baseline","value":"complete updated value, not a diff"},"follow_up":{"should_create":false,"topic":"short topic","context":"what happened and what to ask about","follow_up_after":"${today}"}}
 ONLY valid JSON.`, { maxTokens: 1024 });
 
     const result = parseGeminiJson(text);
@@ -511,6 +608,13 @@ ONLY valid JSON.`, { maxTokens: 1024 });
           `INSERT INTO user_profiles (user_id, ${field}, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(user_id) DO UPDATE SET ${field} = ?, updated_at = datetime('now')`
         ).bind(userId, value, value).run();
       }
+    }
+
+    // Save follow-up if detected
+    if (result.follow_up?.should_create && result.follow_up.topic) {
+      await env.DB.prepare(
+        'INSERT INTO follow_ups (id, user_id, conversation_id, topic, context, follow_up_after) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(crypto.randomUUID(), userId, convId, result.follow_up.topic, result.follow_up.context || '', result.follow_up.follow_up_after).run();
     }
   } catch (e) {
     console.error('Extraction failed:', e.message);
