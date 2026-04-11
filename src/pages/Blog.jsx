@@ -4,6 +4,27 @@ import './Blog.css';
 
 const POSTS = [
   {
+    slug: 'introducing-openpat',
+    title: '为什么我们要做拍拍',
+    subtitle: '大多数人缺的不是信息，不是效率工具，而是被真正听见的感觉。',
+    date: '2026-04-11',
+    tag: '关于我们',
+  },
+  {
+    slug: 'designing-pat',
+    title: '设计拍拍：为什么不是人',
+    subtitle: '做 AI 伴侣的第一个问题不是技术，是形象。',
+    date: '2026-04-10',
+    tag: '设计思考',
+  },
+  {
+    slug: 'thinking-about-memory',
+    title: '我们怎么看待记忆',
+    subtitle: '"记忆"这个词在 AI 产品里被用滥了。我们想做的不是存聊天记录。',
+    date: '2026-04-09',
+    tag: '产品哲学',
+  },
+  {
     slug: 'agent-pets-era',
     title: 'Claude Code 给你养了一只宠物',
     subtitle: '终端角落突然多了个小东西。没什么用，但你会忍不住看它一眼。',

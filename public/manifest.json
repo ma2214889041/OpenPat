@@ -1,7 +1,7 @@
 {
   "name": "OpenPat",
   "short_name": "拍拍",
-  "description": "养一只有智力的数字宠物",
+  "description": "懂你的 AI 小伙伴",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#080d1a",

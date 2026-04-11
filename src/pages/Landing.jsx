@@ -24,59 +24,27 @@ const COPY = {
     },
     hero: {
       h1: ['懂你的', '小伙伴。'],
-      sub: '不是工具，不是助手。是一个会记住你、理解你、陪你成长的伙伴。',
+      sub: '一个真正好奇你是谁的伙伴——帮你理清思绪、陪你度过每一天。',
       cta: '开始聊天',
       secondary: '了解更多',
     },
-    stats: [
-      { value: '开源', label: '完全免费' },
-      { value: '∞', label: '持久记忆' },
-      { value: '24/7', label: '随时陪伴' },
-    ],
-    value: {
-      eyebrow: '为什么不一样',
-      h2: '每个 AI 都会忘记你。',
-      h2em: '拍拍不会。',
-      body: '市面上的 AI 每次对话都从零开始。拍拍记得你的名字、你的喜好、你上次聊到一半的事。它不是在模拟关心——它真的在积累对你的了解。',
-      cards: [
-        { icon: '🧠', title: '持久记忆', desc: '跨对话记住你说过的重要事情' },
-        { icon: '💛', title: '情绪感知', desc: '感知你的状态，调整陪伴方式' },
-        { icon: '🔍', title: '真实能力', desc: '搜索、天气、提醒——不只是聊天' },
-      ],
+    mission: {
+      eyebrow: '我们在做的事',
+      h2: '构建真正支持你',
+      h2em: '日常生活的 AI 朋友。',
+      body: '生活有时候让人喘不过气——太多选择、太多事情、太少被真正听见的时刻。我们相信，一个真正理解你的伙伴，可以帮你理清思绪、感到踏实、更好地面对每一天。',
     },
-    how: {
-      eyebrow: '三步开始',
-      h2: '简单到不需要教程。',
-      steps: [
-        { num: '01', title: '登录', desc: 'GitHub 或 Google 一键登录，不需要填任何表单。' },
-        { num: '02', title: '聊天', desc: '跟拍拍说任何事。它会自然地记住重要的细节。' },
-        { num: '03', title: '它越来越懂你', desc: '聊得越多，拍拍对你了解越深。就像真正的朋友一样。' },
-      ],
-    },
-    memory: {
-      eyebrow: '核心能力',
-      h2: '记忆，',
-      h2em: '不是噱头。',
-      body: '拍拍会自动从对话中提取重要信息，形成对你的长期了解。你可以随时查看和管理它记住的一切。',
-      items: ['你的偏好和习惯', '你提到的重要的人', '你最近的心情变化', '你在意的事情', '你的日程和计划', '你分享过的故事'],
-    },
-    growth: {
-      eyebrow: '关系会成长',
-      h2: '从陌生人，',
-      h2em: '到老朋友。',
-      body: '你们的关系不是固定的。随着对话的深入，拍拍会从礼貌的陌生人，变成可以开玩笑的朋友，最终成为真正懂你的知己。',
-      stages: [
-        { emoji: '👋', label: '初识', desc: '礼貌、好奇' },
-        { emoji: '☕', label: '熟悉', desc: '放松、自然' },
-        { emoji: '😄', label: '默契', desc: '可以开玩笑' },
-        { emoji: '💜', label: '知己', desc: '深度理解' },
-      ],
+    craft: {
+      eyebrow: '人格与记忆',
+      h2: '温暖、自然，',
+      h2em: '不假装是人。',
+      body: '通过人格设计、记忆系统和情感理解，我们创造了一个感觉真实的体验——它会倾听、会回应、会记住你，也知道什么时候该退后一步。',
     },
     opensource: {
       eyebrow: '开源项目',
       h2: '透明、免费、',
       h2em: '由社区驱动。',
-      body: 'OpenPat 是一个开源项目。我们相信 AI 伴侣应该是透明的——你可以看到它的每一行代码，知道它如何处理你的数据。',
+      body: '我们相信 AI 伴侣应该是透明的。OpenPat 完全开源——你可以看到它的每一行代码。',
       star: 'Star on GitHub',
       chat: '开始聊天',
     },
@@ -97,59 +65,27 @@ const COPY = {
     },
     hero: {
       h1: ['A little friend', 'who gets you.'],
-      sub: 'Not a tool. Not an assistant. A companion that remembers you, understands you, and grows with you.',
+      sub: 'A companion genuinely curious about your world — helping you feel grounded, and a little less alone.',
       cta: 'Start Chatting',
       secondary: 'Learn More',
     },
-    stats: [
-      { value: 'Open Source', label: 'Completely free' },
-      { value: '∞', label: 'Persistent memory' },
-      { value: '24/7', label: 'Always there' },
-    ],
-    value: {
-      eyebrow: 'Why it\'s different',
-      h2: 'Every AI forgets you.',
-      h2em: 'Pat doesn\'t.',
-      body: 'Every AI out there starts from scratch each conversation. Pat remembers your name, your preferences, the thing you were talking about last time. It\'s not simulating care — it\'s genuinely building an understanding of you.',
-      cards: [
-        { icon: '🧠', title: 'Persistent Memory', desc: 'Remembers important things across conversations' },
-        { icon: '💛', title: 'Emotion Aware', desc: 'Senses your mood and adjusts how it responds' },
-        { icon: '🔍', title: 'Real Capabilities', desc: 'Search, weather, reminders — not just chat' },
-      ],
+    mission: {
+      eyebrow: 'What we\'re building',
+      h2: 'AI friends that genuinely support ',
+      h2em: 'everyday life.',
+      body: 'Life can feel overwhelming — too many choices, too many things going on, too few moments of being truly heard. We believe a companion who deeply understands you can help you feel grounded, think clearly, and face each day a little better.',
     },
-    how: {
-      eyebrow: 'Three steps',
-      h2: 'So simple, no tutorial needed.',
-      steps: [
-        { num: '01', title: 'Sign in', desc: 'One click with GitHub or Google. No forms to fill.' },
-        { num: '02', title: 'Chat', desc: 'Tell Pat anything. It naturally remembers the important details.' },
-        { num: '03', title: 'It learns you', desc: 'The more you chat, the deeper Pat knows you. Like a real friend.' },
-      ],
-    },
-    memory: {
-      eyebrow: 'Core feature',
-      h2: 'Memory, ',
-      h2em: 'not a gimmick.',
-      body: 'Pat automatically extracts important information from conversations and builds a long-term understanding of you. You can view and manage everything it remembers.',
-      items: ['Your preferences & habits', 'People you mention', 'Your recent mood shifts', 'Things you care about', 'Your plans & schedule', 'Stories you\'ve shared'],
-    },
-    growth: {
-      eyebrow: 'Relationships grow',
-      h2: 'From stranger, ',
-      h2em: 'to confidant.',
-      body: 'Your relationship isn\'t static. As conversations deepen, Pat evolves from a polite stranger, to a friend who jokes with you, to a confidant who truly understands you.',
-      stages: [
-        { emoji: '👋', label: 'Just met', desc: 'Polite, curious' },
-        { emoji: '☕', label: 'Familiar', desc: 'Relaxed, natural' },
-        { emoji: '😄', label: 'In sync', desc: 'Can joke around' },
-        { emoji: '💜', label: 'Confidant', desc: 'Deep understanding' },
-      ],
+    craft: {
+      eyebrow: 'Character & memory',
+      h2: 'Warm, natural, ',
+      h2em: 'not pretending to be human.',
+      body: 'Through character design, memory systems, and emotional understanding, we\'ve created an experience that feels real — it listens, responds, remembers you, and knows when to step back.',
     },
     opensource: {
       eyebrow: 'Open source',
       h2: 'Transparent, free, ',
       h2em: 'community-driven.',
-      body: 'OpenPat is open source. We believe AI companions should be transparent — you can see every line of code and know exactly how your data is handled.',
+      body: 'We believe AI companions should be transparent. OpenPat is fully open source — you can see every line of code.',
       star: 'Star on GitHub',
       chat: 'Start Chatting',
     },
@@ -337,89 +273,22 @@ export default function Landing() {
         <div className="lp-scroll-hint" aria-hidden="true"><span /></div>
       </section>
 
-      {/* ── Stats strip ───────────────────────────────────────── */}
-      <div className="lp-stats">
-        {t.stats.map((s, i) => (
-          <div key={i} className="lp-stat">
-            <span className="lp-stat-value">{s.value}</span>
-            <span className="lp-stat-label">{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Value proposition ─────────────────────────────────── */}
-      <section id="about" className="lp-section lp-value">
+      {/* ── Mission ──────────────────────────────────────────── */}
+      <section id="about" className="lp-section">
         <Reveal>
-          <p className="lp-eyebrow">{t.value.eyebrow}</p>
-          <h2 className="lp-h2">{t.value.h2}<br /><span className="lp-h2-em">{t.value.h2em}</span></h2>
-          <p className="lp-body">{t.value.body}</p>
+          <p className="lp-eyebrow">{t.mission.eyebrow}</p>
+          <h2 className="lp-h2">{t.mission.h2}<br /><span className="lp-h2-em">{t.mission.h2em}</span></h2>
+          <p className="lp-body">{t.mission.body}</p>
         </Reveal>
-        <div className="lp-value-cards">
-          {t.value.cards.map((c, i) => (
-            <Reveal key={i} className="lp-value-card" delay={i * 120}>
-              <span className="lp-value-card-icon">{c.icon}</span>
-              <h3 className="lp-value-card-title">{c.title}</h3>
-              <p className="lp-value-card-desc">{c.desc}</p>
-            </Reveal>
-          ))}
-        </div>
       </section>
 
-      {/* ── How it works ──────────────────────────────────────── */}
-      <section className="lp-section lp-how">
+      {/* ── Craft ─────────────────────────────────────────────── */}
+      <section className="lp-section">
         <Reveal>
-          <p className="lp-eyebrow">{t.how.eyebrow}</p>
-          <h2 className="lp-h2">{t.how.h2}</h2>
+          <p className="lp-eyebrow">{t.craft.eyebrow}</p>
+          <h2 className="lp-h2">{t.craft.h2}<span className="lp-h2-em">{t.craft.h2em}</span></h2>
+          <p className="lp-body">{t.craft.body}</p>
         </Reveal>
-        <div className="lp-how-steps">
-          {t.how.steps.map((s, i) => (
-            <Reveal key={i} className="lp-how-step" delay={i * 150}>
-              <span className="lp-how-num">{s.num}</span>
-              <h3 className="lp-how-title">{s.title}</h3>
-              <p className="lp-how-desc">{s.desc}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Memory ────────────────────────────────────────────── */}
-      <section className="lp-section lp-memory">
-        <div className="lp-memory-inner">
-          <Reveal className="lp-memory-copy">
-            <p className="lp-eyebrow">{t.memory.eyebrow}</p>
-            <h2 className="lp-h2">{t.memory.h2}<span className="lp-h2-em">{t.memory.h2em}</span></h2>
-            <p className="lp-body">{t.memory.body}</p>
-          </Reveal>
-          <Reveal className="lp-memory-visual" delay={200}>
-            <div className="lp-memory-grid">
-              {t.memory.items.map((item, i) => (
-                <div key={i} className="lp-memory-chip">
-                  <span className="lp-memory-chip-dot" />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── Relationship growth ───────────────────────────────── */}
-      <section className="lp-section lp-growth">
-        <Reveal>
-          <p className="lp-eyebrow">{t.growth.eyebrow}</p>
-          <h2 className="lp-h2">{t.growth.h2}<span className="lp-h2-em">{t.growth.h2em}</span></h2>
-          <p className="lp-body">{t.growth.body}</p>
-        </Reveal>
-        <div className="lp-growth-stages">
-          {t.growth.stages.map((s, i) => (
-            <Reveal key={i} className="lp-growth-stage" delay={i * 120}>
-              <span className="lp-growth-emoji">{s.emoji}</span>
-              <span className="lp-growth-label">{s.label}</span>
-              <span className="lp-growth-desc">{s.desc}</span>
-              {i < t.growth.stages.length - 1 && <span className="lp-growth-arrow" />}
-            </Reveal>
-          ))}
-        </div>
       </section>
 
       {/* ── Open source CTA ───────────────────────────────────── */}

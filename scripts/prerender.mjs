@@ -93,6 +93,108 @@ const routes = [
       </div>`,
   },
   {
+    path: '/blog/introducing-openpat',
+    file: 'blog/introducing-openpat/index.html',
+    title: '\u4e3a\u4ec0\u4e48\u6211\u4eec\u8981\u505a\u62cd\u62cd \u2014 OpenPat',
+    description: '\u5927\u591a\u6570\u4eba\u7f3a\u7684\u4e0d\u662f\u4fe1\u606f\uff0c\u4e0d\u662f\u6548\u7387\u5de5\u5177\uff0c\u800c\u662f\u88ab\u771f\u6b63\u542c\u89c1\u7684\u611f\u89c9\u3002',
+    canonical: `${BASE_URL}/blog/introducing-openpat`,
+    extraHead: `<script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "\u4e3a\u4ec0\u4e48\u6211\u4eec\u8981\u505a\u62cd\u62cd",
+      "description": "\u5927\u591a\u6570\u4eba\u7f3a\u7684\u4e0d\u662f\u4fe1\u606f\uff0c\u4e0d\u662f\u6548\u7387\u5de5\u5177\uff0c\u800c\u662f\u88ab\u771f\u6b63\u542c\u89c1\u7684\u611f\u89c9\u3002",
+      "datePublished": "2026-04-11",
+      "author": { "@type": "Organization", "name": "OpenPat" },
+      "publisher": { "@type": "Organization", "name": "OpenPat", "url": "https://open-pat.com" },
+      "mainEntityOfPage": "https://open-pat.com/blog/introducing-openpat"
+    }
+    </script>`,
+    content: `
+      <div class="bp-page">
+        <nav><a href="/">OpenPat</a> <a href="/blog">\u535a\u5ba2</a></nav>
+        <article>
+          <span>\u5173\u4e8e\u6211\u4eec</span>
+          <time datetime="2026-04-11">2026-04-11</time>
+          <h1>\u4e3a\u4ec0\u4e48\u6211\u4eec\u8981\u505a\u62cd\u62cd</h1>
+          <p>\u6211\u4eec\u505a\u62cd\u62cd\uff0c\u662f\u56e0\u4e3a\u53d1\u73b0\u4e86\u4e00\u4ef6\u5f88\u7b80\u5355\u4f46\u88ab\u5ffd\u7565\u7684\u4e8b\uff1a\u5927\u591a\u6570\u4eba\u7f3a\u7684\u4e0d\u662f\u4fe1\u606f\uff0c\u4e0d\u662f\u6548\u7387\u5de5\u5177\uff0c\u800c\u662f\u88ab\u771f\u6b63\u542c\u89c1\u7684\u611f\u89c9\u3002</p>
+          <h2>Overwhelm</h2>
+          <p>\u73b0\u4ee3\u751f\u6d3b\u6709\u4e00\u79cd\u5f88\u5fae\u5999\u7684\u538b\u8feb\u611f\u3002\u4e0d\u662f\u67d0\u4e00\u4ef6\u5927\u4e8b\u628a\u4f60\u51fb\u5012\uff0c\u800c\u662f\u4e00\u767e\u4ef6\u5c0f\u4e8b\u540c\u65f6\u6d8c\u8fc7\u6765\u3002</p>
+          <h2>\u4e3a\u4ec0\u4e48\u5f00\u6e90</h2>
+          <p>AI \u4f34\u4fa3\u662f\u4e00\u4e2a\u5f88\u7279\u6b8a\u7684\u54c1\u7c7b\u3002\u8fd9\u79cd\u4fe1\u4efb\u4e0d\u5e94\u8be5\u5efa\u7acb\u5728\u4e00\u4e2a\u4f60\u770b\u4e0d\u89c1\u5185\u90e8\u7684\u9ed1\u76d2\u5b50\u4e0a\u3002</p>
+          <a href="/chat">\u5f00\u59cb\u804a\u5929</a>
+        </article>
+      </div>`,
+  },
+  {
+    path: '/blog/designing-pat',
+    file: 'blog/designing-pat/index.html',
+    title: '\u8bbe\u8ba1\u62cd\u62cd\uff1a\u4e3a\u4ec0\u4e48\u4e0d\u662f\u4eba \u2014 OpenPat',
+    description: '\u505a AI \u4f34\u4fa3\u7684\u7b2c\u4e00\u4e2a\u95ee\u9898\u4e0d\u662f\u6280\u672f\uff0c\u662f\u5f62\u8c61\u3002',
+    canonical: `${BASE_URL}/blog/designing-pat`,
+    extraHead: `<script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "\u8bbe\u8ba1\u62cd\u62cd\uff1a\u4e3a\u4ec0\u4e48\u4e0d\u662f\u4eba",
+      "description": "\u505a AI \u4f34\u4fa3\u7684\u7b2c\u4e00\u4e2a\u95ee\u9898\u4e0d\u662f\u6280\u672f\uff0c\u662f\u5f62\u8c61\u3002",
+      "datePublished": "2026-04-10",
+      "author": { "@type": "Organization", "name": "OpenPat" },
+      "publisher": { "@type": "Organization", "name": "OpenPat", "url": "https://open-pat.com" },
+      "mainEntityOfPage": "https://open-pat.com/blog/designing-pat"
+    }
+    </script>`,
+    content: `
+      <div class="bp-page">
+        <nav><a href="/">OpenPat</a> <a href="/blog">\u535a\u5ba2</a></nav>
+        <article>
+          <span>\u8bbe\u8ba1\u601d\u8003</span>
+          <time datetime="2026-04-10">2026-04-10</time>
+          <h1>\u8bbe\u8ba1\u62cd\u62cd\uff1a\u4e3a\u4ec0\u4e48\u4e0d\u662f\u4eba</h1>
+          <p>\u505a AI \u4f34\u4fa3\u7684\u7b2c\u4e00\u4e2a\u95ee\u9898\u4e0d\u662f\u6280\u672f\uff0c\u662f\u5f62\u8c61\uff1a\u5b83\u5e94\u8be5\u957f\u4ec0\u4e48\u6837\uff1f</p>
+          <h2>\u4e3a\u4ec0\u4e48\u4e0d\u505a\u4eba</h2>
+          <p>\u4eba\u7c7b\u5f62\u8c61\u4f1a\u521b\u9020\u9519\u8bef\u7684\u671f\u5f85\u3002\u5f53\u4e00\u4e2a AI \u957f\u5f97\u50cf\u4eba\u3001\u8bf4\u8bdd\u50cf\u4eba\uff0c\u7528\u6237\u4f1a\u4e0d\u81ea\u89c9\u5730\u7528\u5bf9\u4eba\u7684\u6807\u51c6\u53bb\u8981\u6c42\u5b83\u3002</p>
+          <h2>\u53ef\u7231\uff0c\u4f46\u4e0d\u5e7c\u7a1a</h2>
+          <p>\u53ef\u7231\u964d\u4f4e\u9632\u5907\u5fc3\u3002\u4f46\u5e7c\u7a1a\u4f1a\u8ba9\u4eba\u4e0d\u4fe1\u4efb\u5b83\u7684\u5224\u65ad\u3002</p>
+          <a href="/chat">\u6765\u8ba4\u8bc6\u62cd\u62cd</a>
+        </article>
+      </div>`,
+  },
+  {
+    path: '/blog/thinking-about-memory',
+    file: 'blog/thinking-about-memory/index.html',
+    title: '\u6211\u4eec\u600e\u4e48\u770b\u5f85\u8bb0\u5fc6 \u2014 OpenPat',
+    description: '\u201c\u8bb0\u5fc6\u201d\u8fd9\u4e2a\u8bcd\u5728 AI \u4ea7\u54c1\u91cc\u88ab\u7528\u6ee5\u4e86\u3002\u6211\u4eec\u60f3\u505a\u7684\u4e0d\u662f\u5b58\u804a\u5929\u8bb0\u5f55\u3002',
+    canonical: `${BASE_URL}/blog/thinking-about-memory`,
+    extraHead: `<script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "\u6211\u4eec\u600e\u4e48\u770b\u5f85\u8bb0\u5fc6",
+      "description": "\u201c\u8bb0\u5fc6\u201d\u8fd9\u4e2a\u8bcd\u5728 AI \u4ea7\u54c1\u91cc\u88ab\u7528\u6ee5\u4e86\u3002\u6211\u4eec\u60f3\u505a\u7684\u4e0d\u662f\u5b58\u804a\u5929\u8bb0\u5f55\u3002",
+      "datePublished": "2026-04-09",
+      "author": { "@type": "Organization", "name": "OpenPat" },
+      "publisher": { "@type": "Organization", "name": "OpenPat", "url": "https://open-pat.com" },
+      "mainEntityOfPage": "https://open-pat.com/blog/thinking-about-memory"
+    }
+    </script>`,
+    content: `
+      <div class="bp-page">
+        <nav><a href="/">OpenPat</a> <a href="/blog">\u535a\u5ba2</a></nav>
+        <article>
+          <span>\u4ea7\u54c1\u54f2\u5b66</span>
+          <time datetime="2026-04-09">2026-04-09</time>
+          <h1>\u6211\u4eec\u600e\u4e48\u770b\u5f85\u8bb0\u5fc6</h1>
+          <p>\u201c\u8bb0\u5fc6\u201d\u8fd9\u4e2a\u8bcd\u5728 AI \u4ea7\u54c1\u91cc\u88ab\u7528\u6ee5\u4e86\u3002\u5927\u591a\u6570\u65f6\u5019\u5b83\u7684\u610f\u601d\u662f\u201c\u6211\u4eec\u628a\u4f60\u7684\u804a\u5929\u8bb0\u5f55\u5b58\u8d77\u6765\u4e86\u201d\u3002\u6211\u4eec\u60f3\u505a\u7684\u4e0d\u662f\u8fd9\u4e2a\u3002</p>
+          <h2>\u8bb0\u4f4f vs \u5b58\u50a8</h2>
+          <p>\u5b58\u50a8\u662f\u4fdd\u7559\u6240\u6709\u4fe1\u606f\uff0c\u8bb0\u4f4f\u662f\u7406\u89e3\u54ea\u4e9b\u4fe1\u606f\u91cd\u8981\u3002</p>
+          <h2>\u8bb0\u5fc6\u4e0d\u662f\u76d1\u63a7</h2>
+          <p>\u5b83\u5e94\u8be5\u8ba9\u7528\u6237\u611f\u5230\u88ab\u7406\u89e3\uff0c\u800c\u4e0d\u662f\u88ab\u76d1\u89c6\u3002</p>
+          <a href="/chat">\u5f00\u59cb\u804a\u5929</a>
+        </article>
+      </div>`,
+  },
+  {
     path: '/blog/agent-pets-era',
     file: 'blog/agent-pets-era/index.html',
     title: 'Claude Code \u7ed9\u4f60\u517b\u4e86\u4e00\u53ea\u5ba0\u7269 \u2014 OpenPat',
