@@ -1,11 +1,13 @@
-/* ══ SignIn — 分屏登录页 ══ */
+/* ═══════════════════════════════════════════════════════════
+   SignIn — Warm cream theme (matching Landing)
+   ═══════════════════════════════════════════════════════════ */
 
 .signin-page {
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: 100vh;
-  background: #080808;
-  font-family: var(--font-body), system-ui, sans-serif;
+  background: #F5F2E8;
+  font-family: 'Lato', 'Noto Sans SC', system-ui, sans-serif;
 }
 
 /* ══ Left: Form ══ */
@@ -15,7 +17,7 @@
   justify-content: center;
   padding: 48px 40px;
   box-sizing: border-box;
-  border-right: 1px solid rgba(255,255,255,0.06);
+  border-right: 1px solid rgba(0,0,0,0.06);
   position: relative;
 }
 
@@ -28,7 +30,7 @@
   width: 400px;
   height: 400px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139,139,255,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(124,111,224,0.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -51,22 +53,22 @@
 .signin-logo-icon { font-size: 24px; }
 
 .signin-logo-name {
-  font-family: var(--font-heading), system-ui, sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.03em;
+  font-family: 'Poppins', 'Noto Sans SC', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2D2A26;
+  letter-spacing: -0.02em;
 }
 
 /* Copy */
 .signin-copy { display: flex; flex-direction: column; gap: 8px; }
 
 .signin-h1 {
-  font-family: var(--font-heading), system-ui, sans-serif;
+  font-family: 'Poppins', 'Noto Sans SC', system-ui, sans-serif;
   font-size: 32px;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.04em;
+  color: #2D2A26;
+  letter-spacing: -0.03em;
   line-height: 1.1;
   margin: 0;
 }
@@ -74,7 +76,7 @@
 .signin-sub {
   font-size: 14px;
   line-height: 1.6;
-  color: #71717a;
+  color: #4A4640;
   font-weight: 500;
   margin: 0;
   max-width: 32ch;
@@ -94,12 +96,12 @@
   gap: 10px;
   width: 100%;
   padding: 14px 20px;
-  border-radius: 14px;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.15s, filter 0.15s, box-shadow 0.15s;
-  font-family: var(--font-body), system-ui, sans-serif;
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: 'Lato', 'Noto Sans SC', system-ui, sans-serif;
   letter-spacing: 0.01em;
   border: none;
   box-sizing: border-box;
@@ -110,35 +112,35 @@
 }
 
 .signin-btn--github {
-  background: #fff;
-  color: #000;
-  box-shadow: 0 4px 20px rgba(255,255,255,0.1);
+  background: #2D2A26;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 .signin-btn--github:hover {
-  box-shadow: 0 8px 28px rgba(255,255,255,0.16);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.16);
 }
 
 .signin-btn--google {
-  background: rgba(255,255,255,0.06);
-  color: #e2e8f0;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #FFFFFF;
+  color: #2D2A26;
+  border: 1px solid rgba(0,0,0,0.08);
   box-shadow: none;
 }
 .signin-btn--google:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.03);
 }
 
 /* Skip link */
 .signin-hint {
   font-size: 13px;
-  color: #52525b;
+  color: #8A857D;
   font-weight: 500;
   margin: 0;
   text-align: center;
 }
 
 .signin-skip {
-  color: #83FFC1;
+  color: #7C6FE0;
   text-decoration: none;
   font-weight: 700;
   transition: opacity 0.15s;
@@ -148,35 +150,35 @@
 /* ToS */
 .signin-tos {
   font-size: 11px;
-  color: #3f3f46;
+  color: #8A857D;
   line-height: 1.6;
   text-align: center;
   margin: 0;
 }
 .signin-tos-link {
-  color: #52525b;
+  color: #4A4640;
   cursor: pointer;
   transition: color 0.15s;
 }
-.signin-tos-link:hover { color: #71717a; }
+.signin-tos-link:hover { color: #2D2A26; }
 
 .signin-no-supabase {
   font-size: 13px;
-  color: #52525b;
+  color: #8A857D;
   text-align: center;
   padding: 16px;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(0,0,0,0.06);
   border-radius: 12px;
 }
 
-/* ══ Right: Lobster showcase ══ */
+/* ══ Right: Showcase ══ */
 .signin-right {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px 40px;
   box-sizing: border-box;
-  background: #050505;
+  background: #EDE9DC;
   position: relative;
   overflow: hidden;
 }
@@ -186,7 +188,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;
 }
@@ -200,7 +202,7 @@
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(131,255,193,0.05) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(124,111,224,0.06) 0%, transparent 65%);
   pointer-events: none;
 }
 
@@ -216,10 +218,10 @@
 }
 
 .signin-right-label {
-  font-family: var(--font-heading), system-ui, sans-serif;
+  font-family: 'Poppins', 'Noto Sans SC', system-ui, sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: rgba(255,255,255,0.2);
+  color: #7C6FE0;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin: 0;
@@ -234,26 +236,27 @@
 }
 
 .signin-state-card {
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.06);
   border-radius: 20px;
   overflow: hidden;
-  transition: transform 0.2s, border-color 0.2s;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
   cursor: default;
 }
 
 .signin-state-card:hover {
   transform: translateY(-4px) scale(1.02);
-  border-color: rgba(255,255,255,0.14);
+  border-color: rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
 }
 
-/* Image placeholder — user replaces with real sprite frames */
+/* Image placeholder */
 .signin-state-img {
   aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.02);
+  background: rgba(0,0,0,0.02);
   position: relative;
 }
 
@@ -262,8 +265,8 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 60%, var(--glow, #fff) 0%, transparent 65%);
-  opacity: 0.08;
+  background: radial-gradient(circle at 50% 60%, var(--glow, #7C6FE0) 0%, transparent 65%);
+  opacity: 0.12;
 }
 
 .signin-state-emoji {
@@ -275,7 +278,7 @@
 
 .signin-state-info {
   padding: 10px 14px 12px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -284,14 +287,14 @@
 .signin-state-name {
   font-size: 13px;
   font-weight: 700;
-  color: #e2e8f0;
-  font-family: var(--font-heading), system-ui, sans-serif;
+  color: #2D2A26;
+  font-family: 'Poppins', 'Noto Sans SC', system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
 
 .signin-state-en {
   font-size: 10px;
-  color: #3f3f46;
+  color: #8A857D;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -299,7 +302,7 @@
 
 .signin-right-sub {
   font-size: 13px;
-  color: rgba(255,255,255,0.2);
+  color: #8A857D;
   font-weight: 500;
   text-align: center;
   margin: 0;

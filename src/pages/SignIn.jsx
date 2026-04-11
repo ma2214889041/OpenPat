@@ -6,7 +6,7 @@ import './SignIn.css';
 
 const STATES_PREVIEW = [
   { label: '思考中', emoji: '🧠', color: '#FFE780', desc: 'Thinking' },
-  { label: '工作中', emoji: '⚡', color: '#8B8BFF', desc: 'Working' },
+  { label: '工作中', emoji: '⚡', color: '#7C6FE0', desc: 'Working' },
   { label: '完成啦', emoji: '🎉', color: '#83FFC1', desc: 'Done' },
   { label: '摸鱼中', emoji: '💤', color: '#FF94DB', desc: 'Idle' },
   { label: '报错了', emoji: '💫', color: '#FF94DB', desc: 'Error' },

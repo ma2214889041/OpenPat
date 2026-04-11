@@ -1,1701 +1,565 @@
 /* ═══════════════════════════════════════════════════════════
-   OpenPat Landing — Doodles-inspired 暖白版
-   字体: Syne (标题) + Nunito (正文)
+   OpenPat Landing — Tolan-inspired warm & friendly
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 设计语言 token — Doodles 精确值 ──────────────────────── */
+/* ── Design tokens ───────────────────────────────────────── */
 :root {
-  /* 背景 — 纯白，和 Doodles 一致 */
-  --lp-bg: #ffffff;
-  --lp-bg-alt: #ffffff;
-  --lp-bg-coral: #ffffff;
+  --lp-bg: #F5F2E8;
+  --lp-bg-warm: #EDE9DC;
+  --lp-bg-card: #FFFFFF;
 
-  /* 文字 — 纯黑 */
-  --lp-ink: #000000;
-  --lp-ink-2: #333333;
-  --lp-muted: #666666;
+  --lp-ink: #2D2A26;
+  --lp-ink-2: #4A4640;
+  --lp-muted: #8A857D;
 
-  /* Doodles 精确彩色 */
-  --lp-green:  #83FFC1;   /* doodles-green */
-  --lp-pink:   #FF94DB;   /* doodles-pink  */
-  --lp-purple: #8B8BFF;   /* animation-colors-purple */
-  --lp-yellow: #FFE780;   /* animation-colors-yellow */
+  --lp-accent: #7C6FE0;
+  --lp-accent-soft: #B8A9E8;
+  --lp-coral: #F4A89A;
+  --lp-sage: #A8D8B9;
+  --lp-peach: #F8D5C8;
+  --lp-lavender: #E8E0F4;
 
-  /* CTA 渐变 — hero 按钮精确值 */
-  --lp-cta-gradient: linear-gradient(22deg, #5757C4 5.35%, #FF94DB 47.78%, #FFE780 90.21%);
-
-  /* Brand accent (Doodles green) */
-  --lp-brand: #83FFC1;
-  --lp-brand-dk: #5AC99A;
-
-  /* 边框 */
-  --lp-border: #e5e7eb;
-  --lp-border-dk: #d1d5db;
-
-  /* 字体 */
   --font-display: 'Poppins', 'Noto Sans SC', system-ui, sans-serif;
   --font-body: 'Lato', 'Noto Sans SC', system-ui, sans-serif;
 
-  /* 圆角 */
   --r-sm: 12px;
-  --r-md: 16px;
-  --r-lg: 24px;
+  --r-md: 20px;
+  --r-lg: 28px;
   --r-xl: 40px;
-  --r-full: 9999px;
 
-  /* 间距 — contained-content: max 1920px, 100px padding on desktop */
   --gut: clamp(20px, 6vw, 100px);
+  --max-w: 1120px;
 }
 
-/* ── 基础 ─────────────────────────────────────────────────── */
-.lp {
-  background: var(--lp-bg);
-  color: var(--lp-ink);
-  font-family: var(--font-body);
-  overflow-x: hidden;
-  min-height: 100vh;
-}
+/* ── Reset ───────────────────────────────────────────────── */
+.lp { background: var(--lp-bg); color: var(--lp-ink); font-family: var(--font-body); overflow-x: hidden; min-height: 100vh; }
+.lp *, .lp *::before, .lp *::after { box-sizing: border-box; margin: 0; }
 
-.lp *,
-.lp *::before,
-.lp *::after {
-  box-sizing: border-box;
-  margin: 0;
+/* ── Scroll reveal ───────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1), transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
 }
+.reveal.revealed { opacity: 1; transform: translateY(0); }
 
-/* ── 排版 ─────────────────────────────────────────────────── */
-.lp-eyebrow {
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--lp-muted);
-  margin-bottom: 14px;
+/* ── Auth error ──────────────────────────────────────────── */
+.lp-auth-error {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: #D94F4F; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 12px 20px; font-size: 14px;
 }
-
-.lp-hero .lp-eyebrow {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-/* Doodles: md:text-5xl = 48px, font-bold, -tracking-wider */
-.lp-section-h2 {
-  font-family: var(--font-display);
-  font-size: clamp(36px, 4vw, 48px);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
-  color: var(--lp-ink);
-}
-
-.lp-section-h2 em {
-  font-style: normal;
-  color: var(--lp-ink);
-}
-
-/* Doodles content-block-p: 16px mobile → 24px desktop, weight 500, -1px tracking */
-.lp-body-text {
-  font-size: clamp(16px, 2vw, 24px);
-  line-height: 1.5;
-  letter-spacing: -0.01em;
-  color: var(--lp-ink-2);
-  max-width: 46ch;
-  font-weight: 500;
-  font-family: var(--font-body);
-}
-
-.lp-body-text--hint {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--lp-muted);
-  max-width: 50ch;
-  font-weight: 500;
-}
-
-.lp-text-dim {
-  color: var(--lp-border-dk);
-}
-
-.lp-placeholder-label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--lp-border-dk);
-  margin-top: 8px;
-  display: block;
-}
-
-/* ── 按钮 — Doodles pill 风格 ────────────────────────────── */
-.lp-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  text-decoration: none;
-  border-radius: var(--r-full);
-  padding: 12px 26px;
-  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
-  cursor: pointer;
-  border: none;
-  white-space: nowrap;
-}
-
-.lp-btn:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
-}
-
-.lp-btn:active {
-  transform: translateY(0);
-}
-
-/* Primary — Doodles CTA gradient 精确值，黑色文字 */
-.lp-btn--primary {
-  background: var(--lp-cta-gradient);
-  color: #000;
-}
-
-.lp-btn--primary:hover {
-  filter: brightness(1.06);
-}
-
-/* Green — Doodles About 按钮，#83FFC1 */
-.lp-btn--green {
-  background: var(--lp-green);
-  color: #000;
-}
-
-.lp-btn--green:hover {
-  filter: brightness(1.06);
-}
-
-.lp-btn--outline {
-  background: transparent;
-  color: var(--lp-ink);
-  border: 2px solid var(--lp-border-dk);
-}
-
-.lp-btn--outline:hover {
-  border-color: var(--lp-ink);
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.lp-btn--ghost {
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--lp-ink);
-}
-
-.lp-btn--ghost:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.lp-btn--lg {
-  font-size: 16px;
-  padding: 15px 34px;
-}
-
-/* ── Section 辅助 ─────────────────────────────────────────── */
-.lp-section-head {
-  text-align: center;
-  margin-bottom: 60px;
-  padding-inline: var(--gut);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.lp-section-head .lp-body-text {
-  text-align: center;
-  margin-top: 12px;
-}
+.lp-auth-error button { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
 
 /* ══════════════════════════════════════════════════════════
-   导航
+   NAV
    ══════════════════════════════════════════════════════════ */
 .lp-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: transparent;
-  backdrop-filter: none;
-  border-bottom: 1px solid transparent;
-  transition: background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 var(--gut);
+  transition: background 0.35s, box-shadow 0.35s, backdrop-filter 0.35s;
 }
-
 .lp-nav--scrolled {
-  background: rgba(255, 252, 247, 0.88);
-  backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid var(--lp-border);
+  background: rgba(245, 242, 232, 0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
 }
-
 .lp-nav-inner {
-  margin-inline: var(--gut);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
   height: 64px;
 }
-
-.lp-nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  text-decoration: none;
-}
-
-.lp-nav-logo-emoji {
-  font-size: 24px;
-}
-
-.lp-nav-logo-name {
+.lp-logo {
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 20px;
+  font-weight: 700; font-size: 22px;
+  color: var(--lp-ink); text-decoration: none;
   letter-spacing: -0.02em;
-  color: var(--lp-ink);
-  transition: color 0.4s ease;
 }
-
-.lp-nav--scrolled .lp-nav-logo-name {
-  color: var(--lp-ink);
-}
-
-/* 透明导航时 logo 变白 */
-.lp-nav:not(.lp-nav--scrolled) .lp-nav-logo-name {
-  color: #fff;
-}
-
-/* About 区 logo 更大 */
-.lp-about .lp-nav-logo-name {
-  color: var(--lp-ink);
-  font-size: 36px;
-}
-
-.lp-nav-links {
-  display: flex;
-  gap: 32px;
-}
-
+.lp-nav-links { display: flex; align-items: center; gap: 8px; }
 .lp-nav-link {
-  font-size: 14px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.75);
-  text-decoration: none;
-  transition: color 0.4s ease;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: var(--font-body);
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-body); font-size: 14px; font-weight: 500;
+  color: var(--lp-ink-2); padding: 8px 14px; border-radius: 999px;
+  transition: background 0.2s, color 0.2s; text-decoration: none;
 }
+.lp-nav-link:hover { background: rgba(0,0,0,0.05); color: var(--lp-ink); }
+.lp-nav-lang { font-weight: 700; }
+.lp-nav-auth-area { margin-left: 4px; }
 
-.lp-nav-link:hover {
-  color: #fff;
+/* Nav auth */
+.lp-nav-user { position: relative; }
+.lp-nav-avatar-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 999px;
+  transition: background 0.2s;
 }
-
-.lp-nav--scrolled .lp-nav-link {
-  color: var(--lp-muted);
+.lp-nav-avatar-btn:hover { background: rgba(0,0,0,0.05); }
+.lp-nav-avatar { width: 28px; height: 28px; border-radius: 50%; }
+.lp-nav-avatar-fallback {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--lp-accent-soft); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
 }
-
-.lp-nav--scrolled .lp-nav-link:hover {
-  color: var(--lp-ink);
+.lp-nav-username { font-size: 13px; color: var(--lp-ink-2); font-weight: 500; }
+.lp-nav-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  background: var(--lp-bg-card); border-radius: var(--r-sm);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  min-width: 160px; overflow: hidden;
 }
-
-/* ── Mobile hamburger ── */
-.lp-nav-burger {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  margin-left: auto;
-}
-.lp-nav-burger span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 2px;
-  transition: background 0.3s;
-}
-.lp-nav--scrolled .lp-nav-burger span {
-  background: var(--lp-ink);
-}
-
-.lp-mobile-menu {
-  position: fixed;
-  top: 56px;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  flex-direction: column;
-  background: rgba(10, 10, 10, 0.95);
-  backdrop-filter: blur(20px);
-  padding: 12px 24px 20px;
-  gap: 4px;
-}
-
-@media (min-width: 601px) {
-  .lp-mobile-menu { display: none !important; }
-}
-
-@media (max-width: 600px) {
-  .lp-mobile-menu {
-    display: flex;
-  }
-  .lp-mobile-link {
-    font-family: var(--font-body);
-    font-size: 15px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
-    background: none;
-    border: none;
-    padding: 12px 0;
-    text-align: left;
-    cursor: pointer;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .lp-mobile-link:last-child {
-    border-bottom: none;
-  }
-
-  .lp-mobile-auth {
-    padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    margin-top: 4px;
-  }
-
-  .lp-mobile-auth .lp-nav-signin {
-    display: block;
-    text-align: center;
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-  }
-
-  .lp-mobile-auth .lp-nav-auth-avatar-btn {
-    width: 100%;
-    justify-content: flex-start;
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .lp-mobile-auth .lp-nav-auth-dropdown {
-    position: static;
-    margin-top: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 10px;
-  }
-}
-
-.lp-nav-cta {
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 800;
-  color: #000;
-  background: rgba(255, 255, 255, 0.92);
-  text-decoration: none;
-  padding: 11px 26px;
-  border-radius: var(--r-full);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-  transition: transform 0.15s, box-shadow 0.15s, background 0.3s, color 0.3s, border-color 0.3s;
-  white-space: nowrap;
-}
-
-.lp-nav-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-}
-
-/* When nav is scrolled → dark button on white bg */
-.lp-nav--scrolled .lp-nav-cta {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-  box-shadow: none;
-}
-
-/* ── OAuth 错误 banner ────────────────────────────────────── */
-.lp-auth-error {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 999;
-  background: #fff0f0;
-  border: 1.5px solid #fca5a5;
-  color: #b91c1c;
-  border-radius: var(--r-md);
-  padding: 12px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font-body);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-  max-width: calc(100vw - 40px);
-}
-
-.lp-auth-error-close {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: #b91c1c;
-  line-height: 1;
-  padding: 0;
-  flex-shrink: 0;
-}
-
-/* ── 导航右侧区域（登录 + CTA） ───────────────────────────── */
-.lp-nav-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* 未登录 — 登录/注册链接 */
-.lp-nav-signin {
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  text-decoration: none;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
-
-.lp-nav-signin:hover {
-  color: #fff;
-}
-
-.lp-nav--scrolled .lp-nav-signin {
-  color: var(--lp-muted);
-}
-
-.lp-nav--scrolled .lp-nav-signin:hover {
-  color: var(--lp-ink);
-}
-
-/* Language toggle */
-.lp-nav-lang {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 4px;
-  color: rgba(255,255,255,0.7);
-  background: transparent;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-  letter-spacing: 0.04em;
-}
-.lp-nav-lang:hover {
-  border-color: rgba(255,255,255,0.6);
-  color: #fff;
-}
-.lp-nav--scrolled .lp-nav-lang {
-  border-color: rgba(0,0,0,0.2);
-  color: var(--lp-muted);
-}
-.lp-nav--scrolled .lp-nav-lang:hover {
-  border-color: var(--lp-ink);
-  color: var(--lp-ink);
-}
-
-/* 已登录 — 用户头像 + 下拉 */
-.lp-nav-auth-user {
-  position: relative;
-}
-
-.lp-nav-auth-avatar-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--r-full);
-  padding: 5px 12px 5px 5px;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.lp-nav-auth-avatar-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.lp-nav--scrolled .lp-nav-auth-avatar-btn {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: var(--lp-border);
-  color: var(--lp-ink);
-}
-
-.lp-nav-auth-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.lp-nav-auth-avatar-fallback {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--lp-green);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: #000;
-}
-
-.lp-nav-auth-username {
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lp-nav-auth-chevron {
-  font-size: 10px;
-  opacity: 0.6;
-}
-
-.lp-nav-auth-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: #fff;
-  border: 1px solid var(--lp-border);
-  border-radius: var(--r-md);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  min-width: 160px;
-  overflow: hidden;
-  z-index: 200;
-}
-
-.lp-nav-auth-menu-item {
-  display: block;
-  width: 100%;
-  padding: 10px 16px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--lp-ink);
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
+.lp-nav-dropdown-item {
+  display: block; width: 100%; padding: 10px 16px;
+  font-size: 14px; color: var(--lp-ink-2); text-decoration: none;
+  background: none; border: none; text-align: left; cursor: pointer;
   transition: background 0.15s;
 }
+.lp-nav-dropdown-item:hover { background: rgba(0,0,0,0.04); }
+.lp-nav-dropdown-item--danger { color: #D94F4F; }
+.lp-nav-signin-btn {
+  font-size: 14px; font-weight: 600; color: #fff;
+  background: var(--lp-accent); padding: 8px 20px;
+  border-radius: 999px; text-decoration: none;
+  transition: opacity 0.2s;
+}
+.lp-nav-signin-btn:hover { opacity: 0.88; }
 
-.lp-nav-auth-menu-item:hover {
-  background: rgba(0, 0, 0, 0.04);
+/* Nav burger (mobile) */
+.lp-nav-burger {
+  display: none; background: none; border: none; cursor: pointer;
+  width: 36px; height: 36px; flex-direction: column; justify-content: center; align-items: center; gap: 5px;
+}
+.lp-nav-burger span { display: block; width: 20px; height: 2px; background: var(--lp-ink); border-radius: 2px; }
+
+/* Mobile menu */
+.lp-mobile-menu {
+  display: none;
+  flex-direction: column; gap: 4px;
+  padding: 8px 16px 16px;
+  background: rgba(245, 242, 232, 0.96);
+}
+.lp-mobile-menu button, .lp-mobile-menu a {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-body); font-size: 15px; font-weight: 500;
+  color: var(--lp-ink-2); padding: 10px 0; text-decoration: none; text-align: left;
 }
 
-.lp-nav-auth-menu-item--danger {
-  color: #e53e3e;
+@media (max-width: 720px) {
+  .lp-nav-links { display: none; }
+  .lp-nav-burger { display: flex; }
+  .lp-mobile-menu { display: flex; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   首屏 Hero
+   HERO
    ══════════════════════════════════════════════════════════ */
 .lp-hero {
   position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding-top: 64px;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
   overflow: hidden;
-  background: #000;
 }
 
-/* 背景装饰圆 — Doodles 风格气泡 */
-.lp-hero::before {
-  content: '';
-  position: absolute;
-  top: -120px;
-  right: -100px;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #FFE8E0 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+/* Full-screen video background */
+.lp-hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: var(--lp-bg);
 }
-
-.lp-hero::after {
-  content: '';
-  position: absolute;
-  bottom: -80px;
-  left: -80px;
-  width: 400px;
-  height: 400px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #FFF5D6 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.lp-hero-video-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
 .lp-hero-video {
-  width: 100%;
-  height: 100%;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
   object-fit: cover;
-  opacity: 0.85;
+}
+.lp-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(45, 42, 38, 0.35) 0%,
+    rgba(45, 42, 38, 0.55) 50%,
+    rgba(45, 42, 38, 0.7) 100%
+  );
+}
+/* No video: use the warm bg color, no dark overlay */
+.lp-hero--no-video .lp-hero-overlay {
+  background: none;
+}
+.lp-hero--no-video .lp-hero-h1 { color: var(--lp-ink); }
+.lp-hero--no-video .lp-hero-sub { color: var(--lp-ink-2); }
+.lp-hero--no-video .lp-btn--hero { background: var(--lp-accent); color: #fff; box-shadow: 0 4px 20px rgba(124, 111, 224, 0.3); }
+.lp-hero--no-video .lp-btn--hero:hover { box-shadow: 0 6px 28px rgba(124, 111, 224, 0.4); }
+.lp-hero--no-video .lp-btn--hero-ghost { color: var(--lp-ink-2); border-color: rgba(0,0,0,0.12); }
+.lp-hero--no-video .lp-btn--hero-ghost:hover { border-color: rgba(0,0,0,0.25); color: var(--lp-ink); }
+.lp-hero--no-video .lp-scroll-hint span { border-color: rgba(0,0,0,0.15); }
+.lp-hero--no-video .lp-scroll-hint span::after { background: rgba(0,0,0,0.25); }
+
+.lp-hero-inner {
+  position: relative; z-index: 1;
+  max-width: var(--max-w); width: 100%;
+  padding: 100px var(--gut) 80px;
+  display: flex; align-items: center;
+  gap: clamp(40px, 6vw, 100px);
 }
 
-/* 顶部渐变 — 像 Doodles，让导航文字可读，只遮一点点 */
-.lp-hero-video-overlay-top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 220px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0.08) 60%, transparent 100%);
-  pointer-events: none;
-}
-
-/* 底部渐变 — 融入页面背景 */
-.lp-hero-video-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, transparent 55%, var(--lp-bg) 100%);
-}
-
-.lp-hero-content {
-  position: relative;
-  z-index: 1;
-  margin-inline: var(--gut);
-  max-width: 680px;
-  padding-block: 80px;
-}
-
-/* Doodles: text-3xl md:text-[44px] font-bold -tracking-[2px] */
+.lp-hero-content { flex: 1; max-width: 560px; }
 .lp-hero-h1 {
   font-family: var(--font-display);
-  font-size: clamp(30px, 5vw, 44px);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-size: clamp(42px, 6.5vw, 72px);
+  font-weight: 800; line-height: 1.06;
+  letter-spacing: -0.03em;
   color: #fff;
+}
+.lp-hero-h1-em {
+  background: linear-gradient(135deg, var(--lp-accent-soft) 0%, var(--lp-coral) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.lp-hero-sub {
+  margin-top: 20px;
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.6; color: rgba(255,255,255,0.78);
+  max-width: 460px;
+}
+.lp-hero-actions { margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* Hero buttons — white on dark overlay */
+.lp-btn--hero {
+  background: #fff; color: var(--lp-ink);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.lp-btn--hero:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.22); }
+.lp-btn--hero-ghost {
+  background: transparent; color: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(255,255,255,0.3);
+}
+.lp-btn--hero-ghost:hover { border-color: rgba(255,255,255,0.6); color: #fff; }
+
+/* Scroll hint */
+.lp-scroll-hint {
+  position: absolute; bottom: 28px; left: 50%;
+  transform: translateX(-50%); z-index: 1;
+}
+.lp-scroll-hint span {
+  display: block; width: 24px; height: 40px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 999px; position: relative;
+}
+.lp-scroll-hint span::after {
+  content: ''; position: absolute;
+  top: 8px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.5);
+  animation: scroll-dot 2s ease-in-out infinite;
+}
+@keyframes scroll-dot {
+  0%, 100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 0.3; transform: translateX(-50%) translateY(10px); }
+}
+
+/* ── Hero creature (fallback when no video) ──────────────── */
+.lp-hero-visual {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+}
+.lp-creature { position: relative; width: 280px; height: 300px; display: flex; flex-direction: column; align-items: center; }
+.lp-creature-body {
+  position: relative;
+  width: 220px; height: 220px;
+  background: linear-gradient(160deg, var(--lp-accent-soft) 0%, var(--lp-lavender) 100%);
+  border-radius: 50% 50% 48% 48% / 50% 50% 42% 42%;
+  animation: creature-float 4s ease-in-out infinite;
+  box-shadow: 0 20px 60px rgba(124, 111, 224, 0.18);
+}
+.lp-creature-face {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px; height: 70px;
+}
+.lp-creature-eye {
+  position: absolute; top: 8px;
+  width: 32px; height: 36px;
+  background: #fff; border-radius: 50%;
+  animation: creature-blink 4s ease-in-out infinite;
+}
+.lp-creature-eye--l { left: 12px; }
+.lp-creature-eye--r { right: 12px; }
+.lp-creature-pupil {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  width: 14px; height: 16px;
+  background: var(--lp-ink); border-radius: 50%;
+}
+.lp-creature-pupil::after {
+  content: ''; position: absolute; top: 3px; right: 3px;
+  width: 5px; height: 5px; background: #fff; border-radius: 50%;
+}
+.lp-creature-mouth {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 10px;
+  border-bottom: 3px solid var(--lp-ink);
+  border-radius: 0 0 50% 50%;
+}
+.lp-creature-cheek {
+  position: absolute; top: 55%; width: 28px; height: 18px;
+  background: var(--lp-coral); border-radius: 50%; opacity: 0.45;
+}
+.lp-creature-cheek--l { left: 14px; }
+.lp-creature-cheek--r { right: 14px; }
+.lp-creature-shadow {
+  margin-top: 16px;
+  width: 120px; height: 16px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.1) 0%, transparent 70%);
+  animation: creature-shadow 4s ease-in-out infinite;
+}
+
+@keyframes creature-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@keyframes creature-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 1; }
+  50% { transform: scaleX(0.82); opacity: 0.6; }
+}
+@keyframes creature-blink {
+  0%, 42%, 46%, 100% { transform: scaleY(1); }
+  44% { transform: scaleY(0.08); }
+}
+
+@media (max-width: 720px) {
+  .lp-hero-inner { flex-direction: column-reverse; text-align: center; padding-top: 120px; }
+  .lp-hero-sub { margin-left: auto; margin-right: auto; }
+  .lp-hero-actions { justify-content: center; }
+  .lp-creature { width: 200px; height: 220px; }
+  .lp-creature-body { width: 160px; height: 160px; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATS STRIP
+   ══════════════════════════════════════════════════════════ */
+.lp-stats {
+  display: flex; justify-content: center; gap: clamp(32px, 6vw, 80px);
+  padding: 40px var(--gut);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.lp-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.lp-stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 700; color: var(--lp-accent);
+}
+.lp-stat-label { font-size: 13px; color: var(--lp-muted); font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════════
+   SHARED SECTION STYLES
+   ══════════════════════════════════════════════════════════ */
+.lp-section {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: clamp(60px, 10vw, 120px) var(--gut);
+}
+.lp-eyebrow {
+  font-family: var(--font-body);
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--lp-accent); margin-bottom: 14px;
+}
+.lp-h2 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 700; line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--lp-ink);
+  margin-bottom: 20px;
+}
+.lp-h2-em { color: var(--lp-accent); }
+.lp-body {
+  font-size: clamp(16px, 1.8vw, 19px);
+  line-height: 1.65; color: var(--lp-ink-2);
+  max-width: 560px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BUTTONS
+   ══════════════════════════════════════════════════════════ */
+.lp-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-body); font-size: 15px; font-weight: 600;
+  padding: 14px 32px; border-radius: 999px;
+  border: none; cursor: pointer; text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+.lp-btn:hover { transform: translateY(-1px); }
+.lp-btn:active { transform: translateY(0); }
+
+.lp-btn--primary {
+  background: var(--lp-accent); color: #fff;
+  box-shadow: 0 4px 20px rgba(124, 111, 224, 0.3);
+}
+.lp-btn--primary:hover { box-shadow: 0 6px 28px rgba(124, 111, 224, 0.4); }
+
+.lp-btn--ghost {
+  background: transparent; color: var(--lp-ink-2);
+  border: 1.5px solid rgba(0,0,0,0.12);
+}
+.lp-btn--ghost:hover { border-color: rgba(0,0,0,0.25); color: var(--lp-ink); }
+
+.lp-btn--outline {
+  background: transparent; color: var(--lp-ink);
+  border: 2px solid var(--lp-ink);
+}
+.lp-btn--outline:hover { background: var(--lp-ink); color: var(--lp-bg); }
+
+/* ══════════════════════════════════════════════════════════
+   VALUE PROPOSITION
+   ══════════════════════════════════════════════════════════ */
+.lp-value-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 20px; margin-top: 48px;
+}
+.lp-value-card {
+  background: var(--lp-bg-card);
+  border-radius: var(--r-lg); padding: 36px 28px;
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.lp-value-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.06); }
+.lp-value-card-icon { font-size: 36px; display: block; margin-bottom: 16px; }
+.lp-value-card-title {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700; color: var(--lp-ink);
+  margin-bottom: 8px;
+}
+.lp-value-card-desc { font-size: 15px; line-height: 1.55; color: var(--lp-muted); }
+
+@media (max-width: 720px) {
+  .lp-value-cards { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOW IT WORKS
+   ══════════════════════════════════════════════════════════ */
+.lp-how-steps { display: flex; gap: 32px; margin-top: 48px; }
+.lp-how-step { flex: 1; }
+.lp-how-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: 50%;
+  font-family: var(--font-display); font-size: 16px; font-weight: 800;
   margin-bottom: 16px;
 }
-
-.lp-hero-h1 em {
-  font-style: normal;
-  color: var(--lp-brand);
-  position: relative;
-  display: inline-block;
-}
-
-/* 手绘下划线装饰 */
-.lp-hero-h1 em::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 100%;
-  height: 6px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'%3E%3Cpath d='M2 5 Q25 1 50 5 T100 5 T150 5 T198 5' stroke='%23FF5C35' stroke-width='3' fill='none' stroke-linecap='round' opacity='0.5'/%3E%3C/svg%3E") repeat-x center;
-  background-size: auto 100%;
-}
-
-/* Doodles: text-xl md:text-2xl font-medium -tracking-[1px] */
-.lp-hero-sub {
-  font-size: clamp(20px, 2.8vw, 28px);
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-  color: #fff;
-  margin-bottom: 12px;
-  max-width: 40ch;
-}
-
-.lp-hero-sub--2 {
-  font-size: clamp(14px, 1.8vw, 17px);
-  font-weight: 400;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 32px;
-  max-width: 46ch;
-}
-
-.lp-hero-actions {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.lp-scroll-hint {
-  position: absolute;
-  bottom: 36px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-}
-
-.lp-scroll-hint span {
-  display: block;
-  width: 1px;
-  height: 44px;
-  background: linear-gradient(to bottom, transparent, var(--lp-border-dk));
-  margin: auto;
-  animation: lp-scroll 2s ease-in-out infinite;
-}
-
-@keyframes lp-scroll {
-
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════
-   How it works
-   ══════════════════════════════════════════════════════════ */
-.lp-how {
-  padding-block: 100px;
-  background: var(--lp-bg);
-  border-top: 1px solid var(--lp-border);
-}
-
-.lp-how-steps {
-  margin-inline: var(--gut);
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-}
-
-.lp-how-step {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 0 32px;
-}
-
-.lp-how-step:first-child { padding-left: 0; }
-.lp-how-step:last-child  { padding-right: 0; }
-
-.lp-how-num {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--r-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 800;
-  color: #000;
-  flex-shrink: 0;
-}
-
+.lp-how-step:nth-child(1) .lp-how-num { background: var(--lp-sage); color: #2D5A3D; }
+.lp-how-step:nth-child(2) .lp-how-num { background: var(--lp-peach); color: #8A4A3A; }
+.lp-how-step:nth-child(3) .lp-how-num { background: var(--lp-lavender); color: #5A4A8A; }
 .lp-how-title {
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--lp-ink);
+  font-size: 20px; font-weight: 700; color: var(--lp-ink);
+  margin-bottom: 8px;
+}
+.lp-how-desc { font-size: 15px; line-height: 1.6; color: var(--lp-muted); }
+
+@media (max-width: 720px) {
+  .lp-how-steps { flex-direction: column; gap: 28px; }
 }
 
-.lp-how-desc {
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--lp-ink-2);
-  font-weight: 500;
+/* ══════════════════════════════════════════════════════════
+   MEMORY
+   ══════════════════════════════════════════════════════════ */
+.lp-memory { background: var(--lp-bg-warm); border-radius: 0; max-width: 100%; padding-left: 0; padding-right: 0; }
+.lp-memory-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--gut);
+  display: flex; align-items: center; gap: clamp(40px, 6vw, 80px);
 }
-
-.lp-how-connector {
-  font-size: 24px;
-  color: var(--lp-border-dk);
-  padding-top: 12px;
+.lp-memory-copy { flex: 1; }
+.lp-memory-visual { flex: 1; }
+.lp-memory-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.lp-memory-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--lp-bg-card); border-radius: 999px;
+  padding: 10px 20px; font-size: 14px; font-weight: 500;
+  color: var(--lp-ink-2); border: 1px solid rgba(0,0,0,0.06);
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.lp-memory-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.lp-memory-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--lp-accent-soft);
   flex-shrink: 0;
 }
+.lp-memory-chip:nth-child(2) .lp-memory-chip-dot { background: var(--lp-coral); }
+.lp-memory-chip:nth-child(3) .lp-memory-chip-dot { background: var(--lp-sage); }
+.lp-memory-chip:nth-child(4) .lp-memory-chip-dot { background: var(--lp-peach); }
+.lp-memory-chip:nth-child(5) .lp-memory-chip-dot { background: #F0D87C; }
+.lp-memory-chip:nth-child(6) .lp-memory-chip-dot { background: var(--lp-lavender); }
 
-@media (max-width: 768px) {
-  .lp-how-steps {
-    flex-direction: column;
-    gap: 40px;
-  }
-  .lp-how-step {
-    padding: 0;
-  }
-  .lp-how-connector {
-    transform: rotate(90deg);
-    padding-top: 0;
-    align-self: flex-start;
-    margin-left: 12px;
-  }
+@media (max-width: 720px) {
+  .lp-memory-inner { flex-direction: column; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   Roadmap
+   RELATIONSHIP GROWTH
    ══════════════════════════════════════════════════════════ */
-.lp-roadmap {
-  padding-block: 100px;
-  background: var(--lp-bg);
-  border-top: 1px solid var(--lp-border);
+.lp-growth { text-align: center; }
+.lp-growth .lp-body { margin: 0 auto 48px; }
+.lp-growth-stages {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; flex-wrap: wrap;
 }
-
-.lp-roadmap-grid {
-  margin-inline: var(--gut);
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 56px;
+.lp-growth-stage {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; position: relative; padding: 0 clamp(16px, 3vw, 40px);
 }
-
-.lp-roadmap-card {
-  border-radius: var(--r-lg);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1.5px solid var(--lp-border);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.lp-roadmap-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-}
-
-.lp-roadmap-card--done   { background: #fff; border-color: #83FFC1; }
-.lp-roadmap-card--soon   { background: #fff; border-color: #FF94DB; }
-.lp-roadmap-card--future { background: #fff; border-color: #8B8BFF; border-style: dashed; }
-
-.lp-roadmap-tag {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: var(--r-full);
-  width: fit-content;
-}
-
-.lp-roadmap-card--done   .lp-roadmap-tag { background: #83FFC1; color: #000; }
-.lp-roadmap-card--soon   .lp-roadmap-tag { background: #FF94DB; color: #000; }
-.lp-roadmap-card--future .lp-roadmap-tag { background: #8B8BFF; color: #000; }
-
-.lp-roadmap-title {
+.lp-growth-emoji { font-size: 40px; margin-bottom: 4px; }
+.lp-growth-label {
   font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--lp-ink);
+  font-size: 16px; font-weight: 700; color: var(--lp-ink);
+}
+.lp-growth-desc { font-size: 13px; color: var(--lp-muted); }
+.lp-growth-arrow {
+  position: absolute; right: -8px; top: 24px;
+  width: 16px; height: 2px; background: rgba(0,0,0,0.12);
+}
+.lp-growth-arrow::after {
+  content: ''; position: absolute; right: 0; top: -3px;
+  width: 8px; height: 8px;
+  border-right: 2px solid rgba(0,0,0,0.12);
+  border-top: 2px solid rgba(0,0,0,0.12);
+  transform: rotate(45deg);
 }
 
-.lp-roadmap-desc {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--lp-ink-2);
-  font-weight: 500;
-}
-
-.lp-roadmap-github {
-  margin-inline: var(--gut);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 16px;
-  text-align: center;
-}
-
-.lp-roadmap-github-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--lp-muted);
-}
-
-@media (max-width: 1024px) {
-  .lp-roadmap-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 600px) {
-  .lp-roadmap-grid { grid-template-columns: 1fr; }
+@media (max-width: 720px) {
+  .lp-growth-stages { flex-direction: column; gap: 24px; }
+  .lp-growth-arrow { display: none; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   跑马灯
+   OPEN SOURCE CTA
    ══════════════════════════════════════════════════════════ */
-.lp-marquee-wrap {
-  overflow: hidden;
-  padding-block: 14px;
-  background: var(--lp-ink);
-  position: relative;
-}
-
-.lp-marquee {
-  display: inline-flex;
-  will-change: transform;
-}
-
-.lp-marquee-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding-inline: 24px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
-  white-space: nowrap;
-}
-
-/* 每隔几个变品牌色 */
-.lp-marquee-item:nth-child(3n+1) { color: var(--lp-brand); }
-.lp-marquee-item:nth-child(3n+2) { color: var(--lp-yellow); }
-
-.lp-marquee-dot {
-  font-size: 8px;
-  color: rgba(255, 255, 255, 0.3);
-}
-
-/* lp-float animation (shared) */
-@keyframes lp-float {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(-2deg);
-  }
-
-  50% {
-    transform: translateY(-16px) rotate(2deg);
-  }
-}
-
-@keyframes lp-float-tag {
-
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-6px);
-  }
-}
+.lp-opensource { text-align: center; }
+.lp-opensource .lp-body { margin: 0 auto 36px; }
+.lp-opensource-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 /* ══════════════════════════════════════════════════════════
-   关于 — 左文字右图，仿 Doodles About
-   ══════════════════════════════════════════════════════════ */
-.lp-about {
-  padding-block: 100px;
-  background: var(--lp-bg);
-  border-top: 1.5px solid var(--lp-border);
-}
-
-.lp-about-inner {
-  margin-inline: var(--gut);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: center;
-}
-
-/* 左：文字 */
-.lp-about-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
-/* Logo 区域 */
-.lp-about-logo {
-  display: flex;
-  align-items: center;
-}
-
-.lp-about-logo img {
-  height: 48px;
-  width: auto;
-  display: block;
-}
-
-/* Logo 文字占位样式（未上传 logo 时显示） */
-.lp-about-logo .lp-nav-logo-name {
-  font-size: 32px;
-  letter-spacing: -0.02em;
-}
-
-.lp-about-desc {
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.75;
-  color: var(--lp-ink-2);
-  max-width: 36ch;
-  margin: 0;
-}
-
-.lp-about-copy .lp-btn {
-  align-self: flex-start;
-}
-
-/* 右：图片 */
-.lp-about-image {
-  position: relative;
-}
-
-/* 浮动装饰标签 — 像 Doodles 的 notification badge */
-.lp-float-tag {
-  position: absolute;
-  background: #fff;
-  border: 1.5px solid var(--lp-border);
-  border-radius: var(--r-full);
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--lp-ink);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  animation: lp-float-tag 3s ease-in-out infinite;
-  z-index: 2;
-}
-
-.lp-float-tag--tl {
-  top: -16px;
-  left: 5%;
-  animation-delay: 0s;
-}
-
-.lp-float-tag--br {
-  bottom: 10px;
-  right: 2%;
-  animation-delay: 1.5s;
-}
-
-.lp-about-img {
-  width: 100%;
-  height: auto;
-  border-radius: var(--r-lg);
-  display: block;
-}
-
-@media (max-width: 860px) {
-  .lp-about-inner {
-    grid-template-columns: 1fr;
-    gap: 48px;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════
-   情绪 / 状态
-   ══════════════════════════════════════════════════════════ */
-.lp-states {
-  padding-block: 100px;
-  background: var(--lp-bg-alt);
-  border-top: 1.5px solid var(--lp-border);
-  border-bottom: 1.5px solid var(--lp-border);
-}
-
-.lp-states-grid {
-  margin-inline: var(--gut);
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-}
-
-.lp-state-card {
-  background: #fff;
-  border: 1.5px solid var(--lp-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: default;
-}
-
-.lp-state-card:hover {
-  transform: translateY(-5px) rotate(-1deg);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-}
-
-.lp-state-preview {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-}
-
-/* Doodles animation-colors 精确值 */
-.lp-state-card--blue   { border-color: #8B8BFF; }
-.lp-state-card--blue   .lp-state-preview { background: #8B8BFF; }
-.lp-state-card--yellow { border-color: #FFE780; }
-.lp-state-card--yellow .lp-state-preview { background: #FFE780; }
-.lp-state-card--green  { border-color: #83FFC1; }
-.lp-state-card--green  .lp-state-preview { background: #83FFC1; }
-.lp-state-card--pink   { border-color: #FF94DB; }
-.lp-state-card--pink   .lp-state-preview { background: #FF94DB; }
-
-.lp-state-emoji {
-  font-size: 48px;
-  transition: transform 0.2s;
-}
-
-.lp-state-card:hover .lp-state-emoji {
-  transform: scale(1.15);
-}
-
-.lp-state-lock {
-  font-size: 32px;
-  opacity: 0.4;
-}
-
-.lp-state-info {
-  padding: 12px 14px;
-  border-top: 1.5px solid var(--lp-border);
-}
-
-.lp-state-name {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--lp-ink);
-  display: block;
-}
-
-/* 锁定状态 */
-.lp-state-card--locked {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.lp-state-card--locked:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* 更多提示卡 */
-.lp-state-card--more {
-  border-style: dashed;
-  background: transparent;
-}
-
-.lp-state-card--more:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.lp-state-more-dots {
-  font-size: 24px;
-  color: var(--lp-border-dk);
-  letter-spacing: 4px;
-}
-
-/* ══════════════════════════════════════════════════════════
-   分享
-   ══════════════════════════════════════════════════════════ */
-.lp-share {
-  padding-block: 120px;
-  background: var(--lp-bg);
-}
-
-.lp-share-inner {
-  margin-inline: var(--gut);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: center;
-}
-
-.lp-share-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* 分享视觉区：叠放的卡片 */
-.lp-share-visual {
-  position: relative;
-  height: 380px;
-}
-
-.lp-share-card {
-  position: absolute;
-  background: #fff;
-  border: 1.5px solid var(--lp-border);
-  border-radius: var(--r-lg);
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-}
-
-/* 公开状态页卡 — 前景 */
-.lp-share-card--profile {
-  width: 260px;
-  left: 50%;
-  top: 50%;
-  transform: translate(-60%, -48%) rotate(-2deg);
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.lp-share-card-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.lp-share-card-avatar {
-  font-size: 36px;
-}
-
-.lp-share-card-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--lp-ink);
-}
-
-.lp-share-card-status {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--lp-brand);
-  margin-top: 2px;
-}
-
-.lp-share-card-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.lp-share-card-bar-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--lp-muted);
-  white-space: nowrap;
-}
-
-.lp-share-card-bar-track {
-  flex: 1;
-  height: 5px;
-  background: var(--lp-bg-alt);
-  border-radius: var(--r-full);
-  overflow: hidden;
-}
-
-.lp-share-card-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--lp-brand), var(--lp-yellow));
-  border-radius: var(--r-full);
-}
-
-.lp-share-card-bar-val {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--lp-brand);
-}
-
-.lp-share-card-badges {
-  display: flex;
-  gap: 6px;
-}
-
-.lp-badge {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  background: var(--lp-bg-alt);
-  border: 1.5px solid var(--lp-border);
-  border-radius: var(--r-sm);
-}
-
-.lp-badge--locked {
-  opacity: 0.25;
-  filter: grayscale(1);
-}
-
-/* 炫耀卡片 — 背景 */
-.lp-share-card--gif {
-  width: 180px;
-  height: 180px;
-  right: 5%;
-  top: 50%;
-  transform: translateY(-38%) rotate(6deg);
-  z-index: 1;
-  border-color: #FFE8D9;
-  background: var(--lp-bg-coral);
-}
-
-.lp-share-card-gif-inner {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ══════════════════════════════════════════════════════════
-   故事 / 短剧 — Doodles 错落瀑布流
-   ══════════════════════════════════════════════════════════ */
-.lp-shorts {
-  padding-block: 100px;
-  background: var(--lp-bg-alt);
-  border-top: 1.5px solid var(--lp-border);
-  overflow: hidden;
-}
-
-/* 瀑布流容器：3 列等宽，顶部对齐，各列自己控制 marginTop */
-.lp-stories-grid {
-  margin-inline: var(--gut);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.lp-stories-col {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* 单个故事卡片 */
-.lp-story-card {
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  position: relative;
-  cursor: default;
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-  text-decoration: none;
-}
-
-.lp-story-card:hover {
-  transform: scale(1.03) rotate(-0.5deg);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
-}
-
-.lp-story-card--tall   { aspect-ratio: 9 / 16; }
-.lp-story-card--square { aspect-ratio: 1 / 1; }
-
-/* 颜色主题 */
-/* Doodles animation-colors 精确值 */
-.lp-story-card--green  { background: #83FFC1; }
-.lp-story-card--pink   { background: #FF94DB; }
-.lp-story-card--purple { background: #8B8BFF; }
-.lp-story-card--yellow { background: #FFE780; }
-.lp-story-card--blue   { background: #8B8BFF; }
-.lp-story-card--coral  { background: #FF94DB; }
-.lp-story-card--dark   { background: #000; }
-
-.lp-story-card-inner {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 16px;
-  text-align: center;
-}
-
-.lp-story-emoji {
-  font-size: clamp(32px, 4vw, 56px);
-  line-height: 1;
-  transition: transform 0.2s ease;
-}
-
-.lp-story-card:hover .lp-story-emoji {
-  transform: scale(1.15) rotate(5deg);
-}
-
-.lp-story-label {
-  font-size: clamp(11px, 1.2vw, 14px);
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: rgba(0, 0, 0, 0.65);
-  line-height: 1.3;
-}
-
-@media (max-width: 860px) {
-  .lp-stories-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .lp-stories-col:last-child {
-    display: none;
-  }
-}
-
-@media (max-width: 600px) {
-  .lp-stories-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  .lp-stories-col {
-    margin-top: 0 !important;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════
-   召唤 CTA
-   ══════════════════════════════════════════════════════════ */
-.lp-cta {
-  padding-block: 140px;
-  background: var(--lp-ink);
-  position: relative;
-  overflow: hidden;
-}
-
-/* 背景装饰圆 */
-.lp-cta::before {
-  content: '';
-  position: absolute;
-  top: -100px;
-  right: -100px;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 92, 53, 0.12) 0%, transparent 65%);
-  pointer-events: none;
-}
-
-.lp-cta::after {
-  content: '';
-  position: absolute;
-  bottom: -80px;
-  left: -80px;
-  width: 400px;
-  height: 400px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 216, 77, 0.08) 0%, transparent 65%);
-  pointer-events: none;
-}
-
-.lp-cta-inner {
-  position: relative;
-  z-index: 1;
-  margin-inline: var(--gut);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 20px;
-}
-
-.lp-cta-h2 {
-  font-family: var(--font-display);
-  font-size: clamp(36px, 5vw, 48px);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
-  color: #fff;
-}
-
-.lp-cta-h2 em {
-  font-style: normal;
-  color: #fff;
-}
-
-.lp-cta .lp-eyebrow {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.lp-cta-sub {
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
-  max-width: 40ch;
-}
-
-.lp-cta-actions {
-  display: flex;
-  gap: 14px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.lp-cta-actions .lp-btn--ghost {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-}
-
-.lp-cta-actions .lp-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* ══════════════════════════════════════════════════════════
-   页脚
+   FOOTER
    ══════════════════════════════════════════════════════════ */
 .lp-footer {
-  background: var(--lp-ink);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-block: 32px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding: 32px var(--gut);
 }
-
 .lp-footer-inner {
-  margin-inline: var(--gut);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
+  max-width: var(--max-w); margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
 }
-
-.lp-footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 20px;
-}
-
-.lp-footer .lp-nav-logo-name {
-  color: rgba(255, 255, 255, 0.85);
-}
-
 .lp-footer-links {
-  display: flex;
-  gap: 24px;
+  display: flex; gap: 20px;
+  font-size: 13px; color: var(--lp-muted);
 }
+.lp-footer-links a { color: var(--lp-muted); text-decoration: none; }
+.lp-footer-links a:hover { color: var(--lp-ink); }
+.lp-footer-copy { font-size: 13px; color: var(--lp-muted); }
 
-.lp-footer-links a,
-.lp-footer-link-stub {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.4);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.lp-footer-links a:hover {
-  color: #fff;
-}
-
-.lp-footer-link-stub {
-  cursor: default;
-}
-
-.lp-footer-copy {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.25);
-  font-weight: 600;
-}
-
-/* ══════════════════════════════════════════════════════════
-   响应式
-   ══════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) {
-  .lp-states-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 860px) {
-  .lp-character-inner {
-    grid-template-columns: 1fr;
-    gap: 56px;
-  }
-
-  .lp-share-inner {
-    grid-template-columns: 1fr;
-    gap: 56px;
-  }
-
-  .lp-share-visual {
-    height: 300px;
-  }
-
-  .lp-states-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .lp-shorts-grid {
-    grid-template-columns: 1fr;
-    max-width: 360px;
-    margin-inline: auto;
-  }
-
-  .lp-float-tag--tl {
-    top: 12px;
-    left: 0;
-  }
-
-  .lp-float-tag--br {
-    bottom: 12px;
-    right: 0;
-  }
-}
-
-@media (max-width: 600px) {
-  :root {
-    --gut: 20px;
-  }
-
-  .lp-nav-links {
-    display: none;
-  }
-
-  .lp-nav-auth-desktop {
-    display: none;
-  }
-
-  .lp-nav-burger {
-    display: flex;
-  }
-
-  .lp-hero-h1 {
-    font-size: clamp(44px, 12vw, 72px);
-  }
-
-  .lp-states-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .lp-cta-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .lp-cta-actions .lp-btn {
-    justify-content: center;
-  }
-
-  .lp-footer-inner {
-    flex-direction: column;
-    text-align: center;
-  }
+@media (max-width: 720px) {
+  .lp-footer-inner { flex-direction: column; align-items: center; text-align: center; }
 }

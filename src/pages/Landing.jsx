@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { hasSupabase } from '../utils/supabase';
+import './Landing.css';
+
 // Site config loaded from KV via API
 async function loadSiteConfig() {
   try {
@@ -9,105 +11,74 @@ async function loadSiteConfig() {
     return res.ok ? await res.json() : {};
   } catch { return {}; }
 }
-import './Landing.css';
 
-// ── Bilingual copy ────────────────────────────────────────────────────────────
+// ── Bilingual copy ──────────────────────────────────────────────────────────
 const COPY = {
   zh: {
     nav: {
-      about:    '关于',
-      share:    '博客',
-      feedback: '反馈',
-      publicProfile: '🌐 我的主页',
-      openApp:  '开始聊天',
-      signOut:  '退出登录',
-      signIn:   '登录 / 注册',
+      about: '关于',
+      blog: '博客',
+      openApp: '开始聊天',
+      signOut: '退出',
+      signIn: '登录',
     },
     hero: {
-      eyebrow: '有记忆的 AI 伴侣',
-      h1:      ['一个真正记得你的', 'AI。'],
-      sub1:    '不是助手，是伙伴。',
-      sub2:    '拍拍会记住你说过的每一件重要的事，理解你的偏好和情绪，在你需要的时候帮你搜索、提醒、解决问题。',
-      cta:     '开始聊天 →',
-      more:    '了解更多 ↓',
+      h1: ['懂你的', '小伙伴。'],
+      sub: '不是工具，不是助手。是一个会记住你、理解你、陪你成长的伙伴。',
+      cta: '开始聊天',
+      secondary: '了解更多',
     },
-    marquee: [
-      '记住你', '理解你', '帮你搜索', '设置提醒',
-      '查天气', '越来越懂你', '有自己的性格', '真实陪伴',
-      '不敷衍', '有记忆', '跨对话记忆', '情绪感知',
+    stats: [
+      { value: '开源', label: '完全免费' },
+      { value: '∞', label: '持久记忆' },
+      { value: '24/7', label: '随时陪伴' },
     ],
+    value: {
+      eyebrow: '为什么不一样',
+      h2: '每个 AI 都会忘记你。',
+      h2em: '拍拍不会。',
+      body: '市面上的 AI 每次对话都从零开始。拍拍记得你的名字、你的喜好、你上次聊到一半的事。它不是在模拟关心——它真的在积累对你的了解。',
+      cards: [
+        { icon: '🧠', title: '持久记忆', desc: '跨对话记住你说过的重要事情' },
+        { icon: '💛', title: '情绪感知', desc: '感知你的状态，调整陪伴方式' },
+        { icon: '🔍', title: '真实能力', desc: '搜索、天气、提醒——不只是聊天' },
+      ],
+    },
     how: {
-      eyebrow: '很简单',
-      h2: ['注册，', '然后聊天。'],
+      eyebrow: '三步开始',
+      h2: '简单到不需要教程。',
       steps: [
-        {
-          title: '登录',
-          desc:  '用 GitHub 或 Google 账号一键登录。',
-        },
-        {
-          title: '开始聊天',
-          desc:  '跟拍拍说任何事。它会记住重要的信息，下次聊天时自然地引用。',
-        },
-        {
-          title: '它越来越懂你',
-          desc:  '聊得越多，拍拍对你的了解越深。它知道你的偏好、习惯、最近的心情。',
-        },
+        { num: '01', title: '登录', desc: 'GitHub 或 Google 一键登录，不需要填任何表单。' },
+        { num: '02', title: '聊天', desc: '跟拍拍说任何事。它会自然地记住重要的细节。' },
+        { num: '03', title: '它越来越懂你', desc: '聊得越多，拍拍对你了解越深。就像真正的朋友一样。' },
       ],
     },
-    about: {
-      desc: '市面上的 AI 每次对话都从零开始。\n拍拍不一样——它记得你是谁，记得你说过什么，记得你在意什么。',
-      cta:  '开始聊天 →',
+    memory: {
+      eyebrow: '核心能力',
+      h2: '记忆，',
+      h2em: '不是噱头。',
+      body: '拍拍会自动从对话中提取重要信息，形成对你的长期了解。你可以随时查看和管理它记住的一切。',
+      items: ['你的偏好和习惯', '你提到的重要的人', '你最近的心情变化', '你在意的事情', '你的日程和计划', '你分享过的故事'],
     },
-    states: {
-      eyebrow: '它能做什么。',
-      h2: ['不只是', '聊天。'],
-      body: '拍拍有真正的能力。',
-      cards: ['搜索互联网', '查天气', '设提醒', '记住你', '理解情绪', '解决问题'],
-    },
-    share: {
-      eyebrow: '越聊越懂你。',
-      h2: ['持久的', '记忆。'],
-      body1: '拍拍会自动从对话中提取重要信息，\n形成对你的长期了解。',
-      body2: '你可以随时查看和管理拍拍记住的一切。你的数据，你做主。',
-      cta:   '开始聊天 →',
-      demo:  '了解记忆系统 →',
-      cardName:   '你的名字',
-      cardStatus: '💬 聊天中',
-      cardLabel:  '拍拍记住了',
-      cardGif:    '记忆面板',
-    },
-    shorts: {
-      eyebrow: '不同的关系阶段。',
-      h2: ['从陌生人', '到老朋友。'],
-      body: '关系会成长。',
-      cards: ['刚认识', '开始熟悉', '可以开玩笑', '深度理解', '知己', '默契'],
-    },
-    roadmap: {
-      eyebrow: '开源 · 持续进化',
-      h2: ['我们正在', '构建什么。'],
-      body: 'OpenPat 刚刚开始。你的参与会让它更快到来。',
-      tagDone: '已上线',
-      tagSoon: '即将推出',
-      tagFuture: '大胆设想',
-      items: [
-        { tag: 'done', title: '智能对话', desc: '基于 Gemini，能搜索、查天气、设提醒，不只是聊天。' },
-        { tag: 'done', title: '持久记忆', desc: '自动从对话中提取重要信息，跨对话长期记忆。' },
-        { tag: 'done', title: '情绪感知', desc: '感知你的情绪状态，调整回应方式。' },
-        { tag: 'done', title: '关系成长', desc: '从陌生人到知己，聊得越多关系越深。' },
-        { tag: 'soon', title: '📱 移动端 App', desc: '随时随地跟拍拍聊天，不只在浏览器里。' },
-        { tag: 'soon', title: '🎨 自定义角色', desc: '选择你喜欢的伙伴形象——可爱动物、动漫角色、或者其他。' },
-        { tag: 'soon', title: '🔔 主动联系', desc: '拍拍会在合适的时候主动找你——提醒、问候、或者只是想聊聊。' },
-        { tag: 'future', title: '🧠 更强的智力', desc: '接入更多工具，帮你管理日程、读文件、做更复杂的事。' },
-        { tag: 'future', title: '🌍 多平台', desc: '桌面端、手机端、浏览器插件——在每个场景陪伴你。' },
+    growth: {
+      eyebrow: '关系会成长',
+      h2: '从陌生人，',
+      h2em: '到老朋友。',
+      body: '你们的关系不是固定的。随着对话的深入，拍拍会从礼貌的陌生人，变成可以开玩笑的朋友，最终成为真正懂你的知己。',
+      stages: [
+        { emoji: '👋', label: '初识', desc: '礼貌、好奇' },
+        { emoji: '☕', label: '熟悉', desc: '放松、自然' },
+        { emoji: '😄', label: '默契', desc: '可以开玩笑' },
+        { emoji: '💜', label: '知己', desc: '深度理解' },
       ],
-      github: '这是一个开源项目。你的 Star 让我们知道它值得被做。',
-      star: '⭐ Star on GitHub',
     },
-    cta: {
-      eyebrow: '随时开始。',
-      h2: ['找一个', '真正记得你的', '伙伴。'],
-      body: '注册，然后开始聊天。\n拍拍会做剩下的事——记住你、理解你、陪伴你。',
-      start: '开始聊天',
+    opensource: {
+      eyebrow: '开源项目',
+      h2: '透明、免费、',
+      h2em: '由社区驱动。',
+      body: 'OpenPat 是一个开源项目。我们相信 AI 伴侣应该是透明的——你可以看到它的每一行代码，知道它如何处理你的数据。',
+      star: 'Star on GitHub',
+      chat: '开始聊天',
     },
     footer: {
       tos: '服务条款',
@@ -118,99 +89,69 @@ const COPY = {
 
   en: {
     nav: {
-      about:    'About',
-      share:    'Blog',
-      feedback: 'Feedback',
-      publicProfile: '🌐 My Profile',
-      openApp:  'Start Chatting',
-      signOut:  'Sign Out',
-      signIn:   'Sign In / Sign Up',
+      about: 'About',
+      blog: 'Blog',
+      openApp: 'Start Chatting',
+      signOut: 'Sign Out',
+      signIn: 'Sign In',
     },
     hero: {
-      eyebrow: 'AI Companion with Memory',
-      h1:      ['An AI that actually', 'remembers you.'],
-      sub1:    'Not an assistant. A companion.',
-      sub2:    'Pat remembers everything important you share, understands your preferences and emotions, and helps with search, reminders, and real problems when you need it.',
-      cta:     'Start chatting →',
-      more:    'Learn more ↓',
+      h1: ['A little friend', 'who gets you.'],
+      sub: 'Not a tool. Not an assistant. A companion that remembers you, understands you, and grows with you.',
+      cta: 'Start Chatting',
+      secondary: 'Learn More',
     },
-    marquee: [
-      'Remembers you', 'Understands you', 'Web search', 'Set reminders',
-      'Check weather', 'Learns over time', 'Has personality', 'Real companionship',
-      'Never shallow', 'Persistent memory', 'Cross-session', 'Emotion aware',
+    stats: [
+      { value: 'Open Source', label: 'Completely free' },
+      { value: '∞', label: 'Persistent memory' },
+      { value: '24/7', label: 'Always there' },
     ],
+    value: {
+      eyebrow: 'Why it\'s different',
+      h2: 'Every AI forgets you.',
+      h2em: 'Pat doesn\'t.',
+      body: 'Every AI out there starts from scratch each conversation. Pat remembers your name, your preferences, the thing you were talking about last time. It\'s not simulating care — it\'s genuinely building an understanding of you.',
+      cards: [
+        { icon: '🧠', title: 'Persistent Memory', desc: 'Remembers important things across conversations' },
+        { icon: '💛', title: 'Emotion Aware', desc: 'Senses your mood and adjusts how it responds' },
+        { icon: '🔍', title: 'Real Capabilities', desc: 'Search, weather, reminders — not just chat' },
+      ],
+    },
     how: {
-      eyebrow: 'Simple',
-      h2: ['Sign up,', 'then chat.'],
+      eyebrow: 'Three steps',
+      h2: 'So simple, no tutorial needed.',
       steps: [
-        {
-          title: 'Sign in',
-          desc:  'One-click sign in with GitHub or Google.',
-        },
-        {
-          title: 'Start chatting',
-          desc:  'Tell Pat anything. It remembers what matters and naturally references it in future conversations.',
-        },
-        {
-          title: 'It gets to know you',
-          desc:  'The more you chat, the deeper Pat understands you. Your preferences, habits, recent mood — all remembered.',
-        },
+        { num: '01', title: 'Sign in', desc: 'One click with GitHub or Google. No forms to fill.' },
+        { num: '02', title: 'Chat', desc: 'Tell Pat anything. It naturally remembers the important details.' },
+        { num: '03', title: 'It learns you', desc: 'The more you chat, the deeper Pat knows you. Like a real friend.' },
       ],
     },
-    about: {
-      desc: 'Every AI out there starts from scratch each conversation.\nPat is different — it remembers who you are, what you said, and what you care about.',
-      cta:  'Start chatting →',
+    memory: {
+      eyebrow: 'Core feature',
+      h2: 'Memory, ',
+      h2em: 'not a gimmick.',
+      body: 'Pat automatically extracts important information from conversations and builds a long-term understanding of you. You can view and manage everything it remembers.',
+      items: ['Your preferences & habits', 'People you mention', 'Your recent mood shifts', 'Things you care about', 'Your plans & schedule', 'Stories you\'ve shared'],
     },
-    states: {
-      eyebrow: 'What it can do.',
-      h2: ['More than', 'just chat.'],
-      body: 'Pat has real capabilities.',
-      cards: ['Web search', 'Weather', 'Reminders', 'Memory', 'Emotion aware', 'Problem solving'],
-    },
-    share: {
-      eyebrow: 'The more you chat, the more it knows.',
-      h2: ['Persistent', 'memory.'],
-      body1: 'Pat automatically extracts important information from your conversations\nand builds a long-term understanding of you.',
-      body2: 'You can view and manage everything Pat remembers. Your data, your control.',
-      cta:   'Start chatting →',
-      demo:  'Learn about memory →',
-      cardName:   'Your Name',
-      cardStatus: '💬 Chatting',
-      cardLabel:  'Pat remembers',
-      cardGif:    'Memory panel',
-    },
-    shorts: {
-      eyebrow: 'Relationship stages.',
-      h2: ['From stranger', 'to confidant.'],
-      body: 'The relationship grows.',
-      cards: ['Just met', 'Getting familiar', 'Can joke around', 'Deep understanding', 'Confidant', 'In sync'],
-    },
-    roadmap: {
-      eyebrow: 'Open Source · Always Evolving',
-      h2: ['What we\'re', 'building.'],
-      body: 'OpenPat is just getting started. Your participation brings it closer.',
-      tagDone: 'Live',
-      tagSoon: 'Coming soon',
-      tagFuture: 'Big dreams',
-      items: [
-        { tag: 'done', title: 'Smart conversation', desc: 'Powered by Gemini. Can search, check weather, set reminders — not just chat.' },
-        { tag: 'done', title: 'Persistent memory', desc: 'Automatically extracts important info from conversations. Long-term cross-session memory.' },
-        { tag: 'done', title: 'Emotion awareness', desc: 'Senses your emotional state and adjusts responses accordingly.' },
-        { tag: 'done', title: 'Relationship growth', desc: 'From stranger to confidant. The more you chat, the deeper the bond.' },
-        { tag: 'soon', title: '📱 Mobile app', desc: 'Chat with Pat anytime, anywhere — not just in the browser.' },
-        { tag: 'soon', title: '🎨 Custom characters', desc: 'Choose your companion\'s look — cute animals, anime, or something else entirely.' },
-        { tag: 'soon', title: '🔔 Proactive outreach', desc: 'Pat reaches out when it makes sense — reminders, check-ins, or just to chat.' },
-        { tag: 'future', title: '🧠 Stronger intelligence', desc: 'More tools: calendar, file reading, complex task handling.' },
-        { tag: 'future', title: '🌍 Multi-platform', desc: 'Desktop, mobile, browser extension — with you everywhere.' },
+    growth: {
+      eyebrow: 'Relationships grow',
+      h2: 'From stranger, ',
+      h2em: 'to confidant.',
+      body: 'Your relationship isn\'t static. As conversations deepen, Pat evolves from a polite stranger, to a friend who jokes with you, to a confidant who truly understands you.',
+      stages: [
+        { emoji: '👋', label: 'Just met', desc: 'Polite, curious' },
+        { emoji: '☕', label: 'Familiar', desc: 'Relaxed, natural' },
+        { emoji: '😄', label: 'In sync', desc: 'Can joke around' },
+        { emoji: '💜', label: 'Confidant', desc: 'Deep understanding' },
       ],
-      github: 'This is an open-source project. Your star tells us it\'s worth building.',
-      star: '⭐ Star on GitHub',
     },
-    cta: {
-      eyebrow: 'Start anytime.',
-      h2: ['Find a companion', 'that remembers you.', ''],
-      body: 'Sign up and start chatting.\nPat does the rest — remembering, understanding, being there.',
-      start: 'Start chatting',
+    opensource: {
+      eyebrow: 'Open source',
+      h2: 'Transparent, free, ',
+      h2em: 'community-driven.',
+      body: 'OpenPat is open source. We believe AI companions should be transparent — you can see every line of code and know exactly how your data is handled.',
+      star: 'Star on GitHub',
+      chat: 'Start Chatting',
     },
     footer: {
       tos: 'Terms of Service',
@@ -220,6 +161,7 @@ const COPY = {
   },
 };
 
+// ── Nav auth component ──────────────────────────────────────────────────────
 function NavAuth({ t }) {
   const { user, username, signOut } = useAuth();
   const [open, setOpen] = useState(false);
@@ -228,46 +170,61 @@ function NavAuth({ t }) {
 
   if (user) {
     return (
-      <div className="lp-nav-auth-user">
-        <button className="lp-nav-auth-avatar-btn" onClick={() => setOpen(v => !v)}>
+      <div className="lp-nav-user">
+        <button className="lp-nav-avatar-btn" onClick={() => setOpen(v => !v)}>
           {user.user_metadata?.avatar_url
-            ? <img src={user.user_metadata.avatar_url} alt="" className="lp-nav-auth-avatar" />
-            : <span className="lp-nav-auth-avatar-fallback">{(username || '?')[0].toUpperCase()}</span>
-          }
-          <span className="lp-nav-auth-username">@{username}</span>
-          <span className="lp-nav-auth-chevron">{open ? '▲' : '▼'}</span>
+            ? <img src={user.user_metadata.avatar_url} alt="" className="lp-nav-avatar" />
+            : <span className="lp-nav-avatar-fallback">{(username || '?')[0].toUpperCase()}</span>}
+          <span className="lp-nav-username">@{username}</span>
         </button>
         {open && (
-          <div className="lp-nav-auth-dropdown">
-            <a href={`/u/${username}`} className="lp-nav-auth-menu-item">{t.nav.publicProfile}</a>
-            <a href="/chat" className="lp-nav-auth-menu-item">{t.nav.openApp}</a>
-            <button className="lp-nav-auth-menu-item lp-nav-auth-menu-item--danger" onClick={signOut}>{t.nav.signOut}</button>
+          <div className="lp-nav-dropdown">
+            <a href={`/u/${username}`} className="lp-nav-dropdown-item">Profile</a>
+            <a href="/chat" className="lp-nav-dropdown-item">{t.nav.openApp}</a>
+            <button className="lp-nav-dropdown-item lp-nav-dropdown-item--danger" onClick={signOut}>{t.nav.signOut}</button>
           </div>
         )}
       </div>
     );
   }
 
+  return <Link to="/signin" className="lp-nav-signin-btn">{t.nav.signIn}</Link>;
+}
+
+// ── Scroll-reveal hook ──────────────────────────────────────────────────────
+function useReveal() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { el.classList.add('revealed'); obs.unobserve(el); } },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
+function Reveal({ children, className = '', delay = 0 }) {
+  const ref = useReveal();
   return (
-    <Link to="/signin" className="lp-nav-signin">{t.nav.signIn}</Link>
+    <div ref={ref} className={`reveal ${className}`} style={delay ? { transitionDelay: `${delay}ms` } : undefined}>
+      {children}
+    </div>
   );
 }
 
-function scrollTo(id) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-}
-
+// ── Main component ──────────────────────────────────────────────────────────
 export default function Landing() {
-  const marqueeRef = useRef(null);
   const [navScrolled, setNavScrolled] = useState(false);
-  const [authError, setAuthError] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem('lp-lang') || 'zh');
-  const [siteConfig, setSiteConfigState] = useState({});
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  const [siteConfig, setSiteConfig] = useState({});
 
-  useEffect(() => {
-    loadSiteConfig().then(setSiteConfigState).catch(() => {});
-  }, []);
+  useEffect(() => { loadSiteConfig().then(setSiteConfig).catch(() => {}); }, []);
 
   const t = COPY[lang];
 
@@ -287,372 +244,210 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 40);
+    const onScroll = () => setNavScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    const el = marqueeRef.current;
-    if (!el) return;
-    el.innerHTML = '';
-    const items = t.marquee.map(text => {
-      const span = document.createElement('span');
-      span.className = 'lp-marquee-item';
-      span.innerHTML = `<span class="lp-marquee-dot">✦</span>${text}`;
-      return span;
-    });
-    items.forEach(i => el.appendChild(i));
-    // duplicate for seamless loop
-    items.forEach(i => el.appendChild(i.cloneNode(true)));
-    let x = 0, raf;
-    const tick = () => {
-      x -= 0.55;
-      el.style.transform = `translateX(${x}px)`;
-      if (Math.abs(x) > el.scrollWidth / 2) x = 0;
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [lang]); // re-run when language changes
-
-  const roadmapTagClass = { done: 'lp-roadmap-card--done', soon: 'lp-roadmap-card--soon', future: 'lp-roadmap-card--future' };
-  const roadmapTagLabel = { done: t.roadmap.tagDone, soon: t.roadmap.tagSoon, future: t.roadmap.tagFuture };
+  function scrollTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  }
 
   return (
     <div className="lp">
 
-      {/* ── OAuth error ───────────────────────────────────────────────────── */}
+      {/* ── Auth error ────────────────────────────────────────── */}
       {authError && (
         <div className="lp-auth-error">
           <span>{lang === 'zh' ? `登录失败：${authError}` : `Sign-in failed: ${authError}`}</span>
-          <button className="lp-auth-error-close" onClick={() => setAuthError(null)}>×</button>
+          <button onClick={() => setAuthError(null)}>×</button>
         </div>
       )}
 
-      {/* ── Nav ──────────────────────────────────────────────────────────── */}
+      {/* ── Nav ───────────────────────────────────────────────── */}
       <nav className={`lp-nav${navScrolled ? ' lp-nav--scrolled' : ''}`}>
         <div className="lp-nav-inner">
-          <a href="/" className="lp-nav-logo">
-            <span className="lp-nav-logo-name">OpenPat</span>
-          </a>
+          <a href="/" className="lp-logo">OpenPat</a>
           <div className="lp-nav-links">
             <button className="lp-nav-link" onClick={() => scrollTo('about')}>{t.nav.about}</button>
-            <Link to="/blog" className="lp-nav-link">{t.nav.share}</Link>
-            <button className="lp-nav-link lp-nav-lang" onClick={toggleLang} title="Switch language">
+            <Link to="/blog" className="lp-nav-link">{t.nav.blog}</Link>
+            <button className="lp-nav-link lp-nav-lang" onClick={toggleLang}>
               {lang === 'zh' ? 'EN' : '中'}
             </button>
+            <div className="lp-nav-auth-area"><NavAuth t={t} /></div>
           </div>
-          <div className="lp-nav-auth-desktop"><NavAuth t={t} /></div>
           <button className="lp-nav-burger" onClick={() => setMobileMenu(v => !v)} aria-label="Menu">
             <span /><span /><span />
           </button>
         </div>
         {mobileMenu && (
           <div className="lp-mobile-menu">
-            <button className="lp-mobile-link" onClick={() => { scrollTo('about'); setMobileMenu(false); }}>{t.nav.about}</button>
-            <Link to="/blog" className="lp-mobile-link" onClick={() => setMobileMenu(false)}>{t.nav.share}</Link>
-            <button className="lp-mobile-link" onClick={() => { toggleLang(); setMobileMenu(false); }}>
-              {lang === 'zh' ? 'EN' : '中'}
-            </button>
-            <div className="lp-mobile-auth">
-              <NavAuth t={t} />
-            </div>
+            <button onClick={() => { scrollTo('about'); setMobileMenu(false); }}>{t.nav.about}</button>
+            <Link to="/blog" onClick={() => setMobileMenu(false)}>{t.nav.blog}</Link>
+            <button onClick={() => { toggleLang(); setMobileMenu(false); }}>{lang === 'zh' ? 'EN' : '中'}</button>
+            <NavAuth t={t} />
           </div>
         )}
       </nav>
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="lp-hero">
-        <div className="lp-hero-video-wrap">
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <section className={`lp-hero${siteConfig.hero_video_url ? '' : ' lp-hero--no-video'}`}>
+        {/* Full-screen background video */}
+        <div className="lp-hero-bg">
           {siteConfig.hero_video_url && (
-            <video className="lp-hero-video" autoPlay muted loop playsInline aria-hidden="true">
+            <video className="lp-hero-video" autoPlay muted loop playsInline>
               <source src={siteConfig.hero_video_url} type="video/mp4" />
             </video>
           )}
-          <div className="lp-hero-video-overlay" />
-          <div className="lp-hero-video-overlay-top" />
+          <div className="lp-hero-overlay" />
         </div>
 
-        <div className="lp-hero-content">
-          <p className="lp-eyebrow">{t.hero.eyebrow}</p>
-          <h1 className="lp-hero-h1">
-            {t.hero.h1[0]}<br />
-            <em>{t.hero.h1[1]}</em>
-          </h1>
-          <p className="lp-hero-sub">{t.hero.sub1}</p>
-          <p className="lp-hero-sub lp-hero-sub--2">{t.hero.sub2}</p>
-          <div className="lp-hero-actions">
-            <Link to="/chat" className="lp-btn lp-btn--primary">{t.hero.cta}</Link>
-            <button className="lp-btn lp-btn--ghost" onClick={() => scrollTo('about')}>{t.hero.more}</button>
+        <div className="lp-hero-inner">
+          <div className="lp-hero-content">
+            <h1 className="lp-hero-h1">
+              {t.hero.h1[0]}<br />
+              <span className="lp-hero-h1-em">{t.hero.h1[1]}</span>
+            </h1>
+            <p className="lp-hero-sub">{t.hero.sub}</p>
+            <div className="lp-hero-actions">
+              <Link to="/chat" className="lp-btn lp-btn--hero">{t.hero.cta}</Link>
+              <button className="lp-btn lp-btn--hero-ghost" onClick={() => scrollTo('about')}>{t.hero.secondary}</button>
+            </div>
           </div>
+
+          {/* Creature shown alongside text when no video */}
+          {!siteConfig.hero_video_url && (
+            <div className="lp-hero-visual">
+              <div className="lp-creature">
+                <div className="lp-creature-body">
+                  <div className="lp-creature-face">
+                    <div className="lp-creature-eye lp-creature-eye--l"><div className="lp-creature-pupil" /></div>
+                    <div className="lp-creature-eye lp-creature-eye--r"><div className="lp-creature-pupil" /></div>
+                    <div className="lp-creature-mouth" />
+                  </div>
+                  <div className="lp-creature-cheek lp-creature-cheek--l" />
+                  <div className="lp-creature-cheek lp-creature-cheek--r" />
+                </div>
+                <div className="lp-creature-shadow" />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="lp-scroll-hint" aria-hidden="true"><span /></div>
       </section>
 
-      {/* ── Marquee ──────────────────────────────────────────────────────── */}
-      <div className="lp-marquee-wrap">
-        <div className="lp-marquee" ref={marqueeRef} />
+      {/* ── Stats strip ───────────────────────────────────────── */}
+      <div className="lp-stats">
+        {t.stats.map((s, i) => (
+          <div key={i} className="lp-stat">
+            <span className="lp-stat-value">{s.value}</span>
+            <span className="lp-stat-label">{s.label}</span>
+          </div>
+        ))}
       </div>
 
-      {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section id="how" className="lp-how">
-        <div className="lp-section-head">
+      {/* ── Value proposition ─────────────────────────────────── */}
+      <section id="about" className="lp-section lp-value">
+        <Reveal>
+          <p className="lp-eyebrow">{t.value.eyebrow}</p>
+          <h2 className="lp-h2">{t.value.h2}<br /><span className="lp-h2-em">{t.value.h2em}</span></h2>
+          <p className="lp-body">{t.value.body}</p>
+        </Reveal>
+        <div className="lp-value-cards">
+          {t.value.cards.map((c, i) => (
+            <Reveal key={i} className="lp-value-card" delay={i * 120}>
+              <span className="lp-value-card-icon">{c.icon}</span>
+              <h3 className="lp-value-card-title">{c.title}</h3>
+              <p className="lp-value-card-desc">{c.desc}</p>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── How it works ──────────────────────────────────────── */}
+      <section className="lp-section lp-how">
+        <Reveal>
           <p className="lp-eyebrow">{t.how.eyebrow}</p>
-          <h2 className="lp-section-h2">{t.how.h2[0]}<em>{t.how.h2[1]}</em></h2>
-        </div>
+          <h2 className="lp-h2">{t.how.h2}</h2>
+        </Reveal>
         <div className="lp-how-steps">
-          <div className="lp-how-step">
-            <div className="lp-how-num" style={{ background: '#83FFC1' }}>01</div>
-            <h3 className="lp-how-title">{t.how.steps[0].title}</h3>
-            <p className="lp-how-desc">
-              {t.how.steps[0].desc} <code>{t.how.steps[0].code}</code>
-              {t.how.steps[0].desc2} <code>{t.how.steps[0].code2}</code>
-              {t.how.steps[0].desc3}
-              <br /><a href="/chat" style={{ color: 'inherit', fontWeight: 800 }}>{t.how.steps[0].link}</a>
-            </p>
-          </div>
-          <div className="lp-how-connector" aria-hidden="true">→</div>
-          <div className="lp-how-step">
-            <div className="lp-how-num" style={{ background: '#FF94DB' }}>02</div>
-            <h3 className="lp-how-title">{t.how.steps[1].title}</h3>
-            <p className="lp-how-desc">{t.how.steps[1].desc}</p>
-          </div>
-          <div className="lp-how-connector" aria-hidden="true">→</div>
-          <div className="lp-how-step">
-            <div className="lp-how-num" style={{ background: '#8B8BFF' }}>03</div>
-            <h3 className="lp-how-title">{t.how.steps[2].title}</h3>
-            <p className="lp-how-desc">{t.how.steps[2].desc}</p>
-          </div>
+          {t.how.steps.map((s, i) => (
+            <Reveal key={i} className="lp-how-step" delay={i * 150}>
+              <span className="lp-how-num">{s.num}</span>
+              <h3 className="lp-how-title">{s.title}</h3>
+              <p className="lp-how-desc">{s.desc}</p>
+            </Reveal>
+          ))}
         </div>
       </section>
 
-      {/* ── About ────────────────────────────────────────────────────────── */}
-      <section id="about" className="lp-about">
-        <div className="lp-about-inner">
-          <div className="lp-about-copy">
-            <div className="lp-about-logo">
-              <span className="lp-nav-logo-name">OpenPat</span>
-            </div>
-            <p className="lp-about-desc">
-              {t.about.desc.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
-            </p>
-            <Link to="/chat" className="lp-btn lp-btn--green">{t.about.cta}</Link>
-          </div>
-          <div className="lp-about-image">
-            {siteConfig.about_image_url && <img src={siteConfig.about_image_url} alt="OpenPat companions" className="lp-about-img" />}
-          </div>
-        </div>
-      </section>
-
-      {/* ── States ───────────────────────────────────────────────────────── */}
-      <section className="lp-states">
-        <div className="lp-section-head">
-          <p className="lp-eyebrow">{t.states.eyebrow}</p>
-          <h2 className="lp-section-h2">{t.states.h2[0]}<em>{t.states.h2[1]}</em></h2>
-          <p className="lp-body-text">{t.states.body}</p>
-        </div>
-        <div className="lp-states-grid">
-          <div className="lp-state-card lp-state-card--blue">
-            <div className="lp-state-preview"><span className="lp-state-emoji">🧠</span></div>
-            <div className="lp-state-info"><span className="lp-state-name">{t.states.cards[0]}</span></div>
-          </div>
-          <div className="lp-state-card lp-state-card--yellow">
-            <div className="lp-state-preview"><span className="lp-state-emoji">⚡</span></div>
-            <div className="lp-state-info"><span className="lp-state-name">{t.states.cards[1]}</span></div>
-          </div>
-          <div className="lp-state-card lp-state-card--green">
-            <div className="lp-state-preview"><span className="lp-state-emoji">🎉</span></div>
-            <div className="lp-state-info"><span className="lp-state-name">{t.states.cards[2]}</span></div>
-          </div>
-          <div className="lp-state-card lp-state-card--pink">
-            <div className="lp-state-preview"><span className="lp-state-emoji">💤</span></div>
-            <div className="lp-state-info"><span className="lp-state-name">{t.states.cards[3]}</span></div>
-          </div>
-          <div className="lp-state-card lp-state-card--locked">
-            <div className="lp-state-preview"><span className="lp-state-lock">🔒</span></div>
-            <div className="lp-state-info"><span className="lp-state-name">{t.states.cards[4]}</span></div>
-          </div>
-          <div className="lp-state-card lp-state-card--more">
-            <div className="lp-state-preview"><span className="lp-state-more-dots">· · ·</span></div>
-            <div className="lp-state-info"><span className="lp-state-name">{t.states.cards[5]}</span></div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Share ────────────────────────────────────────────────────────── */}
-      <section id="share" className="lp-share">
-        <div className="lp-share-inner">
-          <div className="lp-share-copy">
-            <p className="lp-eyebrow">{t.share.eyebrow}</p>
-            <h2 className="lp-section-h2">
-              {t.share.h2[0]}<br />
-              <em>{t.share.h2[1]}</em>
-            </h2>
-            <p className="lp-body-text">
-              {t.share.body1.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
-            </p>
-            <p className="lp-body-text" style={{ marginTop: '12px' }}>{t.share.body2}</p>
-            <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <Link to="/chat" className="lp-btn lp-btn--primary">{t.share.cta}</Link>
-              <Link to="/u/demo" className="lp-btn lp-btn--ghost">{t.share.demo}</Link>
-            </div>
-          </div>
-
-          <div className="lp-share-visual">
-            <div className="lp-share-card lp-share-card--profile">
-              <div className="lp-share-card-top">
-                <span className="lp-share-card-avatar">👤</span>
-                <div>
-                  <div className="lp-share-card-name">{t.share.cardName}</div>
-                  <div className="lp-share-card-status">{t.share.cardStatus}</div>
+      {/* ── Memory ────────────────────────────────────────────── */}
+      <section className="lp-section lp-memory">
+        <div className="lp-memory-inner">
+          <Reveal className="lp-memory-copy">
+            <p className="lp-eyebrow">{t.memory.eyebrow}</p>
+            <h2 className="lp-h2">{t.memory.h2}<span className="lp-h2-em">{t.memory.h2em}</span></h2>
+            <p className="lp-body">{t.memory.body}</p>
+          </Reveal>
+          <Reveal className="lp-memory-visual" delay={200}>
+            <div className="lp-memory-grid">
+              {t.memory.items.map((item, i) => (
+                <div key={i} className="lp-memory-chip">
+                  <span className="lp-memory-chip-dot" />
+                  {item}
                 </div>
-              </div>
-              <div className="lp-share-card-bar">
-                <span className="lp-share-card-bar-label">{t.share.cardLabel}</span>
-                <div className="lp-share-card-bar-track">
-                  <div className="lp-share-card-bar-fill" style={{ width: '72%' }} />
-                </div>
-                <span className="lp-share-card-bar-val">72</span>
-              </div>
-              <div className="lp-share-card-badges">
-                <span className="lp-badge">🏆</span>
-                <span className="lp-badge">🔥</span>
-                <span className="lp-badge">⚡</span>
-                <span className="lp-badge lp-badge--locked">🔒</span>
-                <span className="lp-badge lp-badge--locked">🔒</span>
-              </div>
+              ))}
             </div>
-
-            <div className="lp-share-card lp-share-card--gif">
-              <div className="lp-share-card-gif-inner">
-                <span style={{ fontSize: '48px' }}>✨</span>
-                <span className="lp-placeholder-label">{t.share.cardGif}</span>
-              </div>
-            </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ── Stories ──────────────────────────────────────────────────────── */}
-      <section id="shorts" className="lp-shorts">
-        <div className="lp-section-head">
-          <p className="lp-eyebrow">{t.shorts.eyebrow}</p>
-          <h2 className="lp-section-h2">{t.shorts.h2[0]}<em>{t.shorts.h2[1]}</em></h2>
-          <p className="lp-body-text">{t.shorts.body}</p>
+      {/* ── Relationship growth ───────────────────────────────── */}
+      <section className="lp-section lp-growth">
+        <Reveal>
+          <p className="lp-eyebrow">{t.growth.eyebrow}</p>
+          <h2 className="lp-h2">{t.growth.h2}<span className="lp-h2-em">{t.growth.h2em}</span></h2>
+          <p className="lp-body">{t.growth.body}</p>
+        </Reveal>
+        <div className="lp-growth-stages">
+          {t.growth.stages.map((s, i) => (
+            <Reveal key={i} className="lp-growth-stage" delay={i * 120}>
+              <span className="lp-growth-emoji">{s.emoji}</span>
+              <span className="lp-growth-label">{s.label}</span>
+              <span className="lp-growth-desc">{s.desc}</span>
+              {i < t.growth.stages.length - 1 && <span className="lp-growth-arrow" />}
+            </Reveal>
+          ))}
         </div>
-        <div className="lp-stories-grid">
-          <div className="lp-stories-col" style={{ marginTop: '30%' }}>
-            <div className="lp-story-card lp-story-card--tall lp-story-card--blue">
-              <div className="lp-story-card-inner">
-                <span className="lp-story-emoji">🧠</span>
-                <span className="lp-story-label">{t.shorts.cards[0]}</span>
-              </div>
-            </div>
-            <div className="lp-story-card lp-story-card--square lp-story-card--green">
-              <div className="lp-story-card-inner">
-                <span className="lp-story-emoji">🌿</span>
-                <span className="lp-story-label">{t.shorts.cards[1]}</span>
-              </div>
-            </div>
-          </div>
+      </section>
 
-          <div className="lp-stories-col">
-            <div className="lp-story-card lp-story-card--square lp-story-card--yellow">
-              <div className="lp-story-card-inner">
-                <span className="lp-story-emoji">🎉</span>
-                <span className="lp-story-label">{t.shorts.cards[2]}</span>
-              </div>
-            </div>
-            <div className="lp-story-card lp-story-card--tall lp-story-card--coral">
-              <div className="lp-story-card-inner">
-                <span className="lp-story-emoji">🎯</span>
-                <span className="lp-story-label">{t.shorts.cards[3]}</span>
-              </div>
-            </div>
-            <div className="lp-story-card lp-story-card--square lp-story-card--pink">
-              <div className="lp-story-card-inner">
-                <span className="lp-story-emoji">💤</span>
-                <span className="lp-story-label">{t.shorts.cards[4]}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lp-stories-col" style={{ marginTop: '15%' }}>
-            <div className="lp-story-card lp-story-card--tall lp-story-card--purple">
-              <div className="lp-story-card-inner">
-                <span className="lp-story-emoji">⚡</span>
-                <span className="lp-story-label">{t.shorts.cards[5]}</span>
-              </div>
-            </div>
+      {/* ── Open source CTA ───────────────────────────────────── */}
+      <section className="lp-section lp-opensource">
+        <Reveal>
+          <p className="lp-eyebrow">{t.opensource.eyebrow}</p>
+          <h2 className="lp-h2">{t.opensource.h2}<span className="lp-h2-em">{t.opensource.h2em}</span></h2>
+          <p className="lp-body">{t.opensource.body}</p>
+          <div className="lp-opensource-actions">
             <a
               href="https://github.com/ma2214889041/OpenPat"
               target="_blank"
               rel="noopener noreferrer"
-              className="lp-story-card lp-story-card--square lp-story-card--dark"
-            >
-              <div className="lp-story-card-inner">
-                <span className="lp-story-emoji">⭐</span>
-                <span className="lp-story-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Star on GitHub</span>
-              </div>
-            </a>
+              className="lp-btn lp-btn--outline"
+            >{t.opensource.star}</a>
+            <Link to="/chat" className="lp-btn lp-btn--primary">{t.opensource.chat}</Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* ── Roadmap ──────────────────────────────────────────────────────── */}
-      <section className="lp-roadmap">
-        <div className="lp-section-head">
-          <p className="lp-eyebrow">{t.roadmap.eyebrow}</p>
-          <h2 className="lp-section-h2">{t.roadmap.h2[0]}<em>{t.roadmap.h2[1]}</em></h2>
-          <p className="lp-body-text">{t.roadmap.body}</p>
-        </div>
-        <div className="lp-roadmap-grid">
-          {t.roadmap.items.map((item, i) => (
-            <div key={i} className={`lp-roadmap-card ${roadmapTagClass[item.tag]}`}>
-              <span className="lp-roadmap-tag">{roadmapTagLabel[item.tag]}</span>
-              <h4 className="lp-roadmap-title">{item.title}</h4>
-              <p className="lp-roadmap-desc">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-        <div className="lp-roadmap-github">
-          <p className="lp-roadmap-github-text">{t.roadmap.github}</p>
-          <a href="https://github.com/ma2214889041/OpenPat" target="_blank" rel="noopener noreferrer" className="lp-btn lp-btn--outline lp-btn--lg">
-            {t.roadmap.star}
-          </a>
-        </div>
-      </section>
-
-      {/* ── CTA ──────────────────────────────────────────────────────────── */}
-      <section className="lp-cta">
-        <div className="lp-cta-inner">
-          <p className="lp-eyebrow">{t.cta.eyebrow}</p>
-          <h2 className="lp-cta-h2">
-            {t.cta.h2[0]}<em>{t.cta.h2[1]}</em><br />
-            {t.cta.h2[2]}
-          </h2>
-          <p className="lp-body-text lp-cta-sub">
-            {t.cta.body.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
-          </p>
-          <div className="lp-cta-actions">
-            <Link to="/chat" className="lp-btn lp-btn--primary lp-btn--lg">{t.cta.start}</Link>
-            <a href="https://github.com/ma2214889041/OpenPat" className="lp-btn lp-btn--ghost">GitHub</a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      {/* ── Footer ────────────────────────────────────────────── */}
       <footer className="lp-footer">
         <div className="lp-footer-inner">
-          <div className="lp-footer-brand">
-            <span className="lp-nav-logo-name">OpenPat</span>
-          </div>
+          <a href="/" className="lp-logo">OpenPat</a>
           <div className="lp-footer-links">
-            <span className="lp-footer-link-stub">{t.footer.tos}</span>
-            <span className="lp-footer-link-stub">{t.footer.privacy}</span>
-            <a href="https://github.com/ma2214889041/OpenPat">GitHub</a>
+            <span>{t.footer.tos}</span>
+            <span>{t.footer.privacy}</span>
+            <a href="https://github.com/ma2214889041/OpenPat" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
           <span className="lp-footer-copy">{t.footer.copy}</span>
         </div>
