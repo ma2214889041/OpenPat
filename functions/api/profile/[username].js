@@ -17,9 +17,5 @@ export async function onRequestGet({ params, env }) {
 
   if (!profile) return cors({ error: 'Not found' }, 404);
 
-  if (typeof profile.achievements === 'string') {
-    try { profile.achievements = JSON.parse(profile.achievements); } catch { profile.achievements = []; }
-  }
-
   return cors(profile);
 }

@@ -37,11 +37,6 @@ export async function onRequestGet({ request, env }) {
     profile = await env.DB.prepare('SELECT * FROM profiles WHERE id = ?').bind(user.id).first();
   }
 
-  // Parse achievements JSON
-  if (profile && typeof profile.achievements === 'string') {
-    try { profile.achievements = JSON.parse(profile.achievements); } catch { profile.achievements = []; }
-  }
-
   return cors(profile);
 }
 
@@ -50,14 +45,11 @@ export async function onRequestPut({ request, env }) {
   if (!user) return cors({ error: 'Unauthorized' }, 401);
 
   const body = await request.json();
-  const achievements = Array.isArray(body.achievements)
-    ? JSON.stringify(body.achievements)
-    : (body.achievements || '[]');
 
   await env.DB.prepare(`
     INSERT INTO profiles (id, username, avatar_url, total_tasks, total_tool_calls,
-      total_tokens_input, total_tokens_output, achievements, level, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      total_tokens_input, total_tokens_output, level, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       username = COALESCE(excluded.username, profiles.username),
       avatar_url = COALESCE(excluded.avatar_url, profiles.avatar_url),
@@ -65,7 +57,6 @@ export async function onRequestPut({ request, env }) {
       total_tool_calls = excluded.total_tool_calls,
       total_tokens_input = excluded.total_tokens_input,
       total_tokens_output = excluded.total_tokens_output,
-      achievements = excluded.achievements,
       level = excluded.level,
       updated_at = excluded.updated_at
   `).bind(
@@ -76,7 +67,6 @@ export async function onRequestPut({ request, env }) {
     body.total_tool_calls || 0,
     body.total_tokens_input || 0,
     body.total_tokens_output || 0,
-    achievements,
     body.level || 0,
     body.updated_at || new Date().toISOString(),
   ).run();

@@ -4,7 +4,7 @@
  */
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const MODEL_CHAT = 'gemini-3.1-pro-preview';
+const MODEL_CHAT = 'gemini-3.1-flash-lite-preview';
 const MODEL_LITE = 'gemini-3.1-flash-lite-preview';
 
 /** Call Gemini and return the raw response JSON. */

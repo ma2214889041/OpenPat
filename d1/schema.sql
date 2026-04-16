@@ -1,6 +1,8 @@
 -- OpenPat D1 Schema (SQLite)
 -- Run: wrangler d1 execute openpat-db --file=d1/schema.sql
 
+-- ── User & Auth ────────────────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS profiles (
   id                  TEXT PRIMARY KEY,
   username            TEXT UNIQUE NOT NULL,
@@ -9,7 +11,6 @@ CREATE TABLE IF NOT EXISTS profiles (
   total_tool_calls    INTEGER DEFAULT 0,
   total_tokens_input  INTEGER DEFAULT 0,
   total_tokens_output INTEGER DEFAULT 0,
-  achievements        TEXT DEFAULT '[]',
   level               INTEGER DEFAULT 0,
   created_at          TEXT DEFAULT (datetime('now')),
   updated_at          TEXT DEFAULT (datetime('now'))
@@ -41,43 +42,7 @@ CREATE TABLE IF NOT EXISTS feedback_submissions (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS state_memes (
-  state      TEXT PRIMARY KEY,
-  image_url  TEXT,
-  caption    TEXT,
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS achievement_configs (
-  id                TEXT PRIMARY KEY,
-  name              TEXT,
-  description       TEXT DEFAULT '',
-  emoji             TEXT,
-  rarity            TEXT,
-  unlock_type       TEXT,
-  unlock_threshold  INTEGER,
-  unlock_caption    TEXT DEFAULT '',
-  share_caption     TEXT DEFAULT '',
-  icon_locked_url   TEXT,
-  icon_unlocked_url TEXT,
-  is_active         INTEGER DEFAULT 1,
-  created_at        TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS skins (
-  id           TEXT PRIMARY KEY,
-  name         TEXT,
-  description  TEXT,
-  emoji        TEXT,
-  rarity       TEXT,
-  display_type TEXT,
-  colors       TEXT,
-  pixelated    INTEGER DEFAULT 0,
-  is_active    INTEGER DEFAULT 1,
-  created_at   TEXT DEFAULT (datetime('now'))
-);
-
--- ── Companion Chat & Memory ─────────────────────────────────────────────────
+-- ── Companion Chat & Memory ────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS memories (
   id          TEXT PRIMARY KEY,
@@ -97,7 +62,6 @@ CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(user_id);
 CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(user_id, type);
 CREATE INDEX IF NOT EXISTS idx_memories_layer ON memories(user_id, layer);
 
--- Core user profile: single structured document per user (MemGPT-style)
 CREATE TABLE IF NOT EXISTS user_profiles (
   user_id       TEXT PRIMARY KEY,
   core_summary  TEXT DEFAULT '',
@@ -107,7 +71,6 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   updated_at    TEXT DEFAULT (datetime('now'))
 );
 
--- Emotional state tracking per conversation
 CREATE TABLE IF NOT EXISTS emotional_logs (
   id              TEXT PRIMARY KEY,
   user_id         TEXT NOT NULL,
@@ -119,7 +82,6 @@ CREATE TABLE IF NOT EXISTS emotional_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_emotional_user ON emotional_logs(user_id, created_at DESC);
 
--- Relationship tracking
 CREATE TABLE IF NOT EXISTS relationship_state (
   user_id          TEXT PRIMARY KEY,
   stage            TEXT DEFAULT 'stranger' CHECK(stage IN ('stranger','acquaintance','friend','close_friend','confidant')),
@@ -130,6 +92,8 @@ CREATE TABLE IF NOT EXISTS relationship_state (
   last_seen_at     TEXT DEFAULT (datetime('now')),
   updated_at       TEXT DEFAULT (datetime('now'))
 );
+
+-- ── Conversations ──────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS conversations (
   id         TEXT PRIMARY KEY,
@@ -151,17 +115,8 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id, created_at ASC);
 
-CREATE TABLE IF NOT EXISTS reminders (
-  id         TEXT PRIMARY KEY,
-  user_id    TEXT NOT NULL,
-  content    TEXT NOT NULL,
-  remind_at  TEXT NOT NULL,
-  done       INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_reminders_user ON reminders(user_id, remind_at);
+-- ── Proactive Follow-ups ───────────────────────────────────────────────────
 
--- Proactive follow-ups: things Pat should ask about later
 CREATE TABLE IF NOT EXISTS follow_ups (
   id              TEXT PRIMARY KEY,
   user_id         TEXT NOT NULL,

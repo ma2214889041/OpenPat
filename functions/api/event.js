@@ -64,26 +64,5 @@ export async function onRequestPost({ request, env }) {
     'UPDATE api_tokens SET last_used_at = ? WHERE id = ?'
   ).bind(now, tokenRow.id).run();
 
-  // Also update Supabase for Realtime subscribers (dual-write during transition)
-  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY) {
-    try {
-      await fetch(`${env.SUPABASE_URL}/rest/v1/agent_status`, {
-        method: 'POST',
-        headers: {
-          'apikey': env.SUPABASE_SERVICE_KEY,
-          'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates',
-        },
-        body: JSON.stringify({
-          user_id: tokenRow.user_id,
-          status,
-          current_tool: eventType === 'tool_start' ? (body.tool_name || null) : null,
-          updated_at: now,
-        }),
-      });
-    } catch { /* best-effort */ }
-  }
-
   return cors({ ok: true, status });
 }

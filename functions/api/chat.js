@@ -52,23 +52,6 @@ const TOOLS = [
       required: ['memory_name'],
     },
   },
-  {
-    name: 'set_reminder',
-    description: 'Set a reminder for the user.',
-    parameters: {
-      type: 'object',
-      properties: {
-        content: { type: 'string', description: 'Reminder content' },
-        remind_at: { type: 'string', description: 'ISO 8601 datetime' },
-      },
-      required: ['content', 'remind_at'],
-    },
-  },
-  {
-    name: 'list_reminders',
-    description: 'List all pending reminders.',
-    parameters: { type: 'object', properties: {} },
-  },
 ];
 
 // ── Memory security ────────────────────────────────────────────────────────
@@ -133,21 +116,6 @@ async function executeTool(name, args, env, userId, memories) {
         return `Deleted: ${mem.name}`;
       }
 
-      case 'set_reminder': {
-        await env.DB.prepare(
-          'INSERT INTO reminders (id, user_id, content, remind_at) VALUES (?, ?, ?, ?)'
-        ).bind(crypto.randomUUID(), userId, args.content, args.remind_at).run();
-        return `Reminder set: ${args.content} at ${args.remind_at}`;
-      }
-
-      case 'list_reminders': {
-        const result = await env.DB.prepare(
-          "SELECT content, remind_at FROM reminders WHERE user_id = ? AND done = 0 AND remind_at > datetime('now') ORDER BY remind_at ASC LIMIT 20"
-        ).bind(userId).all();
-        const rows = result.results || [];
-        return rows.length ? rows.map((r) => `- ${r.content} (${r.remind_at})`).join('\n') : 'No pending reminders.';
-      }
-
       default:
         return 'Unknown tool.';
     }
@@ -181,7 +149,7 @@ Stage: ${stage}. ${STAGE_BEHAVIOR[stage] || ''}
 ${relationship ? `Trust: ${relationship.trust_score || 10}/100. ${relationship.total_messages || 0} messages over ${relationship.first_met_at ? Math.max(1, Math.floor((Date.now() - new Date(relationship.first_met_at + 'Z').getTime()) / 86400000)) + ' days' : 'today'}.` : ''}
 
 ## Tools
-You can: search the web, check weather, save/delete memories, set reminders.
+You can: search the web, check weather, save/delete memories.
 Use tools when needed. Don't say "I can't do that." When saving memories, just say "got it" naturally.`,
   ];
 

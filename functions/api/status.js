@@ -32,28 +32,5 @@ export async function onRequestPut({ request, env }) {
     now,
   ).run();
 
-  // Dual-write to Supabase for Realtime subscribers
-  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY) {
-    try {
-      await fetch(`${env.SUPABASE_URL}/rest/v1/agent_status`, {
-        method: 'POST',
-        headers: {
-          'apikey': env.SUPABASE_SERVICE_KEY,
-          'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates',
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-          status: body.status || 'offline',
-          current_tool: body.current_tool || null,
-          session_tokens: body.session_tokens || 0,
-          session_tool_calls: body.session_tool_calls || 0,
-          updated_at: now,
-        }),
-      });
-    } catch { /* best-effort */ }
-  }
-
   return cors({ ok: true });
 }
