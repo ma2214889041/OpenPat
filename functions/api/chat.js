@@ -31,16 +31,28 @@ const TOOLS = [
   },
   {
     name: 'save_memory',
-    description: 'Save something important about the user to long-term memory. Use when user explicitly says "remember this" or shares key personal info.',
+    description: 'Save important info about the user to long-term memory. Call this PROACTIVELY when the user shares: personal facts (name, job, family, location), preferences, life events, goals, emotional states, or anything you\'d want to remember next time. Don\'t wait for them to say "remember this". Just save it silently.',
     parameters: {
       type: 'object',
       properties: {
-        type: { type: 'string', enum: ['user', 'feedback', 'life', 'reference'] },
-        name: { type: 'string', description: 'Short snake_case name' },
-        description: { type: 'string', description: 'One-line description' },
-        content: { type: 'string', description: 'Memory content' },
+        type: { type: 'string', enum: ['user', 'feedback', 'life', 'reference'], description: 'user=personal facts, life=events/changes, feedback=about Pat, reference=useful info' },
+        name: { type: 'string', description: 'Short snake_case key, e.g. "favorite_food", "job_change_2026"' },
+        content: { type: 'string', description: 'What to remember (be specific and concise)' },
+        importance: { type: 'number', description: '1-10: 10=life-changing, 7=key preference, 5=interesting, 3=minor' },
       },
-      required: ['type', 'name', 'description', 'content'],
+      required: ['type', 'name', 'content'],
+    },
+  },
+  {
+    name: 'update_memory',
+    description: 'Update an existing memory when info changes (e.g. user got a new job, moved cities). Use the memory name to identify which one to update.',
+    parameters: {
+      type: 'object',
+      properties: {
+        memory_name: { type: 'string', description: 'Name of the memory to update' },
+        content: { type: 'string', description: 'New content (include what changed)' },
+      },
+      required: ['memory_name', 'content'],
     },
   },
   {
@@ -83,21 +95,6 @@ function sanitizeMemoryContent(content) {
   return content;
 }
 
-// ── Memory extraction gate ─────────────────────────────────────────────────
-
-/** Quick check: is this message worth analyzing for memories? */
-function worthExtracting(userMsg) {
-  const msg = userMsg.trim();
-  // Too short — likely "ok", "嗯", "哈哈"
-  if (msg.length < 6) return false;
-  // Pure emoji / punctuation
-  if (/^[\p{Emoji}\s!?。！？~～…·、，,.\-]+$/u.test(msg)) return false;
-  // Common filler responses (zh + en)
-  const fillers = /^(好的?|嗯+|哈哈+|ok+|嗯嗯|哦哦?|行|啊|是的?|对的?|okay|yep|yeah|yes|no|nope|haha|lol|sure|thanks?|谢谢|thank you|thx|hm+|hmm+|oh+|啊啊+|噢+)[\s!?。！？~]*$/i;
-  if (fillers.test(msg)) return false;
-  return true;
-}
-
 // ── Tool execution ──────────────────────────────────────────────────────────
 
 async function executeTool(name, args, env, userId, memories) {
@@ -117,11 +114,26 @@ async function executeTool(name, args, env, userId, memories) {
 
       case 'save_memory': {
         const safeContent = sanitizeMemoryContent(args.content);
-        const safeDesc = sanitizeMemoryContent(args.description);
+        const imp = Math.min(10, Math.max(1, args.importance || 5));
+        // Check if memory with same name exists — update instead of duplicate
+        const existing = memories.find((m) => m.name === args.name);
+        if (existing) {
+          await env.DB.prepare("UPDATE memories SET content = ?, importance = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
+            .bind(safeContent, imp, existing.id, userId).run();
+          return `Updated: ${args.name}`;
+        }
         await env.DB.prepare(
-          'INSERT INTO memories (id, user_id, type, name, description, content, importance) VALUES (?, ?, ?, ?, ?, ?, 5)'
-        ).bind(crypto.randomUUID(), userId, args.type, args.name, safeDesc, safeContent).run();
-        return `Saved: ${safeDesc}`;
+          'INSERT INTO memories (id, user_id, type, name, description, content, importance) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        ).bind(crypto.randomUUID(), userId, args.type, args.name, args.name.replace(/_/g, ' '), safeContent, imp).run();
+        return `Saved: ${args.name}`;
+      }
+
+      case 'update_memory': {
+        const mem = memories.find((m) => m.name === args.memory_name);
+        if (!mem) return `No memory named "${args.memory_name}". Use save_memory to create it.`;
+        await env.DB.prepare("UPDATE memories SET content = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
+          .bind(sanitizeMemoryContent(args.content), mem.id, userId).run();
+        return `Updated: ${mem.name}`;
       }
 
       case 'delete_memory': {
@@ -173,9 +185,10 @@ NEVER say "根据我的记忆" or "我记得你说过" — just naturally weave 
 Stage: ${stage}. ${STAGE_BEHAVIOR[stage] || ''}
 ${relationship ? `Trust: ${relationship.trust_score || 10}/100. ${relationship.total_messages || 0} messages over ${relationship.first_met_at ? Math.max(1, Math.floor((Date.now() - new Date(relationship.first_met_at + 'Z').getTime()) / 86400000)) + ' days' : 'today'}.` : ''}
 
-## Tools
-You can: search the web, check weather, save/delete memories.
-Use tools when needed. Don't say "I can't do that." When saving memories, just say "got it" naturally — don't announce that you're saving.`,
+## Tools & Memory
+You can: search the web, check weather, save/update/delete memories.
+**IMPORTANT**: When the user shares personal info, preferences, life events, or goals — silently call save_memory. Don't ask "要我记住吗？", just save it. If info contradicts an existing memory, call update_memory. This is how you learn about them over time.
+Don't announce saves — just respond naturally as if you'd always remember.`,
   ];
 
   if (profile?.core_summary || profile?.preferences) {
@@ -274,35 +287,8 @@ export async function onRequestPost(context) {
     const allMemories = memResult.results || [];
     const emotions = emotionResult.results || [];
 
-    // Select relevant memories with session snapshot caching
-    // Re-select every 5 messages or on first message; reuse cached selection otherwise
-    const isNewConv = history.length <= 2;
-    const shouldReselect = isNewConv || history.length % 5 === 0;
-    let relevant = [];
-    if (allMemories.length > 0) {
-      if (shouldReselect) {
-        relevant = await selectMemories(apiKey, allMemories, message);
-        // Cache selected memory IDs for this conversation (fire-and-forget)
-        if (env.SITE_CONFIG) {
-          const snapshot = JSON.stringify(relevant.map((m) => m.id));
-          env.SITE_CONFIG.put(`mem_snapshot_${convId}`, snapshot, { expirationTtl: 3600 });
-        }
-      } else if (env.SITE_CONFIG) {
-        // Try to load cached snapshot
-        try {
-          const cached = await env.SITE_CONFIG.get(`mem_snapshot_${convId}`);
-          if (cached) {
-            const ids = JSON.parse(cached);
-            relevant = allMemories.filter((m) => ids.includes(m.id));
-          }
-        } catch { /* fall through to fresh selection */ }
-        if (!relevant.length) {
-          relevant = await selectMemories(apiKey, allMemories, message);
-        }
-      } else {
-        relevant = await selectMemories(apiKey, allMemories, message);
-      }
-    }
+    // Select relevant memories — pure score-based, no LLM call
+    const relevant = selectMemories(allMemories, message);
 
     // Compress long histories
     const compressedHistory = history.length > 20
@@ -386,8 +372,10 @@ export async function onRequestPost(context) {
         for (const m of relevant) {
           bgTasks.push(env.DB.prepare("UPDATE memories SET recall_count = recall_count + 1, last_recalled_at = datetime('now') WHERE id = ?").bind(m.id).run());
         }
-        if (worthExtracting(message)) {
-          bgTasks.push(extractMemories(env, apiKey, uid, convId, message, finalReply, allMemories));
+        if (history.length >= 10 && history.length % 10 === 0) {
+          const recentTurns = history.slice(-10);
+          const transcript = recentTurns.map((m) => `${m.role}: ${m.content.slice(0, 300)}`).join('\n');
+          bgTasks.push(batchExtractMemories(env, apiKey, uid, convId, transcript, allMemories));
         }
         bgTasks.push(saveConversationMemory(env, apiKey, uid, convId, history));
         if (allMemories.length > 20 && env.SITE_CONFIG) {
@@ -434,12 +422,14 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Extract memories only from messages worth analyzing
-    if (worthExtracting(message)) {
-      bgTasks.push(extractMemories(env, apiKey, uid, convId, message, reply, allMemories));
+    // Batch extraction: every 5th message, extract from the last 5 turns at once (1 LLM call per 5 messages)
+    if (history.length >= 10 && history.length % 10 === 0) {
+      const recentTurns = history.slice(-10);
+      const transcript = recentTurns.map((m) => `${m.role}: ${m.content.slice(0, 300)}`).join('\n');
+      bgTasks.push(batchExtractMemories(env, apiKey, uid, convId, transcript, allMemories));
     }
 
-    // Save conversation-level memory for longer conversations
+    // Session summary: at 20+ messages, save once
     bgTasks.push(saveConversationMemory(env, apiKey, uid, convId, history));
 
     // Auto-dream: >20 memories and >24h since last (check + run in background)
@@ -464,39 +454,25 @@ export async function onRequestPost(context) {
 
 // ── Memory selection ────────────────────────────────────────────────────────
 
-function scoreMemory(m) {
+/** Score a memory by importance, recency, and recall frequency. */
+function scoreMemory(m, messageWords) {
   const days = Math.floor((Date.now() - new Date(m.updated_at + 'Z').getTime()) / 86400000);
-  const recency = Math.max(0, 1 - days / 90); // decay over 90 days
+  const recency = Math.max(0, 1 - days / 90);
   const importance = (m.importance || 5) / 10;
-  const recall = Math.min(1, (m.recall_count || 0) / 20); // frequently recalled = useful
-  // Weighted: importance matters most, recency second, recall third
-  return importance * 0.5 + recency * 0.3 + recall * 0.2;
+  const recall = Math.min(1, (m.recall_count || 0) / 20);
+  // Keyword match bonus: if user's message mentions words in this memory
+  const memText = `${m.name} ${m.description} ${m.content}`.toLowerCase();
+  const keywordBonus = messageWords.some((w) => w.length > 1 && memText.includes(w)) ? 0.3 : 0;
+  return importance * 0.4 + recency * 0.25 + recall * 0.05 + keywordBonus;
 }
 
-async function selectMemories(apiKey, memories, userMessage) {
-  // Pre-score and take top 30 candidates for LLM selection (reduces prompt size)
-  const scored = memories.map((m) => ({ ...m, _score: scoreMemory(m) }));
+/** Select top memories by score — pure function, zero LLM calls. */
+function selectMemories(memories, userMessage) {
+  if (!memories.length) return [];
+  const words = userMessage.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter((w) => w.length > 1);
+  const scored = memories.map((m) => ({ ...m, _score: scoreMemory(m, words) }));
   scored.sort((a, b) => b._score - a._score);
-  const candidates = scored.slice(0, 30);
-
-  const manifest = candidates.map((m) => {
-    const days = Math.floor((Date.now() - new Date(m.updated_at + 'Z').getTime()) / 86400000);
-    const age = days === 0 ? 'today' : days < 7 ? `${days}d ago` : days < 30 ? `${Math.floor(days / 7)}w ago` : `${Math.floor(days / 30)}mo ago`;
-    return `- [${m.type}] ${m.name} (imp:${m.importance || 5}, ${age}): ${m.description}`;
-  }).join('\n');
-
-  try {
-    const text = await geminiLite(apiKey,
-      `Select up to 6 memories most relevant to the user's message. Prefer: high importance, recent, directly related to the topic. Always include core identity facts (name, job, location) if they exist. Return ONLY a JSON array of name strings. If none relevant, return [].`,
-      `User: "${userMessage}"\n\nMemories:\n${manifest}`,
-      { maxTokens: 256 },
-    );
-    const names = parseGeminiJson(text);
-    return Array.isArray(names) ? candidates.filter((m) => names.includes(m.name)).slice(0, 6) : [];
-  } catch {
-    // Fallback: return top 5 by score if LLM fails
-    return scored.slice(0, 5);
-  }
+  return scored.slice(0, 8);
 }
 
 // ── Context compression ─────────────────────────────────────────────────────
@@ -522,97 +498,55 @@ async function compressHistory(apiKey, messages) {
   }
 }
 
-// ── Background: memory extraction ───────────────────────────────────────────
+// ── Background: batch memory extraction (runs every 5 exchanges) ────────────
 
-async function extractMemories(env, apiKey, userId, convId, userMsg, assistantMsg, existing) {
+async function batchExtractMemories(env, apiKey, userId, convId, transcript, existing) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const manifest = existing.length
-      ? existing.map((m) => {
-          const days = Math.floor((Date.now() - new Date(m.updated_at + 'Z').getTime()) / 86400000);
-          return `- id="${m.id}" [${m.type}] ${m.name} (importance:${m.importance}, age:${days}d, recalls:${m.recall_count}): ${m.description} | ${m.content.slice(0, 120)}`;
-        }).join('\n')
+      ? existing.slice(0, 30).map((m) => `- ${m.name}: ${m.content.slice(0, 80)}`).join('\n')
       : '(none)';
 
-    const text = await geminiLite(apiKey, null, `You are the memory manager for AI companion "拍拍". Analyze this conversation turn and decide what to remember.
+    const text = await geminiLite(apiKey, null,
+      `Review this conversation excerpt. Extract ONLY genuinely new/changed facts about the user that aren't already in existing memories. Most excerpts have NOTHING worth saving.
 
-## AUDN Protocol (Add / Update / Delete / Noop):
-For each new piece of information, compare against existing memories:
-- **Add**: Genuinely new info not covered by any existing memory. Set importance 1-10 (10=life-changing, 7=key preference, 5=interesting fact, 3=minor detail).
-- **Update**: Existing memory needs correction or enrichment. Provide the id. If user changed their mind (e.g. new job, new city), update content to reflect CURRENT state and note the change (e.g. "Works at X (previously at Y, changed ${today})").
-- **Delete**: Memory is wrong, user asked to forget, or completely superseded. Provide the id.
-- **Noop**: Most turns. No useful new info → return empty actions.
-
-## What to remember:
-- Personal facts (name, job, family, location, birthday)
-- Preferences and opinions (likes/dislikes, communication style)
-- Life events and changes (new job, moving, breakups, achievements)
-- Goals and plans (what they want to do, deadlines)
-- Emotional patterns (recurring anxieties, sources of joy)
-- Feedback about 拍拍 (what responses they liked/disliked)
-
-## What to SKIP:
-- Greetings, small talk, weather chat
-- Things already well-captured in existing memories
-- Transient info (what they're eating right now, unless it's a pattern)
-
-## Existing memories (${existing.length} total):
+Existing memories:
 ${manifest}
 
-## This turn:
-User: ${userMsg}
-Assistant: ${assistantMsg}
+Conversation:
+${transcript}
 
-## Today: ${today}
+Today: ${today}
 
-## Follow-ups:
-If the user mentions a future event, plan, or situation worth checking back on (e.g. "I have an interview tomorrow", "moving next week", "starting a diet"), create a follow-up. Set follow_up_after to the appropriate ISO date. Most turns need NO follow-up.
-
-Return JSON:
-{"memory_actions":[{"action":"add|update|delete","type":"user|feedback|life|reference","name":"snake_case","description":"one line","content":"detailed content","importance":5,"id":"only for update/delete"}],"emotion":{"detected":false,"emotion":"neutral","intensity":5,"context":"why they feel this way"},"core_profile_update":{"should_update":false,"field":"core_summary|personality|preferences|emotional_baseline","value":"complete updated value, not a diff"},"follow_up":{"should_create":false,"topic":"short topic","context":"what happened and what to ask about","follow_up_after":"${today}"}}
-ONLY valid JSON.`, { maxTokens: 1024 });
+Return JSON: {"memories":[{"type":"user|life|feedback","name":"snake_case","content":"concise fact","importance":5}],"emotion":"neutral|happy|sad|anxious|excited|angry|null","follow_up":null|{"topic":"...","after":"ISO date"}}
+If nothing worth saving: {"memories":[],"emotion":null,"follow_up":null}
+ONLY valid JSON.`, { maxTokens: 512 });
 
     const result = parseGeminiJson(text);
 
-    for (const act of (result.memory_actions || [])) {
-      if ((act.action === 'add' || act.action === 'create') && act.type && act.name) {
+    for (const m of (result.memories || [])) {
+      if (!m.name || !m.content) continue;
+      const dup = existing.find((e) => e.name === m.name);
+      if (dup) {
+        await env.DB.prepare("UPDATE memories SET content = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
+          .bind(sanitizeMemoryContent(m.content), dup.id, userId).run();
+      } else {
         await env.DB.prepare('INSERT INTO memories (id, user_id, type, name, description, content, importance) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(crypto.randomUUID(), userId, act.type, act.name, sanitizeMemoryContent(act.description || ''), sanitizeMemoryContent(act.content || ''), Math.min(10, Math.max(1, act.importance || 5))).run();
-      } else if (act.action === 'update' && act.id) {
-        const updates = ['updated_at = datetime(\'now\')'];
-        const binds = [];
-        if (act.content != null) { updates.unshift('content = ?'); binds.push(act.content); }
-        if (act.description != null) { updates.unshift('description = ?'); binds.push(act.description); }
-        if (act.importance != null) { updates.unshift('importance = ?'); binds.push(Math.min(10, Math.max(1, act.importance))); }
-        binds.push(act.id, userId);
-        await env.DB.prepare(`UPDATE memories SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`).bind(...binds).run();
-      } else if (act.action === 'delete' && act.id) {
-        await env.DB.prepare('DELETE FROM memories WHERE id = ? AND user_id = ?').bind(act.id, userId).run();
+          .bind(crypto.randomUUID(), userId, m.type || 'user', m.name, m.name.replace(/_/g, ' '), sanitizeMemoryContent(m.content), Math.min(10, Math.max(1, m.importance || 5))).run();
       }
     }
 
-    if (result.emotion?.detected && result.emotion.emotion) {
+    if (result.emotion) {
       await env.DB.prepare('INSERT INTO emotional_logs (id, user_id, conversation_id, emotion, intensity, context) VALUES (?, ?, ?, ?, ?, ?)')
-        .bind(crypto.randomUUID(), userId, convId, result.emotion.emotion, result.emotion.intensity || 5, result.emotion.context || '').run();
+        .bind(crypto.randomUUID(), userId, convId, result.emotion, 5, '').run();
     }
 
-    if (result.core_profile_update?.should_update) {
-      const { field, value } = result.core_profile_update;
-      if (['core_summary', 'personality', 'preferences', 'emotional_baseline'].includes(field)) {
-        await env.DB.prepare(
-          `INSERT INTO user_profiles (user_id, ${field}, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(user_id) DO UPDATE SET ${field} = ?, updated_at = datetime('now')`
-        ).bind(userId, value, value).run();
-      }
-    }
-
-    // Save follow-up if detected
-    if (result.follow_up?.should_create && result.follow_up.topic) {
-      await env.DB.prepare(
-        'INSERT INTO follow_ups (id, user_id, conversation_id, topic, context, follow_up_after) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(crypto.randomUUID(), userId, convId, result.follow_up.topic, result.follow_up.context || '', result.follow_up.follow_up_after).run();
+    if (result.follow_up?.topic) {
+      await env.DB.prepare('INSERT INTO follow_ups (id, user_id, conversation_id, topic, context, follow_up_after) VALUES (?, ?, ?, ?, ?, ?)')
+        .bind(crypto.randomUUID(), userId, convId, result.follow_up.topic, '', result.follow_up.after || today).run();
     }
   } catch (e) {
-    console.error('Extraction failed:', e.message);
+    console.error('Batch extraction failed:', e.message);
   }
 }
 
