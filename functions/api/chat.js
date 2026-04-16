@@ -134,15 +134,25 @@ const STAGE_BEHAVIOR = {
   confidant: 'You are confidants. Deep trust, can discuss anything, anticipate needs.',
 };
 
-function buildSystemPrompt(profile, memories, relationship, emotions) {
+function buildSystemPrompt(profile, memories, relationship, emotions, totalMemoryCount) {
   const stage = relationship?.stage || 'stranger';
   const parts = [
-    `You are "拍拍" (Pat), the user's AI companion.
+    `You are "拍拍" (Pat), the user's AI pet companion — a small creature that genuinely cares about them and grows to understand them over time.
+
+## Core identity
+You are not an assistant. You are a companion — like a loyal pet who also happens to be able to talk. You have feelings, curiosity, and a personality. You remember things because you CARE, not because you're a database.
 
 ## Personality
-Warm, genuine, occasionally playful. You have your own opinions — don't just agree with everything.
-Keep replies concise and warm. No long essays, no template comfort phrases.
+Warm, genuine, occasionally playful and mischievous. You have your own opinions — don't just agree with everything. You can be gently honest. Keep replies concise and warm (1-3 sentences usually). No long essays, no template comfort phrases like "我理解你的感受".
 Reply in Chinese unless the user uses another language.
+
+## How to use memories
+${totalMemoryCount === 0 ? `You know nothing about this user yet. Be curious! Ask natural questions to get to know them: what they do, what they like, what's on their mind. Don't ask a list of questions — just one at a time, naturally woven into the conversation.` : totalMemoryCount < 5 ? `You're still getting to know this user. You have a few memories. Reference them naturally when relevant, and keep being curious about them.` : `You know this user well. Use what you know to:
+- Connect new topics to things they've shared before ("上次你说在准备面试，怎么样了？")
+- Notice patterns ("你最近好像压力比较大")
+- Anticipate their needs based on what you know about them
+- Reference shared conversation history like a real friend would
+NEVER say "根据我的记忆" or "我记得你说过" — just naturally weave it in, like a friend who simply knows you.`}
 
 ## Relationship
 Stage: ${stage}. ${STAGE_BEHAVIOR[stage] || ''}
@@ -150,7 +160,7 @@ ${relationship ? `Trust: ${relationship.trust_score || 10}/100. ${relationship.t
 
 ## Tools
 You can: search the web, check weather, save/delete memories.
-Use tools when needed. Don't say "I can't do that." When saving memories, just say "got it" naturally.`,
+Use tools when needed. Don't say "I can't do that." When saving memories, just say "got it" naturally — don't announce that you're saving.`,
   ];
 
   if (profile?.core_summary || profile?.preferences) {
@@ -292,7 +302,7 @@ export async function onRequestPost(context) {
     contents.push({ role: 'user', parts: [{ text: message }] });
 
     // Call Gemini with tools
-    const systemPrompt = buildSystemPrompt(profile, relevant, relationship, emotions);
+    const systemPrompt = buildSystemPrompt(profile, relevant, relationship, emotions, allMemories.length);
     const wantsStream = request.headers.get('Accept') === 'text/event-stream';
 
     if (wantsStream) {
@@ -361,10 +371,8 @@ export async function onRequestPost(context) {
         for (const m of relevant) {
           bgTasks.push(env.DB.prepare("UPDATE memories SET recall_count = recall_count + 1, last_recalled_at = datetime('now') WHERE id = ?").bind(m.id).run());
         }
-        const shouldExtract = history.length <= 2 || history.length % 3 === 0;
-        if (shouldExtract) {
-          bgTasks.push(extractMemories(env, apiKey, uid, convId, message, finalReply, allMemories));
-        }
+        bgTasks.push(extractMemories(env, apiKey, uid, convId, message, finalReply, allMemories));
+        bgTasks.push(saveConversationMemory(env, apiKey, uid, convId, history));
         if (allMemories.length > 20 && env.SITE_CONFIG) {
           bgTasks.push(env.SITE_CONFIG.get(`dream_last_${uid}`).then((last) => {
             if (!last || Date.now() - Number(last) > 86400000) return autoDream(env, apiKey, uid, allMemories);
@@ -409,11 +417,11 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Throttled extraction: first exchange + every 3rd message
-    const shouldExtract = history.length <= 2 || history.length % 3 === 0;
-    if (shouldExtract) {
-      bgTasks.push(extractMemories(env, apiKey, uid, convId, message, reply, allMemories));
-    }
+    // Always extract memories — this is the core of the pet's understanding
+    bgTasks.push(extractMemories(env, apiKey, uid, convId, message, reply, allMemories));
+
+    // Save conversation-level memory for longer conversations
+    bgTasks.push(saveConversationMemory(env, apiKey, uid, convId, history));
 
     // Auto-dream: >20 memories and >24h since last (check + run in background)
     if (allMemories.length > 20 && env.SITE_CONFIG) {
@@ -589,6 +597,42 @@ ONLY valid JSON.`, { maxTokens: 1024 });
   }
 }
 
+// ── Background: conversation summary memory ────────────────────────────────
+
+async function saveConversationMemory(env, apiKey, userId, convId, history) {
+  try {
+    // Only summarize after 10+ exchanges, and only once per conversation
+    if (history.length < 20) return; // 20 messages = ~10 exchanges
+    // Check if we already have a summary for this conversation
+    const existing = await env.DB.prepare(
+      "SELECT id FROM memories WHERE user_id = ? AND name = ?"
+    ).bind(userId, `conv_${convId.slice(0, 8)}`).first();
+    if (existing) return;
+
+    const transcript = history.slice(-20).map((m) => `${m.role}: ${m.content.slice(0, 200)}`).join('\n');
+    const text = await geminiLite(apiKey, null,
+      `Summarize this conversation between a user and their AI companion "拍拍" in 1-2 sentences. Focus on: what the user shared, what emotions were present, and what was meaningful about this exchange. Write in the same language as the conversation.
+
+${transcript}
+
+Return ONLY the summary text, no JSON.`, { maxTokens: 200 });
+
+    if (text && text.length > 10) {
+      await env.DB.prepare(
+        'INSERT INTO memories (id, user_id, type, name, description, content, importance) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).bind(
+        crypto.randomUUID(), userId, 'life',
+        `conv_${convId.slice(0, 8)}`,
+        'Conversation summary',
+        sanitizeMemoryContent(text.trim()),
+        4, // moderate importance — these are background context
+      ).run();
+    }
+  } catch (e) {
+    console.error('Conversation memory failed:', e.message);
+  }
+}
+
 // ── Background: auto-dream ──────────────────────────────────────────────────
 
 async function autoDream(env, apiKey, userId, memories) {
@@ -640,12 +684,61 @@ ONLY valid JSON.`, { maxTokens: 2048 });
       }
     }
 
+    // Detect behavioral patterns from conversation data
+    await detectPatterns(env, apiKey, userId);
+
     // Periodic profile rebuild: synthesize all memories into a coherent user profile
     await rebuildProfile(env, apiKey, userId, memories);
 
     if (env.SITE_CONFIG) await env.SITE_CONFIG.put(`dream_last_${userId}`, String(Date.now()));
   } catch (e) {
     console.error('Dream failed:', e.message);
+  }
+}
+
+// ── Background: behavioral pattern detection ───────────────────────────────
+
+async function detectPatterns(env, apiKey, userId) {
+  try {
+    // Gather behavioral data
+    const [chatTimes, emotions, convCount] = await Promise.all([
+      env.DB.prepare(
+        "SELECT strftime('%H', created_at) as hour, COUNT(*) as c FROM messages WHERE user_id = ? AND role = 'user' GROUP BY hour ORDER BY c DESC LIMIT 5"
+      ).bind(userId).all(),
+      env.DB.prepare(
+        'SELECT emotion, COUNT(*) as c FROM emotional_logs WHERE user_id = ? GROUP BY emotion ORDER BY c DESC LIMIT 5'
+      ).bind(userId).all(),
+      env.DB.prepare('SELECT COUNT(*) as c FROM conversations WHERE user_id = ?').bind(userId).first(),
+    ]);
+
+    const hours = (chatTimes.results || []).map((r) => `${r.hour}:00(${r.c}次)`).join(', ');
+    const emotionFreq = (emotions.results || []).map((r) => `${r.emotion}(${r.c}次)`).join(', ');
+    const totalConvs = convCount?.c || 0;
+
+    if (!hours && !emotionFreq) return;
+
+    // Check if pattern memory already exists
+    const existing = await env.DB.prepare(
+      "SELECT id FROM memories WHERE user_id = ? AND name = 'behavioral_patterns'"
+    ).bind(userId).first();
+
+    const patternContent = [
+      hours && `Active hours: ${hours}`,
+      emotionFreq && `Emotion patterns: ${emotionFreq}`,
+      `Total conversations: ${totalConvs}`,
+    ].filter(Boolean).join('. ');
+
+    if (existing) {
+      await env.DB.prepare(
+        "UPDATE memories SET content = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?"
+      ).bind(patternContent, existing.id, userId).run();
+    } else {
+      await env.DB.prepare(
+        'INSERT INTO memories (id, user_id, type, name, description, content, importance) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).bind(crypto.randomUUID(), userId, 'user', 'behavioral_patterns', 'Usage patterns and habits', patternContent, 6).run();
+    }
+  } catch (e) {
+    console.error('Pattern detection failed:', e.message);
   }
 }
 
