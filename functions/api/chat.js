@@ -83,6 +83,21 @@ function sanitizeMemoryContent(content) {
   return content;
 }
 
+// ── Memory extraction gate ─────────────────────────────────────────────────
+
+/** Quick check: is this message worth analyzing for memories? */
+function worthExtracting(userMsg) {
+  const msg = userMsg.trim();
+  // Too short — likely "ok", "嗯", "哈哈"
+  if (msg.length < 6) return false;
+  // Pure emoji / punctuation
+  if (/^[\p{Emoji}\s!?。！？~～…·、，,.\-]+$/u.test(msg)) return false;
+  // Common filler responses (zh + en)
+  const fillers = /^(好的?|嗯+|哈哈+|ok+|嗯嗯|哦哦?|行|啊|是的?|对的?|okay|yep|yeah|yes|no|nope|haha|lol|sure|thanks?|谢谢|thank you|thx|hm+|hmm+|oh+|啊啊+|噢+)[\s!?。！？~]*$/i;
+  if (fillers.test(msg)) return false;
+  return true;
+}
+
 // ── Tool execution ──────────────────────────────────────────────────────────
 
 async function executeTool(name, args, env, userId, memories) {
@@ -371,7 +386,9 @@ export async function onRequestPost(context) {
         for (const m of relevant) {
           bgTasks.push(env.DB.prepare("UPDATE memories SET recall_count = recall_count + 1, last_recalled_at = datetime('now') WHERE id = ?").bind(m.id).run());
         }
-        bgTasks.push(extractMemories(env, apiKey, uid, convId, message, finalReply, allMemories));
+        if (worthExtracting(message)) {
+          bgTasks.push(extractMemories(env, apiKey, uid, convId, message, finalReply, allMemories));
+        }
         bgTasks.push(saveConversationMemory(env, apiKey, uid, convId, history));
         if (allMemories.length > 20 && env.SITE_CONFIG) {
           bgTasks.push(env.SITE_CONFIG.get(`dream_last_${uid}`).then((last) => {
@@ -417,8 +434,10 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Always extract memories — this is the core of the pet's understanding
-    bgTasks.push(extractMemories(env, apiKey, uid, convId, message, reply, allMemories));
+    // Extract memories only from messages worth analyzing
+    if (worthExtracting(message)) {
+      bgTasks.push(extractMemories(env, apiKey, uid, convId, message, reply, allMemories));
+    }
 
     // Save conversation-level memory for longer conversations
     bgTasks.push(saveConversationMemory(env, apiKey, uid, convId, history));
